@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Banklar — App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">B</div>
+      <div>
+        <h1>Banklar</h1>
+        <p id="greeting">Bienvenido</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-settings" class="btn-ghost" aria-label="Ajustes de la aplicación">⚙️ Ajustes</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="cards">
+      <article class="card balance-card">
+        <div class="card-header">
+          <h2>Balances</h2>
+          <button id="refresh-balances" class="refresh-btn" aria-label="Actualizar balances">↻</button>
+        </div>
+        <div class="balances">
+          <div class="balance-item">
+            <div class="label">Caja Nu</div>
+            <div class="amount" id="balance-nu">$0.00</div>
+            <div class="small" id="nu-interest-info">EA: 8.5%</div>
+          </div>
+          <div class="balance-item">
+            <div class="label">Nequi</div>
+            <div class="amount" id="balance-nequi">$0.00</div>
+            <div class="small">Disponible</div>
+          </div>
+          <div class="balance-item">
+            <div class="label">Total</div>
+            <div class="amount" id="balance-total">$0.00</div>
+            <div class="small" id="balance-status"></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card quick-add">
+        <h2>Registrar Transacción</h2>
+        <form id="tx-form">
+          <div class="row">
+            <label for="tx-type">Tipo</label>
+            <select id="tx-type" required>
+              <option value="income">Ingreso</option>
+              <option value="expense">Gasto</option>
+              <option value="transfer">Transferencia entre cuentas</option>
+            </select>
+          </div>
+
+          <div class="row" id="income-source-row">
+            <label for="income-source">Origen (Ingreso)</label>
+            <select id="income-source">
+              <option value="Salario">Salario</option>
+              <option value="novaklar">novaklar</option>
+              <option value="Otros">Otros ingresos</option>
+            </select>
+          </div>
+
+          <div class="row" id="expense-category-row" style="display:none">
+            <label for="expense-category">Categoría (Gasto)</label>
+            <select id="expense-category">
+              <option value="Transporte">Transporte</option>
+              <option value="Skincare">Skincare</option>
+              <option value="Salud">Salud</option>
+              <option value="Entretenimiento">Entretenimiento</option>
+              <option value="Comida">Comida</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </div>
+
+          <div class="row" id="transfer-from-row" style="display:none">
+            <label for="transfer-from">Transferir desde</label>
+            <select id="transfer-from">
+              <option value="nu">Caja Nu → Nequi</option>
+              <option value="nequi">Nequi → Caja Nu</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="tx-amount">Monto</label>
+            <input id="tx-amount" type="text" placeholder="0,00" required class="currency-input">
+            <div class="currency-hint">Escribe números sin puntos ni comas</div>
+          </div>
+
+          <div class="row" id="tx-account-row">
+            <label for="tx-account">Cuenta</label>
+            <select id="tx-account">
+              <option value="nequi">Nequi</option>
+              <option value="nu">Caja Nu</option>
+            </select>
+          </div>
+
+          <div class="row" id="deposit-to-nu-row" style="display:none">
+            <label><input type="checkbox" id="deposit-to-nu"> Depositar todo/parte en Caja Nu</label>
+          </div>
+
+          <div class="row" id="nu-split-row" style="display:none">
+            <label for="nu-split-amount">Monto a enviar a NU (dejar vacío para todo)</label>
+            <input id="nu-split-amount" type="text" placeholder="Ej: 50,00" class="currency-input">
+          </div>
+
+          <div class="row actions">
+            <button type="submit" class="btn-primary">Registrar</button>
+            <button type="button" id="btn-view-all" class="btn-ghost">Ver todas</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card stats-card">
+        <h2>Estadísticas & Alertas</h2>
+        <div id="alerts" class="alerts"></div>
+        <div class="stats-wrapper">
+          <div class="stat-grid">
+            <div class="stat-item stat-income">
+              <div class="stat-label">Ingresos</div>
+              <div class="stat-value" id="total-incomes">$0.00</div>
+              <div class="stat-sub">Total recibido</div>
+            </div>
+            <div class="stat-item stat-expense">
+              <div class="stat-label">Gastos</div>
+              <div class="stat-value" id="total-expenses">$0.00</div>
+              <div class="stat-sub">Total gastado</div>
+            </div>
+            <div class="stat-item stat-saved">
+              <div class="stat-label">Ahorro recomendado</div>
+              <div class="stat-value" id="suggested-savings">—</div>
+              <div class="stat-sub">Sugerencia inteligente</div>
+            </div>
+            <div class="stat-item stat-interest">
+              <div class="stat-label">Interés proyectado (1 año)</div>
+              <div class="stat-value" id="projected-interest">$0.00</div>
+              <div class="stat-sub">Si permaneciera en Caja Nu</div>
+            </div>
+          </div>
+          <div class="chart-area">
+            <button id="btn-expenses-report" class="btn-ghost btn-small">Reporte completo</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="transactions">
+      <article class="card tx-list">
+        <h2>Últimas transacciones</h2>
+        <div class="tx-container">
+          <ul id="last-tx-list" class="tx-items"></ul>
+        </div>
+        <div class="center">
+          <button id="btn-view-all-2" class="btn-ghost">Ver todas</button>
+        </div>
+      </article>
+
+      <article class="card budgets">
+        <h2>Presupuesto de gastos</h2>
+        <div id="budgets-list"></div>
+        <div class="center">
+          <button id="btn-edit-budgets" class="btn-ghost">Editar / Crear presupuestos</button>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="modal-overlay" class="modal-overlay hidden"></div>
+
+  <div id="setup-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setup-title">
+    <h3 id="setup-title">Primera vez — Configura tu cuenta</h3>
+    <form id="setup-form">
+      <div class="row"><label for="user-name">Nombre</label><input id="user-name" type="text" required placeholder="Tu nombre"></div>
+      <div class="row"><label for="user-nu">Sueldo/Saldo en Caja Nu</label><input id="user-nu" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-nequi">Saldo en Nequi</label><input id="user-nequi" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-nu-ea">% EA (Caja Nu)</label><input id="user-nu-ea" type="number" min="0" step="0.01" value="8.5" required></div>
+      <div class="row actions"><button type="submit" class="btn-primary">Guardar y empezar</button></div>
+    </form>
+  </div>
+
+  <div id="view-all-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="viewall-title">
+    <h3 id="viewall-title">Todas las transacciones</h3>
+    <div class="modal-toolbar">
+      <div class="filter-controls">
+        <select id="tx-filter-type"><option value="all">Todas las transacciones</option><option value="income">Solo ingresos</option><option value="expense">Solo gastos</option><option value="transfer">Transferencias</option></select>
+        <select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Caja Nu</option><option value="nequi">Nequi</option></select>
+      </div>
+      <div class="search-control"><input type="text" id="tx-search" placeholder="Buscar..."></div>
+    </div>
+    <div id="all-tx-container" class="all-tx"></div>
+    <div class="row actions"><button id="close-all-tx" class="btn-ghost">Cerrar</button></div>
+  </div>
+
+  <div id="expenses-report-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="report-title">
+    <h3 id="report-title">Reporte de Gastos</h3>
+    <div class="modal-toolbar"><div class="filter-controls"><div class="meta">Resumen por categoría (porcentaje y monto)</div></div></div>
+    <div id="expenses-report-container" class="all-tx"></div>
+    <div class="row actions"><button id="close-expenses-report" class="btn-ghost">Cerrar</button></div>
+  </div>
+
+  <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <h3 id="settings-title">Ajustes</h3>
+    <form id="settings-form">
+      <div class="row"><label for="settings-nu-ea">Cambiar % EA (Caja Nu)</label><input id="settings-nu-ea" type="number" min="0" step="0.01" required></div>
+      <div class="row"><label for="settings-low-threshold">Umbral alerta saldo bajo (Total)</label><input id="settings-low-threshold" type="text" required class="currency-input"></div>
+      <div class="row"><label for="settings-currency">Moneda</label><select id="settings-currency"><option value="COP">COP</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+      <div class="row actions"><button type="submit" class="btn-primary">Guardar</button><button id="btn-apply-interest" type="button" class="btn-ghost">Aplicar interés ahora</button></div>
+    </form>
+  </div>
+
+  <div id="budgets-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="budgets-title">
+    <h3 id="budgets-title">Editar / Crear presupuestos por categoría (mensual)</h3>
+    <form id="budgets-form">
+      <div id="budgets-form-list"></div>
+      <div class="row" style="margin-top:6px;gap:8px;display:flex;align-items:center">
+        <select id="new-budget-name" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="" disabled selected>Seleccionar categoría</option></select>
+        <input id="new-budget-amt" placeholder="Monto" type="text" class="currency-input" style="width:120px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+        <button id="btn-add-budget" type="button" class="btn-ghost">Agregar</button>
+      </div>
+      <div class="row actions"><button type="submit" class="btn-primary">Guardar presupuestos</button><button id="btn-close-budgets" class="btn-ghost" type="button">Cancelar</button></div>
+    </form>
+  </div>
+
+  <div id="export-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="export-title">
+    <h3 id="export-title">Exportar datos</h3>
+    <div class="row"><p>Selecciona el formato para exportar tus datos financieros:</p></div>
+    <div class="row actions"><button id="btn-export-csv" class="btn-ghost">Exportar CSV</button><button id="btn-export-json" class="btn-ghost">Exportar JSON</button><button id="btn-close-export" class="btn-ghost">Cancelar</button></div>
+  </div>
+
+  <footer class="app-footer">
+    <div class="footer-content"><span>Banklar &copy; 2023</span><button id="btn-export" class="btn-ghost">Exportar datos</button></div>
+  </footer>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
