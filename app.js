@@ -162,11 +162,9 @@
     user: null,
     transactions: [],
     budgets: {},
-    settings: { nuEA: 8.25, lowThreshold: 20000, currency: 'COP' },
+    settings: { nuEA: 0, lowThreshold: 20000, currency: 'COP' },
     meta: { 
-      lastInterestApplied: null, 
-      lastUpdated: nowISO(),
-      dailyInterests: {}
+      lastUpdated: nowISO()
     }
   };
 
@@ -365,263 +363,6 @@
     };
   }
 
-  // Calcular balances en una fecha específica (para intereses)
-  function computeBalancesAtDate(targetDate) {
-    const target = new Date(targetDate);
-    let nu = state.user ? Number(state.user.nu || 0) : 0;
-    let nequi = state.user ? Number(state.user.nequi || 0) : 0;
-    let cash = state.user ? Number(state.user.cash || 0) : 0;
-    
-    const txs = (state.transactions || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    txs.forEach(tx => {
-      const txDate = new Date(tx.date);
-      if (txDate <= target) {
-        if (tx.type === 'income') {
-          if (tx.nuAllocated && tx.nuAllocated > 0) {
-            nu += Number(tx.nuAllocated);
-            const rest = Number(tx.amount) - Number(tx.nuAllocated);
-            if (rest > 0) {
-              if (tx.account === 'nequi') nequi += rest;
-              else if (tx.account === 'cash') cash += rest;
-            }
-          } else { 
-            if (tx.account === 'nu') nu += Number(tx.amount);
-            else if (tx.account === 'nequi') nequi += Number(tx.amount);
-            else if (tx.account === 'cash') cash += Number(tx.amount);
-          }
-        } else if (tx.type === 'expense') {
-          if (tx.account === 'nu') nu -= Number(tx.amount);
-          else if (tx.account === 'nequi') nequi -= Number(tx.amount);
-          else if (tx.account === 'cash') cash -= Number(tx.amount);
-        } else if (tx.type === 'transfer') {
-          if (tx.from === 'nu' && tx.to === 'nequi') {
-            nu -= Number(tx.amount);
-            nequi += Number(tx.amount);
-          } else if (tx.from === 'nequi' && tx.to === 'nu') {
-            nequi -= Number(tx.amount);
-            nu += Number(tx.amount);
-          } else if (tx.from === 'cash' && tx.to === 'nu') {
-            cash -= Number(tx.amount);
-            nu += Number(tx.amount);
-          } else if (tx.from === 'cash' && tx.to === 'nequi') {
-            cash -= Number(tx.amount);
-            nequi += Number(tx.amount);
-          } else if (tx.from === 'nu' && tx.to === 'cash') {
-            nu -= Number(tx.amount);
-            cash += Number(tx.amount);
-          } else if (tx.from === 'nequi' && tx.to === 'cash') {
-            nequi -= Number(tx.amount);
-            cash += Number(tx.amount);
-          }
-        } else if (tx.type === 'cash-conversion') {
-          if (tx.conversionType === 'to_cash') {
-            if (tx.from === 'nu') {
-              nu -= Number(tx.amount);
-              cash += Number(tx.amount);
-            } else if (tx.from === 'nequi') {
-              nequi -= Number(tx.amount);
-              cash += Number(tx.amount);
-            }
-          } else if (tx.conversionType === 'from_cash') {
-            if (tx.to === 'nu') {
-              cash -= Number(tx.amount);
-              nu += Number(tx.amount);
-            } else if (tx.to === 'nequi') {
-              cash -= Number(tx.amount);
-              nequi += Number(tx.amount);
-            }
-          }
-        }
-      }
-    });
-    
-    return { 
-      nu: Math.max(0, nu), 
-      nequi: Math.max(0, nequi), 
-      cash: Math.max(0, cash), 
-      total: Math.max(0, nu + nequi + cash) 
-    };
-  }
-
-  // ---------- SISTEMA DE INTERESES COMPUESTOS MEJORADO ----------
-  
-  // Calcular tasa diaria efectiva (interés compuesto)
-  function calculateDailyRate(annualRate) {
-    // Fórmula exacta para interés compuesto diario
-    // Convertir porcentaje a decimal y calcular tasa diaria
-    const annualDecimal = annualRate / 100;
-    return Math.pow(1 + annualDecimal, 1/365) - 1;
-  }
-  
-  // Calcular interés para un día específico
-  function calculateInterestForDay(date, dailyRate) {
-    // Calcular saldo al INICIO del día (antes de aplicar intereses)
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    // Calcular saldo al inicio del día
-    const balanceAtStart = computeBalancesAtDate(startOfDay).nu;
-    
-    // Calcular interés para ese día
-    return balanceAtStart * dailyRate;
-  }
-  
-  // Verificar si hay días pendientes para aplicar intereses
-  function getPendingInterestDays() {
-    if (!state.user || !state.meta.lastInterestApplied) {
-      return [];
-    }
-    
-    const lastApplied = new Date(state.meta.lastInterestApplied);
-    const today = new Date();
-    
-    // Normalizar fechas (solo fecha, sin hora)
-    lastApplied.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    
-    const daysDiff = Math.floor((today - lastApplied) / (1000 * 60 * 60 * 24));
-    
-    if (daysDiff <= 0) return [];
-    
-    const pendingDays = [];
-    for (let i = 1; i <= daysDiff; i++) {
-      const pendingDate = new Date(lastApplied);
-      pendingDate.setDate(pendingDate.getDate() + i);
-      pendingDays.push(pendingDate.toISOString().split('T')[0]);
-    }
-    
-    return pendingDays;
-  }
-  
-  // Calcular intereses acumulados de forma COMPUESTA y PRECISA
-  function computeAccruedInterestCompounded() {
-    if (!state.user || !state.meta.lastInterestApplied) {
-      return 0;
-    }
-    
-    const pendingDays = getPendingInterestDays();
-    if (pendingDays.length === 0) return 0;
-    
-    const dailyRate = calculateDailyRate(state.settings.nuEA || 8.25);
-    let totalInterest = 0;
-    
-    // Para cada día pendiente, calcular el interés basado en el saldo de ESE día
-    pendingDays.forEach(day => {
-      const dayInterest = calculateInterestForDay(day, dailyRate);
-      totalInterest += dayInterest;
-      
-      // Registrar interés calculado para este día
-      if (!state.meta.dailyInterests) state.meta.dailyInterests = {};
-      state.meta.dailyInterests[day] = Number(dayInterest.toFixed(6));
-    });
-    
-    return totalInterest;
-  }
-  
-  // Aplicar intereses acumulados (versión compuesta)
-  function applyAccruedInterest() {
-    if (!state.user) {
-      showToast('Configura tu cuenta primero', 'error');
-      return false;
-    }
-    
-    // Si no hay fecha de último interés, inicializar con hoy
-    if (!state.meta.lastInterestApplied) {
-      state.meta.lastInterestApplied = nowISO();
-      saveState(state);
-      showToast('Sistema de intereses inicializado', 'info');
-      return false;
-    }
-    
-    const interest = computeAccruedInterestCompounded();
-    
-    if (interest < 0.01) { // Mínimo 1 centavo
-      return false;
-    }
-    
-    // Crear transacción de interés compuesto
-    const interestTx = {
-      id: uid(),
-      type: 'income',
-      amount: Number(interest.toFixed(2)),
-      date: nowISO(),
-      account: 'nu',
-      source: 'Interés Compuesto EA',
-      description: `Interés compuesto acumulado (${state.settings.nuEA}% EA)`,
-      nuAllocated: Number(interest.toFixed(2)),
-      isInterest: true
-    };
-    
-    // Agregar transacción
-    state.transactions.push(interestTx);
-    
-    // Actualizar fecha de último interés aplicado (hoy)
-    state.meta.lastInterestApplied = nowISO();
-    
-    // Limpiar intereses diarios ya aplicados
-    state.meta.dailyInterests = {};
-    
-    if (saveState(state)) {
-      showToast(`Interés compuesto aplicado: ${formatCurrency(interest, state.settings.currency)}`, 'success');
-      console.log(`💰 Interés COMPUESTO aplicado: ${formatCurrency(interest, state.settings.currency)}`);
-      
-      // Mostrar detalle de días aplicados
-      const pendingDays = getPendingInterestDays();
-      if (pendingDays.length > 0) {
-        console.log(`📅 Días de interés aplicados: ${pendingDays.length} días`);
-      }
-      
-      renderAll();
-      return true;
-    }
-    
-    return false;
-  }
-  
-  // Verificar y aplicar intereses automáticamente
-  function checkAndApplyInterest() {
-    if (!state.user) return;
-    
-    const pendingDays = getPendingInterestDays();
-    if (pendingDays.length > 0) {
-      const interest = computeAccruedInterestCompounded();
-      if (interest >= 0.01) {
-        console.log(`🔄 Interés pendiente detectado: ${formatCurrency(interest, state.settings.currency)} por ${pendingDays.length} días`);
-        
-        // Aplicar automáticamente si es más de 1 centavo
-        applyAccruedInterest();
-      }
-    }
-  }
-  
-  // Obtener interés acumulado HOY (para mostrar en UI)
-  function getTodayAccruedInterest() {
-    if (!state.user || !state.meta.lastInterestApplied) return 0;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const lastApplied = new Date(state.meta.lastInterestApplied).toISOString().split('T')[0];
-    
-    // Si el último interés fue hoy, no hay interés acumulado hoy aún
-    if (lastApplied === today) return 0;
-    
-    const dailyRate = calculateDailyRate(state.settings.nuEA || 8.25);
-    return calculateInterestForDay(today, dailyRate);
-  }
-  
-  // Obtener proyección de interés anual CORRECTA (compuesta)
-  function getAnnualInterestProjection() {
-    const balances = computeBalances();
-    const annualRate = state.settings.nuEA || 8.25;
-    
-    // Fórmula de interés compuesto: A = P(1 + r)^n para proyección anual
-    const dailyRate = calculateDailyRate(annualRate);
-    const annualFactor = Math.pow(1 + dailyRate, 365);
-    
-    const projection = balances.nu * (annualFactor - 1);
-    return isNaN(projection) ? 0 : projection;
-  }
-
   // ---------- Rendering ----------
   function renderAll() {
     if (!state.user) { showSetup(); populateCategorySelects(); return; }
@@ -635,14 +376,9 @@
     if (el.balanceCash) el.balanceCash.textContent = formatCurrency(balances.cash, currency);
     if (el.balanceTotal) el.balanceTotal.textContent = formatCurrency(balances.total, currency);
     
-    // Mostrar información de interés
+    // Mostrar información de interés (ahora simplificada)
     if (el.nuInterestInfo) {
-      const todayInterest = getTodayAccruedInterest();
-      if (todayInterest > 0) {
-        el.nuInterestInfo.innerHTML = `EA: ${Number(state.settings.nuEA).toFixed(2)}%<br><small>Hoy: +${formatCurrency(todayInterest, currency)}</small>`;
-      } else {
-        el.nuInterestInfo.textContent = `EA: ${Number(state.settings.nuEA).toFixed(2)}% (Compuesto)`;
-      }
+      el.nuInterestInfo.textContent = `Sin interés`;
     }
     
     // Mostrar estado del saldo
@@ -731,9 +467,8 @@
     const rec = suggestSavings(totals); 
     if (el.suggestedSavings) el.suggestedSavings.textContent = rec.text;
     
-    // Proyección de interés anual
-    const projected = getAnnualInterestProjection(); 
-    if (el.projectedInterest) el.projectedInterest.textContent = formatCurrency(projected, currency);
+    // Proyección de interés anual (ahora eliminada)
+    if (el.projectedInterest) el.projectedInterest.textContent = formatCurrency(0, currency);
 
     // Renderizar alertas, presupuestos, etc.
     renderAlerts(balances, totals);
@@ -748,18 +483,6 @@
   function renderAlerts(balances, totals) {
     if (!el.alerts) return;
     el.alerts.innerHTML = '';
-    
-    // Mostrar alerta de interés pendiente
-    const pendingDays = getPendingInterestDays();
-    if (pendingDays.length > 0) {
-      const interest = computeAccruedInterestCompounded();
-      if (interest >= 0.01) {
-        const d = document.createElement('div'); 
-        d.className = 'alert info'; 
-        d.innerHTML = `💡 <strong>Interés pendiente:</strong> ${formatCurrency(interest, state.settings.currency)} acumulado (${pendingDays.length} días). <button class="btn-ghost btn-small" style="margin-left:10px;padding:2px 8px;font-size:11px;" onclick="window._banklar_applyInterestNow()">Aplicar ahora</button>`;
-        el.alerts.appendChild(d);
-      }
-    }
     
     // Alerta de saldo bajo en efectivo
     if (balances.cash < 10000 && balances.cash > 0) {
@@ -982,7 +705,6 @@
     if ($('user-nu')) $('user-nu').value = state.user ? state.user.nu.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
     if ($('user-nequi')) $('user-nequi').value = state.user ? state.user.nequi.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
     if ($('user-cash')) $('user-cash').value = state.user ? state.user.cash.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
-    if ($('user-nu-ea')) $('user-nu-ea').value = state.settings.nuEA || 8.5; 
   }
   
   function showViewAll() { 
@@ -1049,7 +771,7 @@
   function showSettings() { 
     showOverlay(); 
     if (el.settingsModal) el.settingsModal.classList.remove('hidden'); 
-    if ($('settings-nu-ea')) $('settings-nu-ea').value = state.settings.nuEA || 8.25; 
+    if ($('settings-nu-ea')) $('settings-nu-ea').value = 0; 
     if ($('settings-low-threshold')) $('settings-low-threshold').value = formatCurrency(state.settings.lowThreshold || 20000, state.settings.currency).replace('$', '').trim(); 
     if ($('settings-currency')) $('settings-currency').value = state.settings.currency || 'COP'; 
   }
@@ -1153,29 +875,6 @@
     // Formulario de ajustes
     on('settings-form', 'submit', handleSettingsSubmit);
     
-    // Aplicar interés manualmente
-    on('btn-apply-interest', 'click', () => { 
-      if (!state.user) {
-        showToast('Configura tu cuenta primero', 'error');
-        return;
-      }
-      
-      if (!state.meta.lastInterestApplied) {
-        state.meta.lastInterestApplied = nowISO();
-        saveState(state);
-      }
-      
-      const interest = computeAccruedInterestCompounded();
-      if (interest < 0.01) {
-        showToast('No hay interés acumulado para aplicar', 'info');
-        return;
-      }
-      
-      if (!confirm(`Aplicar interés acumulado ${formatCurrency(interest, state.settings.currency)} (interés compuesto)?`)) return;
-      
-      applyAccruedInterest();
-    });
-    
     // Presupuestos
     on('btn-edit-budgets', 'click', showBudgets); 
     on('btn-close-budgets', 'click', hideAllModals);
@@ -1201,7 +900,6 @@
     
     // Refrescar balances
     if (el.refreshBalances) el.refreshBalances.addEventListener('click', () => { 
-      checkAndApplyInterest();
       renderAll(); 
       showToast('Balances actualizados', 'success'); 
     });
@@ -1437,16 +1135,12 @@
   
   function handleSettingsSubmit(e) {
     e.preventDefault();
-    const val = Number($('settings-nu-ea').value || 0); 
-    state.settings.nuEA = val;
+    state.settings.nuEA = 0; // Sin intereses
     state.settings.lowThreshold = parseCurrencyFormatted($('settings-low-threshold').value || '0');
     state.settings.currency = $('settings-currency').value || 'COP';
     
-    if (!state.meta.lastInterestApplied) state.meta.lastInterestApplied = nowISO();
-    
     if (saveState(state)) {
       showToast('Configuración guardada correctamente', 'success');
-      checkAndApplyInterest();
     }
     hideAllModals(); 
     renderAll();
@@ -1510,16 +1204,9 @@
     const nu = parseCurrencyFormatted($('user-nu').value || '0'); 
     const nequi = parseCurrencyFormatted($('user-nequi').value || '0'); 
     const cash = parseCurrencyFormatted($('user-cash').value || '0');
-    const ea = Number($('user-nu-ea').value || 8.5);
     
     state.user = { name, nu, nequi, cash, createdAt: nowISO() }; 
-    state.settings.nuEA = ea; 
-    
-    // Inicializar sistema de intereses
-    if (!state.meta.lastInterestApplied) {
-      state.meta.lastInterestApplied = nowISO();
-      state.meta.dailyInterests = {};
-    }
+    state.settings.nuEA = 0; // Sin intereses
     
     if (saveState(state)) showToast('Configuración inicial guardada', 'success'); 
     hideAllModals(); 
@@ -1543,61 +1230,21 @@
       location.reload(); 
     } 
   };
-  
-  window._banklar_forceInterest = function() {
-    if (!state.meta.lastInterestApplied) {
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 5);
-      state.meta.lastInterestApplied = pastDate.toISOString();
-      saveState(state);
-      showToast('Fecha retrocedida 5 días para prueba', 'info');
-    }
-    applyAccruedInterest();
-  };
-  
-  window._banklar_applyInterestNow = function() {
-    applyAccruedInterest();
-  };
 
   // ---------- Initialize ----------
   window.addEventListener('load', () => { 
-    // Inicializar estado si no existe
-    if (!state.meta.lastInterestApplied && state.user) {
-      state.meta.lastInterestApplied = nowISO();
-      state.meta.dailyInterests = {};
-    }
-    
     // Configurar UI
     populateCategorySelects(); 
     initializeCurrencyMasks();
     updateFormVisibility();
     initializeEventListeners();
     
-    // Verificar y aplicar intereses automáticamente al cargar
-    setTimeout(() => {
-      try {
-        checkAndApplyInterest();
-      } catch (e) {
-        console.error('Error verificando intereses al cargar:', e);
-      }
-    }, 1000);
-    
     // Renderizar UI
     renderAll(); 
-    
-    // Verificar intereses periódicamente
-    setInterval(() => {
-      try {
-        checkAndApplyInterest();
-      } catch (e) {
-        console.error('Error en verificación periódica de intereses:', e);
-      }
-    }, 1000 * 60 * 60); // Cada hora
     
     // Verificar cuando la página gana foco
     window.addEventListener('focus', () => {
       setTimeout(() => {
-        checkAndApplyInterest();
         renderAll();
       }, 500);
     });
@@ -1605,11 +1252,6 @@
 
   // ---------- Public API for debugging ----------
   window._banklar_state = state;
-  window._banklar_applyInterest = applyAccruedInterest;
-  window._banklar_getPendingInterest = computeAccruedInterestCompounded;
-  window._banklar_getPendingDays = getPendingInterestDays;
-  window._banklar_checkInterest = checkAndApplyInterest;
   window._banklar_exportData = exportData;
   window._banklar_computeBalances = computeBalances;
-  window._banklar_getAnnualProjection = getAnnualInterestProjection;
 })();
