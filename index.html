@@ -32,12 +32,17 @@
           <div class="balance-item">
             <div class="label">Caja Nu</div>
             <div class="amount" id="balance-nu">$0.00</div>
-            <div class="small" id="nu-interest-info">EA: 8.5%</div>
+            <div class="small" id="nu-interest-info">Sin interés</div>
           </div>
           <div class="balance-item">
-            <div class="label">Nequi</div>
+            <div class="label">Nequi 1</div>
             <div class="amount" id="balance-nequi">$0.00</div>
-            <div class="small">Disponible</div>
+            <div class="small">Principal</div>
+          </div>
+          <div class="balance-item">
+            <div class="label">Nequi 2</div>
+            <div class="amount" id="balance-nequi2">$0.00</div>
+            <div class="small">Para novaklar</div>
           </div>
           <div class="balance-item">
             <div class="label">Efectivo</div>
@@ -91,12 +96,18 @@
           <div class="row" id="transfer-from-row" style="display:none">
             <label for="transfer-from">Transferir desde</label>
             <select id="transfer-from">
-              <option value="nu">Caja Nu → Nequi</option>
-              <option value="nequi">Nequi → Caja Nu</option>
+              <option value="nu">Caja Nu → Nequi 1</option>
+              <option value="nequi">Nequi 1 → Caja Nu</option>
+              <option value="nequi_to_nequi2">Nequi 1 → Nequi 2</option>
+              <option value="nequi2_to_nequi">Nequi 2 → Nequi 1</option>
+              <option value="nu_to_nequi2">Caja Nu → Nequi 2</option>
+              <option value="nequi2_to_nu">Nequi 2 → Caja Nu</option>
               <option value="cash_to_nu">Efectivo → Caja Nu</option>
-              <option value="cash_to_nequi">Efectivo → Nequi</option>
+              <option value="cash_to_nequi">Efectivo → Nequi 1</option>
+              <option value="cash_to_nequi2">Efectivo → Nequi 2</option>
               <option value="nu_to_cash">Caja Nu → Efectivo</option>
-              <option value="nequi_to_cash">Nequi → Efectivo</option>
+              <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
+              <option value="nequi2_to_cash">Nequi 2 → Efectivo</option>
             </select>
           </div>
 
@@ -112,9 +123,11 @@
             <label for="cash-conversion-details">Detalles</label>
             <select id="cash-conversion-details">
               <option value="nu_to_cash">Caja Nu → Efectivo</option>
-              <option value="nequi_to_cash">Nequi → Efectivo</option>
+              <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
+              <option value="nequi2_to_cash">Nequi 2 → Efectivo</option>
               <option value="cash_to_nu">Efectivo → Caja Nu</option>
-              <option value="cash_to_nequi">Efectivo → Nequi</option>
+              <option value="cash_to_nequi">Efectivo → Nequi 1</option>
+              <option value="cash_to_nequi2">Efectivo → Nequi 2</option>
             </select>
           </div>
 
@@ -127,7 +140,8 @@
           <div class="row" id="tx-account-row">
             <label for="tx-account">Cuenta</label>
             <select id="tx-account">
-              <option value="nequi">Nequi</option>
+              <option value="nequi">Nequi 1</option>
+              <option value="nequi2">Nequi 2 (novaklar)</option>
               <option value="nu">Caja Nu</option>
               <option value="cash">Efectivo</option>
             </select>
@@ -170,9 +184,9 @@
               <div class="stat-sub">Sugerencia inteligente</div>
             </div>
             <div class="stat-item stat-interest">
-              <div class="stat-label">Interés proyectado (1 año)</div>
-              <div class="stat-value" id="projected-interest">$0.00</div>
-              <div class="stat-sub">Si permaneciera en Caja Nu</div>
+              <div class="stat-label">Transacciones Novaklar</div>
+              <div class="stat-value" id="novaklar-transactions">0</div>
+              <div class="stat-sub">En Nequi 2</div>
             </div>
           </div>
           <div class="chart-area">
@@ -198,6 +212,7 @@
         <div id="budgets-list"></div>
         <div class="center">
           <button id="btn-edit-budgets" class="btn-ghost">Editar / Crear presupuestos</button>
+          <button id="btn-data-portability" class="btn-ghost" style="margin-top: 10px;">📋 Copiar datos</button>
         </div>
       </article>
     </section>
@@ -210,9 +225,9 @@
     <form id="setup-form">
       <div class="row"><label for="user-name">Nombre</label><input id="user-name" type="text" required placeholder="Tu nombre"></div>
       <div class="row"><label for="user-nu">Saldo en Caja Nu</label><input id="user-nu" type="text" value="0,00" required class="currency-input"></div>
-      <div class="row"><label for="user-nequi">Saldo en Nequi</label><input id="user-nequi" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-nequi">Saldo en Nequi 1</label><input id="user-nequi" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-nequi2">Saldo en Nequi 2 (novaklar)</label><input id="user-nequi2" type="text" value="0,00" required class="currency-input"></div>
       <div class="row"><label for="user-cash">Saldo en Efectivo</label><input id="user-cash" type="text" value="0,00" required class="currency-input"></div>
-      <div class="row"><label for="user-nu-ea">% EA (Caja Nu)</label><input id="user-nu-ea" type="number" min="0" step="0.01" value="8.5" required></div>
       <div class="row actions"><button type="submit" class="btn-primary">Guardar y empezar</button></div>
     </form>
   </div>
@@ -222,7 +237,7 @@
     <div class="modal-toolbar">
       <div class="filter-controls">
         <select id="tx-filter-type"><option value="all">Todas las transacciones</option><option value="income">Solo ingresos</option><option value="expense">Solo gastos</option><option value="transfer">Transferencias</option><option value="cash-conversion">Conversiones efectivo</option></select>
-        <select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Caja Nu</option><option value="nequi">Nequi</option><option value="cash">Efectivo</option></select>
+        <select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Caja Nu</option><option value="nequi">Nequi 1</option><option value="nequi2">Nequi 2</option><option value="cash">Efectivo</option></select>
       </div>
       <div class="search-control"><input type="text" id="tx-search" placeholder="Buscar..."></div>
     </div>
@@ -240,10 +255,12 @@
   <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
     <h3 id="settings-title">Ajustes</h3>
     <form id="settings-form">
-      <div class="row"><label for="settings-nu-ea">Cambiar % EA (Caja Nu)</label><input id="settings-nu-ea" type="number" min="0" step="0.01" required></div>
       <div class="row"><label for="settings-low-threshold">Umbral alerta saldo bajo (Total)</label><input id="settings-low-threshold" type="text" required class="currency-input"></div>
       <div class="row"><label for="settings-currency">Moneda</label><select id="settings-currency"><option value="COP">COP</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
-      <div class="row actions"><button type="submit" class="btn-primary">Guardar</button><button id="btn-apply-interest" type="button" class="btn-ghost">Aplicar interés ahora</button></div>
+      <div class="row actions">
+        <button type="submit" class="btn-primary">Guardar</button>
+        <button id="btn-import-data" type="button" class="btn-ghost">Importar datos</button>
+      </div>
     </form>
   </div>
 
@@ -264,6 +281,39 @@
     <h3 id="export-title">Exportar datos</h3>
     <div class="row"><p>Selecciona el formato para exportar tus datos financieros:</p></div>
     <div class="row actions"><button id="btn-export-csv" class="btn-ghost">Exportar CSV</button><button id="btn-export-json" class="btn-ghost">Exportar JSON</button><button id="btn-close-export" class="btn-ghost">Cancelar</button></div>
+  </div>
+
+  <div id="portability-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="portability-title">
+    <h3 id="portability-title">Portabilidad de Datos</h3>
+    <div class="row">
+      <p>Copiar todos los datos al portapapeles para pegarlos en una nueva versión:</p>
+      <textarea id="data-export-text" rows="10" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);font-family:monospace;font-size:12px;"></textarea>
+    </div>
+    <div class="row actions">
+      <button id="btn-copy-data" class="btn-primary">📋 Copiar al portapapeles</button>
+      <button id="btn-close-portability" class="btn-ghost">Cerrar</button>
+    </div>
+    <div class="row" style="margin-top:15px;padding:10px;background:rgba(124,58,237,0.05);border-radius:8px;">
+      <p style="margin:0;font-size:12px;color:#666;"><strong>Instrucciones:</strong><br>
+      1. Haz clic en "Copiar al portapapeles"<br>
+      2. En la nueva versión, ve a Ajustes → Importar datos<br>
+      3. Pega los datos copiados y confirma</p>
+    </div>
+  </div>
+
+  <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="import-title">
+    <h3 id="import-title">Importar Datos</h3>
+    <div class="row">
+      <p>Pega los datos exportados de una versión anterior:</p>
+      <textarea id="data-import-text" rows="10" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);font-family:monospace;font-size:12px;" placeholder="Pega aquí los datos copiados..."></textarea>
+    </div>
+    <div class="row actions">
+      <button id="btn-import-confirm" class="btn-primary">Importar datos</button>
+      <button id="btn-close-import" class="btn-ghost">Cancelar</button>
+    </div>
+    <div class="row" style="margin-top:15px;padding:10px;background:rgba(239,68,68,0.05);border-radius:8px;">
+      <p style="margin:0;font-size:12px;color:#666;"><strong>⚠️ Advertencia:</strong> Esta acción sobreescribirá todos tus datos actuales.</p>
+    </div>
   </div>
 
   <footer class="app-footer">
