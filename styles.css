@@ -152,6 +152,12 @@ body {
   border-left: 3px solid #f59e0b;
 }
 
+/* Estilos para Nequi 2 */
+.balance-item.nequi2-item {
+  background: rgba(255, 255, 255, 0.25);
+  border-left: 3px solid #10b981;
+}
+
 /* =========================
    Forms / quick add
    ========================= */
@@ -201,6 +207,16 @@ body {
 
 .btn-small { padding:6px 10px; font-size:13px; border-radius:10px; width:140px; text-align:center; }
 
+/* Estilo para el botón de portabilidad */
+#btn-data-portability {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 /* =========================
    Transactions list
    ========================= */
@@ -225,6 +241,16 @@ body {
 /* Cash conversion styling */
 .tx-cash-conversion { border-left: 3px solid #f59e0b; }
 .tx-cash-conversion .tx-icon { color: #f59e0b; }
+
+/* Estilos para transacciones Novaklar */
+.tx-novaklar {
+  border-left: 3px solid #10b981;
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02));
+}
+
+.tx-novaklar:hover {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.04));
+}
 
 /* =========================
    Stats
@@ -286,6 +312,21 @@ body {
 .search-control input { padding:8px; border-radius: var(--radius-sm); border:1px solid rgba(15,9,55,0.06); width:180px; }
 .all-tx { max-height:420px; overflow:auto; }
 
+/* Estilos para modales de portabilidad */
+#data-export-text, #data-import-text {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 200px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #fff;
+  margin-top: 8px;
+}
+
 /* =========================
    Budgets / progress / alerts
    ========================= */
@@ -334,10 +375,19 @@ body {
   .stat-grid { grid-template-columns:1fr; }
   .chart-area { width:100%; }
   .transactions { grid-template-columns:1fr; }
-  .balance-card .balances { grid-template-columns: 1fr; }
+  .balance-card .balances { grid-template-columns: repeat(2, 1fr); }
   .actions { flex-direction:column; align-items:stretch; }
   .actions .btn-ghost, .actions .btn-primary { width:100%; }
   .footer-content { flex-direction:column; gap:10px; text-align:center; }
+  
+  /* Ajustes para 5 balance items en móvil */
+  .balance-card .balances { 
+    grid-template-columns: repeat(2, 1fr); 
+    grid-template-rows: repeat(3, auto);
+  }
+  .balance-item:nth-child(5) {
+    grid-column: span 2;
+  }
 }
 
 /* =========================
@@ -361,6 +411,13 @@ body {
   }
 
   .stat-item { background: linear-gradient(180deg,#1e1e3a,#1a1a2e); }
+  
+  /* Ajustes para campos de texto en modales de portabilidad en dark mode */
+  #data-export-text, #data-import-text {
+    background: #1a1a2e;
+    color: #f3f4f6;
+    border-color: rgba(255,255,255,0.1);
+  }
 }
 
 /* =========================
@@ -408,8 +465,15 @@ body {
 }
 
 /* Regla final de respaldo para selectores concretos de modales (si existen por id) */
-#setup-modal, #view-all-modal, #settings-modal, #budgets-modal, #export-modal, #expenses-report-modal {
+#setup-modal, #view-all-modal, #settings-modal, #budgets-modal, 
+#export-modal, #expenses-report-modal, #portability-modal, #import-modal {
   color: #000 !important;
+}
+
+/* Forzar color de texto en textareas de portabilidad dentro de modales */
+#data-export-text, #data-import-text {
+  color: #000 !important;
+  background: #fff !important;
 }
 
 /* Fin del archivo CSS. */
