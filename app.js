@@ -16,49 +16,35 @@
   }
 
   function parseCurrencyFormatted(formattedValue) {
-    // Convertir formato "1.234,56" a número 1234.56
     const cleanValue = String(formattedValue)
-      .replace(/[^\d,]/g, '') // Mantener solo números y comas
-      .replace(/\./g, '')     // Eliminar puntos de miles
-      .replace(',', '.');     // Convertir coma decimal a punto
+      .replace(/[^\d,]/g, '')
+      .replace(/\./g, '')
+      .replace(',', '.');
     
     const parsed = parseFloat(cleanValue || 0);
     return isNaN(parsed) ? 0 : parsed;
   }
 
-  // Real-time currency masking - Versión mejorada
+  // Real-time currency masking
   function createCurrencyMask(inputElement) {
     inputElement.addEventListener("input", (e) => {
       let value = e.target.value;
-
-      // Quitar todo lo que NO sea número
       value = value.replace(/\D/g, "");
-
-      // Si no hay valor, limpiar input
       if (value === "") {
         e.target.value = "";
         return;
       }
-
-      // Asegurar mínimo 2 dígitos para decimales
       if (value.length === 1) {
         value = "0" + value;
       }
-
-      // Separar decimales
       const cents = value.slice(-2);
       const integer = value.slice(0, -2);
-
-      // Formatear parte entera con puntos de miles
       const formattedInt = integer === "" 
           ? "0"
           : parseInt(integer).toLocaleString("es-CO");
-
-      // Unir todo: miles + coma + decimales
       e.target.value = `${formattedInt},${cents}`;
     });
     
-    // Formatear al perder el foco
     inputElement.addEventListener("blur", (e) => {
       const value = parseCurrencyFormatted(e.target.value);
       e.target.value = value.toLocaleString('es-CO', {
@@ -67,14 +53,12 @@
       });
     });
     
-    // Limpiar formato al obtener foco (para facilitar edición)
     inputElement.addEventListener("focus", (e) => {
       const value = parseCurrencyFormatted(e.target.value);
       e.target.value = value === 0 ? "" : value.toString();
     });
   }
 
-  // Initialize currency masks for all currency inputs
   function initializeCurrencyMasks() {
     document.querySelectorAll('.currency-input').forEach(input => {
       createCurrencyMask(input);
@@ -97,64 +81,128 @@
   }
 
   // ---------- Storage ----------
-  const STORAGE_KEY = 'banklar_finances_v5';
+  const STORAGE_KEY = 'banklar_finances_v6'; // Nueva versión
   function saveState(s) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); return true; }
-    catch (e) { showToast('Error al guardar datos', 'error'); console.error(e); return false; }
+    try { 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); 
+      return true; 
+    }
+    catch (e) { 
+      showToast('Error al guardar datos', 'error'); 
+      console.error(e); 
+      return false; 
+    }
   }
+  
   function loadState() {
-    try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
-    catch (e) { console.error('Error loading state', e); return null; }
+    try { 
+      const raw = localStorage.getItem(STORAGE_KEY); 
+      return raw ? JSON.parse(raw) : null; 
+    }
+    catch (e) { 
+      console.error('Error loading state', e); 
+      return null; 
+    }
   }
 
-  function exportData(format = 'json') {
-    const s = loadState();
-    if (!s) { showToast('No hay datos para exportar', 'error'); return; }
-    let data, mimeType, filename;
-    if (format === 'json') {
-      data = JSON.stringify(s, null, 2); mimeType = 'application/json';
-      filename = `banklar-backup-${new Date().toISOString().split('T')[0]}.json`;
-    } else {
-      // csv
-      const headers = ['Fecha', 'Tipo', 'Monto', 'Cuenta/Origen', 'Destino', 'Categoría/Origen', 'Descripción'];
-      const rows = (s.transactions || []).map(tx => {
-        let account = '';
-        let destination = '';
-        
-        if (tx.type === 'transfer') {
-          account = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi' : 'Efectivo';
-          destination = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi' : 'Efectivo';
-        } else if (tx.type === 'cash-conversion') {
-          if (tx.conversionType === 'to_cash') {
-            account = tx.from === 'nu' ? 'Caja Nu' : 'Nequi';
-            destination = 'Efectivo';
-          } else {
-            account = 'Efectivo';
-            destination = tx.to === 'nu' ? 'Caja Nu' : 'Nequi';
-          }
-        } else {
-          account = tx.account === 'nu' ? 'Caja Nu' : tx.account === 'nequi' ? 'Nequi' : 'Efectivo';
-        }
-        
-        return [
-          tx.date.split('T')[0],
-          tx.type === 'income' ? 'Ingreso' : tx.type === 'transfer' ? 'Transferencia' : tx.type === 'cash-conversion' ? 'Conversión' : 'Gasto',
-          tx.amount,
-          account,
-          destination,
-          tx.type === 'income' ? (tx.source || 'Ingreso') : tx.type === 'transfer' ? 'Transferencia' : tx.type === 'cash-conversion' ? 'Conversión' : (tx.category || 'Gasto'),
-          tx.description || ''
-        ];
-      });
-      data = [headers, ...rows].map(row => row.map(f => `"${String(f).replace(/"/g, '""')}"`).join(',')).join('\n');
-      mimeType = 'text/csv';
-      filename = `banklar-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+  // ---------- Data Portability ----------
+  function copyDataToClipboard() {
+    const data = JSON.stringify(state, null, 2);
+    const textarea = $('data-export-text');
+    if (textarea) {
+      textarea.value = data;
+      textarea.select();
+      document.execCommand('copy');
+      showToast('Datos copiados al portapapeles', 'success');
     }
-    const blob = new Blob([data], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-    showToast(`Datos exportados como ${format.toUpperCase()}`, 'success');
+  }
+
+  function importDataFromClipboard() {
+    const textarea = $('data-import-text');
+    if (!textarea || !textarea.value.trim()) {
+      showToast('No hay datos para importar', 'error');
+      return;
+    }
+    
+    try {
+      const imported = JSON.parse(textarea.value);
+      
+      // Validar estructura básica
+      if (!imported.user || !imported.transactions) {
+        showToast('Datos inválidos', 'error');
+        return;
+      }
+      
+      // Confirmar sobreescritura
+      if (!confirm('⚠️ ¿Estás seguro de importar estos datos? Se perderán todos los datos actuales.')) {
+        return;
+      }
+      
+      // Actualizar estado
+      state = imported;
+      
+      // Migrar transacciones antiguas si es necesario
+      if (!state.transactions[0]?.timestamp) {
+        state.transactions.forEach(tx => {
+          if (tx.date && !tx.timestamp) {
+            tx.timestamp = new Date(tx.date).getTime();
+            tx.hour = new Date(tx.date).getHours();
+            tx.minute = new Date(tx.date).getMinutes();
+          }
+        });
+      }
+      
+      // Asegurar que exista nequi2 en el usuario
+      if (!state.user.nequi2 && state.user.nequi2 !== 0) {
+        state.user.nequi2 = 0;
+      }
+      
+      if (saveState(state)) {
+        showToast('Datos importados correctamente', 'success');
+        hideAllModals();
+        renderAll();
+        location.reload();
+      }
+    } catch (e) {
+      console.error('Error importing data:', e);
+      showToast('Error al importar datos: formato inválido', 'error');
+    }
+  }
+
+  function showPortabilityModal() {
+    showOverlay();
+    const modal = $('portability-modal');
+    if (!modal) return;
+    
+    // Generar datos actualizados
+    const exportData = {
+      ...state,
+      meta: {
+        ...state.meta,
+        exportedAt: nowISO(),
+        version: 'v6'
+      }
+    };
+    
+    const textarea = $('data-export-text');
+    if (textarea) {
+      textarea.value = JSON.stringify(exportData, null, 2);
+    }
+    
+    modal.classList.remove('hidden');
+  }
+
+  function showImportModal() {
+    showOverlay();
+    const modal = $('import-modal');
+    if (!modal) return;
+    
+    const textarea = $('data-import-text');
+    if (textarea) {
+      textarea.value = '';
+    }
+    
+    modal.classList.remove('hidden');
   }
 
   // ---------- Model / State ----------
@@ -162,9 +210,10 @@
     user: null,
     transactions: [],
     budgets: {},
-    settings: { nuEA: 0, lowThreshold: 20000, currency: 'COP' },
+    settings: { lowThreshold: 20000, currency: 'COP' },
     meta: { 
-      lastUpdated: nowISO()
+      lastUpdated: nowISO(),
+      version: 'v6'
     }
   };
 
@@ -175,6 +224,7 @@
     greeting: $('greeting'),
     balanceNu: $('balance-nu'),
     balanceNequi: $('balance-nequi'),
+    balanceNequi2: $('balance-nequi2'),
     balanceCash: $('balance-cash'),
     balanceTotal: $('balance-total'),
     balanceStatus: $('balance-status'),
@@ -204,8 +254,7 @@
     totalIncomes: $('total-incomes'),
     totalExpenses: $('total-expenses'),
     suggestedSavings: $('suggested-savings'),
-    projectedInterest: $('projected-interest'),
-    pieCanvas: $('expenses-pie'),
+    novaklarTransactions: $('novaklar-transactions'),
     budgetsList: $('budgets-list'),
     btnSettings: $('btn-settings'),
     modalOverlay: $('modal-overlay'),
@@ -269,6 +318,18 @@
   }
 
   function addTransaction(tx) {
+    // Agregar timestamp y hora exacta
+    const now = new Date();
+    tx.timestamp = now.getTime();
+    tx.hour = now.getHours();
+    tx.minute = now.getMinutes();
+    tx.date = now.toISOString().split('T')[0]; // Mantener compatibilidad
+    
+    // Si es ingreso de novaklar a Nequi 2
+    if (tx.type === 'income' && tx.source === 'novaklar' && tx.account === 'nequi2') {
+      tx.description = tx.description || `Ingreso Novaklar ${formatTime(now)}`;
+    }
+    
     state.transactions.push(tx);
     if (saveState(state)) showToast('Transacción registrada correctamente', 'success');
     populateCategorySelects(); 
@@ -288,9 +349,10 @@
   function computeBalances() {
     let nu = state.user ? Number(state.user.nu || 0) : 0;
     let nequi = state.user ? Number(state.user.nequi || 0) : 0;
+    let nequi2 = state.user ? Number(state.user.nequi2 || 0) : 0;
     let cash = state.user ? Number(state.user.cash || 0) : 0;
     
-    const txs = (state.transactions || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    const txs = (state.transactions || []).slice().sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     
     txs.forEach(tx => {
       if (tx.type === 'income') {
@@ -299,57 +361,88 @@
           const rest = Number(tx.amount) - Number(tx.nuAllocated);
           if (rest > 0) {
             if (tx.account === 'nequi') nequi += rest;
+            else if (tx.account === 'nequi2') nequi2 += rest;
             else if (tx.account === 'cash') cash += rest;
           }
         } else { 
           if (tx.account === 'nu') nu += Number(tx.amount);
           else if (tx.account === 'nequi') nequi += Number(tx.amount);
+          else if (tx.account === 'nequi2') nequi2 += Number(tx.amount);
           else if (tx.account === 'cash') cash += Number(tx.amount);
         }
       } else if (tx.type === 'expense') {
         if (tx.account === 'nu') nu -= Number(tx.amount);
         else if (tx.account === 'nequi') nequi -= Number(tx.amount);
+        else if (tx.account === 'nequi2') nequi2 -= Number(tx.amount);
         else if (tx.account === 'cash') cash -= Number(tx.amount);
       } else if (tx.type === 'transfer') {
-        // Transferencias estándar
+        // Todas las combinaciones de transferencias
+        const amount = Number(tx.amount);
+        
         if (tx.from === 'nu' && tx.to === 'nequi') {
-          nu -= Number(tx.amount);
-          nequi += Number(tx.amount);
+          nu -= amount;
+          nequi += amount;
         } else if (tx.from === 'nequi' && tx.to === 'nu') {
-          nequi -= Number(tx.amount);
-          nu += Number(tx.amount);
+          nequi -= amount;
+          nu += amount;
+        } else if (tx.from === 'nu' && tx.to === 'nequi2') {
+          nu -= amount;
+          nequi2 += amount;
+        } else if (tx.from === 'nequi2' && tx.to === 'nu') {
+          nequi2 -= amount;
+          nu += amount;
+        } else if (tx.from === 'nequi' && tx.to === 'nequi2') {
+          nequi -= amount;
+          nequi2 += amount;
+        } else if (tx.from === 'nequi2' && tx.to === 'nequi') {
+          nequi2 -= amount;
+          nequi += amount;
         } else if (tx.from === 'cash' && tx.to === 'nu') {
-          cash -= Number(tx.amount);
-          nu += Number(tx.amount);
+          cash -= amount;
+          nu += amount;
         } else if (tx.from === 'cash' && tx.to === 'nequi') {
-          cash -= Number(tx.amount);
-          nequi += Number(tx.amount);
+          cash -= amount;
+          nequi += amount;
+        } else if (tx.from === 'cash' && tx.to === 'nequi2') {
+          cash -= amount;
+          nequi2 += amount;
         } else if (tx.from === 'nu' && tx.to === 'cash') {
-          nu -= Number(tx.amount);
-          cash += Number(tx.amount);
+          nu -= amount;
+          cash += amount;
         } else if (tx.from === 'nequi' && tx.to === 'cash') {
-          nequi -= Number(tx.amount);
-          cash += Number(tx.amount);
+          nequi -= amount;
+          cash += amount;
+        } else if (tx.from === 'nequi2' && tx.to === 'cash') {
+          nequi2 -= amount;
+          cash += amount;
         }
       } else if (tx.type === 'cash-conversion') {
-        // Conversiones de efectivo (alias de transfer)
+        // Conversiones de efectivo
+        const amount = Number(tx.amount);
+        
         if (tx.conversionType === 'to_cash') {
           // Digital → Efectivo
           if (tx.from === 'nu') {
-            nu -= Number(tx.amount);
-            cash += Number(tx.amount);
+            nu -= amount;
+            cash += amount;
           } else if (tx.from === 'nequi') {
-            nequi -= Number(tx.amount);
-            cash += Number(tx.amount);
+            nequi -= amount;
+            cash += amount;
+          } else if (tx.from === 'nequi2') {
+            nequi2 -= amount;
+            cash += amount;
           }
         } else if (tx.conversionType === 'from_cash') {
           // Efectivo → Digital
           if (tx.to === 'nu') {
-            cash -= Number(tx.amount);
-            nu += Number(tx.amount);
+            cash -= amount;
+            nu += amount;
           } else if (tx.to === 'nequi') {
-            cash -= Number(tx.amount);
-            nequi += Number(tx.amount);
+            cash -= amount;
+            nequi += amount;
+          } else if (tx.to === 'nequi2') {
+            cash -= amount;
+            nequi2 += amount;
           }
         }
       }
@@ -358,9 +451,32 @@
     return { 
       nu: Math.max(0, nu), 
       nequi: Math.max(0, nequi), 
+      nequi2: Math.max(0, nequi2),
       cash: Math.max(0, cash), 
-      total: Math.max(0, nu + nequi + cash) 
+      total: Math.max(0, nu + nequi + nequi2 + cash) 
     };
+  }
+
+  // ---------- Novaklar Functions ----------
+  function getNovaklarTransactions() {
+    return state.transactions.filter(tx => 
+      (tx.type === 'income' && tx.source === 'novaklar') ||
+      (tx.account === 'nequi2')
+    ).length;
+  }
+
+  function formatTime(date) {
+    return date.toLocaleTimeString('es-CO', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  }
+
+  function formatDateTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return `${date.toLocaleDateString('es-CO')} ${formatTime(date)}`;
   }
 
   // ---------- Rendering ----------
@@ -373,10 +489,11 @@
     // Actualizar balances en UI
     if (el.balanceNu) el.balanceNu.textContent = formatCurrency(balances.nu, currency);
     if (el.balanceNequi) el.balanceNequi.textContent = formatCurrency(balances.nequi, currency);
+    if (el.balanceNequi2) el.balanceNequi2.textContent = formatCurrency(balances.nequi2, currency);
     if (el.balanceCash) el.balanceCash.textContent = formatCurrency(balances.cash, currency);
     if (el.balanceTotal) el.balanceTotal.textContent = formatCurrency(balances.total, currency);
     
-    // Mostrar información de interés (ahora simplificada)
+    // Mostrar información sin interés
     if (el.nuInterestInfo) {
       el.nuInterestInfo.textContent = `Sin interés`;
     }
@@ -388,15 +505,20 @@
       el.balanceStatus.style.color = balances.total < low ? '#ef4444' : '#10b981';
     }
 
+    // Transacciones Novaklar
+    if (el.novaklarTransactions) {
+      el.novaklarTransactions.textContent = getNovaklarTransactions();
+    }
+
     // Últimas transacciones
     if (el.lastTxList) {
       el.lastTxList.innerHTML = '';
-      const sorted = (state.transactions || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-      const last3 = sorted.slice(0, 3);
-      if (last3.length === 0) {
+      const sorted = (state.transactions || []).slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      const last5 = sorted.slice(0, 5);
+      if (last5.length === 0) {
         const li = document.createElement('li'); li.className = 'tx-item'; li.innerHTML = '<div class="meta">No hay transacciones recientes</div>'; el.lastTxList.appendChild(li);
       } else {
-        last3.forEach(tx => {
+        last5.forEach(tx => {
           const li = document.createElement('li'); 
           let cssClass = 'tx-item';
           
@@ -404,6 +526,8 @@
             cssClass += ' tx-transfer';
           } else if (tx.type === 'cash-conversion') {
             cssClass += ' tx-cash-conversion';
+          } else if (tx.type === 'income' && tx.source === 'novaklar') {
+            cssClass += ' tx-novaklar';
           }
           
           li.className = cssClass;
@@ -413,21 +537,25 @@
           let amountDisplay = '';
           
           if (tx.type === 'transfer') {
-            description = `${tx.from === 'nu' ? 'Nu → Nequi' : tx.from === 'nequi' ? 'Nequi → Nu' : tx.from === 'cash' ? 'Efectivo → ' + (tx.to === 'nu' ? 'Nu' : 'Nequi') : (tx.to === 'cash' ? '→ Efectivo' : 'Transferencia')}`;
+            const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+            const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+            description = `${fromName} → ${toName}`;
             icon = '🔄 ';
             amountDisplay = `↔ ${formatCurrency(tx.amount, currency)}`;
           } else if (tx.type === 'cash-conversion') {
             if (tx.conversionType === 'to_cash') {
-              description = `${tx.from === 'nu' ? 'Nu → Efectivo' : 'Nequi → Efectivo'}`;
+              const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+              description = `${fromName} → Efectivo`;
               icon = '💵 ';
             } else {
-              description = `Efectivo → ${tx.to === 'nu' ? 'Nu' : 'Nequi'}`;
+              const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+              description = `Efectivo → ${toName}`;
               icon = '🏦 ';
             }
             amountDisplay = `↔ ${formatCurrency(tx.amount, currency)}`;
           } else if (tx.type === 'income') {
             description = tx.source || 'Ingreso';
-            icon = '⬆️ ';
+            icon = tx.source === 'novaklar' ? '💰 ' : '⬆️ ';
             amountDisplay = `+ ${formatCurrency(tx.amount, currency)}`;
           } else {
             description = tx.category || 'Gasto';
@@ -438,17 +566,24 @@
           // Determinar cuenta para mostrar
           let accountInfo = '';
           if (tx.type === 'income' || tx.type === 'expense') {
-            accountInfo = tx.account === 'nu' ? 'Nu' : tx.account === 'nequi' ? 'Nequi' : 'Efectivo';
+            accountInfo = tx.account === 'nu' ? 'Nu' : 
+                         tx.account === 'nequi' ? 'Nequi 1' : 
+                         tx.account === 'nequi2' ? 'Nequi 2' : 
+                         'Efectivo';
           } else if (tx.type === 'transfer') {
             accountInfo = 'Transferencia';
           } else if (tx.type === 'cash-conversion') {
             accountInfo = 'Conversión';
           }
           
+          // Mostrar hora exacta
+          const timeDisplay = tx.timestamp ? formatDateTime(tx.timestamp) : tx.date;
+          
           li.innerHTML = `
             <div>
-              <div><strong>${icon}${amountDisplay}</strong> <span class="meta">| ${accountInfo} | ${tx.date.slice(0,10)}</span></div>
+              <div><strong>${icon}${amountDisplay}</strong> <span class="meta">| ${accountInfo} | ${timeDisplay}</span></div>
               <div class="meta">${description}</div>
+              ${tx.description ? `<div class="meta" style="font-size:11px;color:#666;">${tx.description}</div>` : ''}
             </div>
             <div class="actions">
               <button class="btn-ghost" data-id="${tx.id}" data-action="view">Ver</button>
@@ -466,9 +601,6 @@
     
     const rec = suggestSavings(totals); 
     if (el.suggestedSavings) el.suggestedSavings.textContent = rec.text;
-    
-    // Proyección de interés anual (ahora eliminada)
-    if (el.projectedInterest) el.projectedInterest.textContent = formatCurrency(0, currency);
 
     // Renderizar alertas, presupuestos, etc.
     renderAlerts(balances, totals);
@@ -652,13 +784,15 @@
       
       if (isIncome) {
         el.txAccount.innerHTML = `
-          <option value="nequi">Nequi</option>
+          <option value="nequi">Nequi 1</option>
+          <option value="nequi2">Nequi 2 (novaklar)</option>
           <option value="nu">Caja Nu</option>
           <option value="cash">Efectivo</option>
         `;
       } else if (isExpense) {
         el.txAccount.innerHTML = `
-          <option value="nequi">Nequi</option>
+          <option value="nequi">Nequi 1</option>
+          <option value="nequi2">Nequi 2 (novaklar)</option>
           <option value="nu">Caja Nu</option>
           <option value="cash">Efectivo</option>
         `;
@@ -679,13 +813,15 @@
         // Digital → Efectivo
         el.cashConversionDetails.innerHTML = `
           <option value="nu_to_cash">Caja Nu → Efectivo</option>
-          <option value="nequi_to_cash">Nequi → Efectivo</option>
+          <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
+          <option value="nequi2_to_cash">Nequi 2 → Efectivo</option>
         `;
       } else {
         // Efectivo → Digital
         el.cashConversionDetails.innerHTML = `
           <option value="cash_to_nu">Efectivo → Caja Nu</option>
-          <option value="cash_to_nequi">Efectivo → Nequi</option>
+          <option value="cash_to_nequi">Efectivo → Nequi 1</option>
+          <option value="cash_to_nequi2">Efectivo → Nequi 2</option>
         `;
       }
     }
@@ -695,7 +831,7 @@
   function showOverlay() { if (el.modalOverlay) el.modalOverlay.classList.remove('hidden'); }
   function hideOverlay() { if (el.modalOverlay) el.modalOverlay.classList.add('hidden'); }
   function hideAllModals() {
-    [el.setupModal, el.viewAllModal, el.settingsModal, el.budgetsModal, $('export-modal'), $('expenses-report-modal')].forEach(m => { if (m) m.classList.add('hidden'); });
+    [el.setupModal, el.viewAllModal, el.settingsModal, el.budgetsModal, $('export-modal'), $('expenses-report-modal'), $('portability-modal'), $('import-modal')].forEach(m => { if (m) m.classList.add('hidden'); });
     hideOverlay();
   }
   
@@ -704,6 +840,7 @@
     if (el.setupModal) el.setupModal.classList.remove('hidden'); 
     if ($('user-nu')) $('user-nu').value = state.user ? state.user.nu.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
     if ($('user-nequi')) $('user-nequi').value = state.user ? state.user.nequi.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
+    if ($('user-nequi2')) $('user-nequi2').value = state.user ? (state.user.nequi2 || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
     if ($('user-cash')) $('user-cash').value = state.user ? state.user.cash.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
   }
   
@@ -714,32 +851,36 @@
     const typeFilter = $('tx-filter-type') ? $('tx-filter-type').value : 'all'; 
     const accountFilter = $('tx-filter-account') ? $('tx-filter-account').value : 'all'; 
     const searchFilter = $('tx-search') ? $('tx-search').value : ''; 
-    const filtered = filterTransactions(typeFilter, accountFilter, searchFilter).sort((a, b) => new Date(b.date) - new Date(a.date)); 
+    const filtered = filterTransactions(typeFilter, accountFilter, searchFilter).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)); 
     if (filtered.length === 0) { container.innerHTML = '<div class="meta">No hay transacciones que coincidan con los filtros.</div>'; return; } 
     filtered.forEach(tx => { 
       const div = document.createElement('div'); 
-      div.className = `tx-row ${tx.type === 'transfer' ? 'tx-transfer' : tx.type === 'cash-conversion' ? 'tx-cash-conversion' : ''}`;
+      div.className = `tx-row ${tx.type === 'transfer' ? 'tx-transfer' : tx.type === 'cash-conversion' ? 'tx-cash-conversion' : tx.type === 'income' && tx.source === 'novaklar' ? 'tx-novaklar' : ''}`;
       
       let description = '';
       let icon = '';
       let amountDisplay = '';
       
       if (tx.type === 'transfer') {
-        description = `${tx.from === 'nu' ? 'Nu → Nequi' : tx.from === 'nequi' ? 'Nequi → Nu' : tx.from === 'cash' ? 'Efectivo → ' + (tx.to === 'nu' ? 'Nu' : 'Nequi') : (tx.to === 'cash' ? '→ Efectivo' : 'Transferencia')}`;
+        const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        description = `${fromName} → ${toName}`;
         icon = '🔄 ';
         amountDisplay = `↔ ${formatCurrency(tx.amount, state.settings.currency)}`;
       } else if (tx.type === 'cash-conversion') {
         if (tx.conversionType === 'to_cash') {
-          description = `${tx.from === 'nu' ? 'Nu → Efectivo' : 'Nequi → Efectivo'}`;
+          const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+          description = `${fromName} → Efectivo`;
           icon = '💵 ';
         } else {
-          description = `Efectivo → ${tx.to === 'nu' ? 'Nu' : 'Nequi'}`;
+          const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+          description = `Efectivo → ${toName}`;
           icon = '🏦 ';
         }
         amountDisplay = `↔ ${formatCurrency(tx.amount, state.settings.currency)}`;
       } else if (tx.type === 'income') {
         description = tx.source || 'Ingreso';
-        icon = '⬆️ ';
+        icon = tx.source === 'novaklar' ? '💰 ' : '⬆️ ';
         amountDisplay = `+ ${formatCurrency(tx.amount, state.settings.currency)}`;
       } else {
         description = tx.category || 'Gasto';
@@ -749,17 +890,24 @@
       
       let accountInfo = '';
       if (tx.type === 'income' || tx.type === 'expense') {
-        accountInfo = tx.account === 'nu' ? 'Nu' : tx.account === 'nequi' ? 'Nequi' : 'Efectivo';
+        accountInfo = tx.account === 'nu' ? 'Nu' : 
+                     tx.account === 'nequi' ? 'Nequi 1' : 
+                     tx.account === 'nequi2' ? 'Nequi 2' : 
+                     'Efectivo';
       } else if (tx.type === 'transfer') {
         accountInfo = 'Transferencia';
       } else if (tx.type === 'cash-conversion') {
         accountInfo = 'Conversión';
       }
       
+      // Mostrar hora exacta
+      const timeDisplay = tx.timestamp ? formatDateTime(tx.timestamp) : tx.date;
+      
       div.innerHTML = `
         <div>
-          <div><strong>${icon}${amountDisplay}</strong> <span class="meta">| ${accountInfo} | ${tx.date.slice(0,10)}</span></div>
+          <div><strong>${icon}${amountDisplay}</strong> <span class="meta">| ${accountInfo} | ${timeDisplay}</span></div>
           <div class="meta">${description}</div>
+          ${tx.description ? `<div class="meta" style="font-size:11px;color:#666;">${tx.description}</div>` : ''}
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <button class="btn-ghost" data-action="revert" data-id="${tx.id}">Eliminar</button>
@@ -771,7 +919,6 @@
   function showSettings() { 
     showOverlay(); 
     if (el.settingsModal) el.settingsModal.classList.remove('hidden'); 
-    if ($('settings-nu-ea')) $('settings-nu-ea').value = 0; 
     if ($('settings-low-threshold')) $('settings-low-threshold').value = formatCurrency(state.settings.lowThreshold || 20000, state.settings.currency).replace('$', '').trim(); 
     if ($('settings-currency')) $('settings-currency').value = state.settings.currency || 'COP'; 
   }
@@ -806,11 +953,13 @@
           // Para transferencias, verificar si involucra la cuenta seleccionada
           if (accountFilter === 'nu' && !(tx.from === 'nu' || tx.to === 'nu')) return false;
           if (accountFilter === 'nequi' && !(tx.from === 'nequi' || tx.to === 'nequi')) return false;
+          if (accountFilter === 'nequi2' && !(tx.from === 'nequi2' || tx.to === 'nequi2')) return false;
           if (accountFilter === 'cash' && !(tx.from === 'cash' || tx.to === 'cash')) return false;
         } else if (tx.type === 'cash-conversion') {
           // Para conversiones, verificar según el tipo
           if (accountFilter === 'nu' && !((tx.conversionType === 'to_cash' && tx.from === 'nu') || (tx.conversionType === 'from_cash' && tx.to === 'nu'))) return false;
           if (accountFilter === 'nequi' && !((tx.conversionType === 'to_cash' && tx.from === 'nequi') || (tx.conversionType === 'from_cash' && tx.to === 'nequi'))) return false;
+          if (accountFilter === 'nequi2' && !((tx.conversionType === 'to_cash' && tx.from === 'nequi2') || (tx.conversionType === 'from_cash' && tx.to === 'nequi2'))) return false;
           if (accountFilter === 'cash' && !((tx.conversionType === 'to_cash') || (tx.conversionType === 'from_cash'))) return false;
         } else if (tx.account !== accountFilter) {
           return false;
@@ -879,6 +1028,16 @@
     on('btn-edit-budgets', 'click', showBudgets); 
     on('btn-close-budgets', 'click', hideAllModals);
     
+    // Portabilidad de datos
+    on('btn-data-portability', 'click', showPortabilityModal);
+    on('btn-copy-data', 'click', copyDataToClipboard);
+    on('btn-close-portability', 'click', hideAllModals);
+    
+    // Importar datos
+    on('btn-import-data', 'click', showImportModal);
+    on('btn-import-confirm', 'click', importDataFromClipboard);
+    on('btn-close-import', 'click', hideAllModals);
+    
     // Exportar
     on('btn-export', 'click', showExportModal); 
     on('btn-close-export', 'click', hideAllModals);
@@ -923,16 +1082,14 @@
       return; 
     }
     
-    const date = nowISO();
-    
     if (type === 'income') {
-      handleIncomeTransaction(amount, date);
+      handleIncomeTransaction(amount);
     } else if (type === 'expense') {
-      handleExpenseTransaction(amount, date);
+      handleExpenseTransaction(amount);
     } else if (type === 'transfer') {
-      handleTransferTransaction(amount, date);
+      handleTransferTransaction(amount);
     } else if (type === 'cash-conversion') {
-      handleCashConversionTransaction(amount, date);
+      handleCashConversionTransaction(amount);
     }
     
     // Resetear formulario y actualizar UI
@@ -941,7 +1098,7 @@
     initializeCurrencyMasks();
   }
   
-  function handleIncomeTransaction(amount, date) {
+  function handleIncomeTransaction(amount) {
     const source = el.incomeSource.value; 
     const depositNU = el.depositToNu && el.depositToNu.checked; 
     let nuAllocated = 0;
@@ -952,28 +1109,39 @@
     }
     
     const account = el.txAccount.value;
+    
+    // Si es novaklar, forzar a Nequi 2
+    const finalAccount = source === 'novaklar' ? 'nequi2' : account;
+    
     const tx = { 
       id: uid(), 
       type: 'income', 
       amount: Number(amount.toFixed(2)), 
-      date, 
-      account, 
       source, 
-      nuAllocated: nuAllocated > 0 ? Number(nuAllocated.toFixed(2)) : 0 
+      account: finalAccount,
+      nuAllocated: nuAllocated > 0 ? Number(nuAllocated.toFixed(2)) : 0,
+      description: source === 'novaklar' ? `Ingreso Novaklar ${formatTime(new Date())}` : undefined
     };
     addTransaction(tx);
   }
   
-  function handleExpenseTransaction(amount, date) {
+  function handleExpenseTransaction(amount) {
     const category = el.expenseCategory ? el.expenseCategory.value : 'Otros';
     const account = el.txAccount.value;
     
     // Verificar saldo suficiente
     const balances = computeBalances();
-    const accountBalance = account === 'nu' ? balances.nu : account === 'nequi' ? balances.nequi : balances.cash;
+    const accountBalance = account === 'nu' ? balances.nu : 
+                          account === 'nequi' ? balances.nequi : 
+                          account === 'nequi2' ? balances.nequi2 : 
+                          balances.cash;
     
     if (amount > accountBalance) {
-      showToast(`Saldo insuficiente en ${account === 'nu' ? 'Caja Nu' : account === 'nequi' ? 'Nequi' : 'Efectivo'}`, 'error');
+      const accountName = account === 'nu' ? 'Caja Nu' : 
+                         account === 'nequi' ? 'Nequi 1' : 
+                         account === 'nequi2' ? 'Nequi 2' : 
+                         'Efectivo';
+      showToast(`Saldo insuficiente en ${accountName}`, 'error');
       return;
     }
     
@@ -981,42 +1149,77 @@
       id: uid(), 
       type: 'expense', 
       amount: Number(amount.toFixed(2)), 
-      date, 
       account, 
       category 
     };
     addTransaction(tx);
   }
   
-  function handleTransferTransaction(amount, date) {
+  function handleTransferTransaction(amount) {
     const transferOption = el.transferFrom.value;
-    let fromAccount, toAccount;
+    let fromAccount, toAccount, description;
     
     // Determinar cuentas según la opción seleccionada
     switch (transferOption) {
       case 'nu':
         fromAccount = 'nu';
         toAccount = 'nequi';
+        description = 'Caja Nu → Nequi 1';
         break;
       case 'nequi':
         fromAccount = 'nequi';
         toAccount = 'nu';
+        description = 'Nequi 1 → Caja Nu';
+        break;
+      case 'nequi_to_nequi2':
+        fromAccount = 'nequi';
+        toAccount = 'nequi2';
+        description = 'Nequi 1 → Nequi 2';
+        break;
+      case 'nequi2_to_nequi':
+        fromAccount = 'nequi2';
+        toAccount = 'nequi';
+        description = 'Nequi 2 → Nequi 1';
+        break;
+      case 'nu_to_nequi2':
+        fromAccount = 'nu';
+        toAccount = 'nequi2';
+        description = 'Caja Nu → Nequi 2';
+        break;
+      case 'nequi2_to_nu':
+        fromAccount = 'nequi2';
+        toAccount = 'nu';
+        description = 'Nequi 2 → Caja Nu';
         break;
       case 'cash_to_nu':
         fromAccount = 'cash';
         toAccount = 'nu';
+        description = 'Efectivo → Caja Nu';
         break;
       case 'cash_to_nequi':
         fromAccount = 'cash';
         toAccount = 'nequi';
+        description = 'Efectivo → Nequi 1';
+        break;
+      case 'cash_to_nequi2':
+        fromAccount = 'cash';
+        toAccount = 'nequi2';
+        description = 'Efectivo → Nequi 2';
         break;
       case 'nu_to_cash':
         fromAccount = 'nu';
         toAccount = 'cash';
+        description = 'Caja Nu → Efectivo';
         break;
       case 'nequi_to_cash':
         fromAccount = 'nequi';
         toAccount = 'cash';
+        description = 'Nequi 1 → Efectivo';
+        break;
+      case 'nequi2_to_cash':
+        fromAccount = 'nequi2';
+        toAccount = 'cash';
+        description = 'Nequi 2 → Efectivo';
         break;
       default:
         showToast('Opción de transferencia no válida', 'error');
@@ -1025,10 +1228,17 @@
     
     // Verificar saldo suficiente en cuenta de origen
     const balances = computeBalances();
-    const sourceBalance = fromAccount === 'nu' ? balances.nu : fromAccount === 'nequi' ? balances.nequi : balances.cash;
+    const sourceBalance = fromAccount === 'nu' ? balances.nu : 
+                         fromAccount === 'nequi' ? balances.nequi : 
+                         fromAccount === 'nequi2' ? balances.nequi2 : 
+                         balances.cash;
     
     if (amount > sourceBalance) {
-      showToast(`Saldo insuficiente en ${fromAccount === 'nu' ? 'Caja Nu' : fromAccount === 'nequi' ? 'Nequi' : 'Efectivo'}`, 'error');
+      const accountName = fromAccount === 'nu' ? 'Caja Nu' : 
+                         fromAccount === 'nequi' ? 'Nequi 1' : 
+                         fromAccount === 'nequi2' ? 'Nequi 2' : 
+                         'Efectivo';
+      showToast(`Saldo insuficiente en ${accountName}`, 'error');
       return;
     }
     
@@ -1036,16 +1246,15 @@
       id: uid(), 
       type: 'transfer', 
       amount: Number(amount.toFixed(2)), 
-      date, 
       from: fromAccount,
       to: toAccount,
-      description: `Transferencia ${fromAccount === 'nu' ? 'Caja Nu' : fromAccount === 'nequi' ? 'Nequi' : 'Efectivo'} → ${toAccount === 'nu' ? 'Caja Nu' : toAccount === 'nequi' ? 'Nequi' : 'Efectivo'}`
+      description: `Transferencia: ${description}`
     };
     addTransaction(tx);
     showToast(`Transferencia de ${formatCurrency(amount, state.settings.currency)} realizada`, 'success');
   }
   
-  function handleCashConversionTransaction(amount, date) {
+  function handleCashConversionTransaction(amount) {
     const conversionType = el.cashConversionType.value;
     const conversionDetails = el.cashConversionDetails.value;
     
@@ -1058,10 +1267,14 @@
         fromAccount = 'nu';
         toAccount = 'cash';
         conversionDescription = 'Caja Nu → Efectivo';
-      } else {
+      } else if (conversionDetails === 'nequi_to_cash') {
         fromAccount = 'nequi';
         toAccount = 'cash';
-        conversionDescription = 'Nequi → Efectivo';
+        conversionDescription = 'Nequi 1 → Efectivo';
+      } else {
+        fromAccount = 'nequi2';
+        toAccount = 'cash';
+        conversionDescription = 'Nequi 2 → Efectivo';
       }
     } else {
       // Efectivo → Digital
@@ -1069,19 +1282,30 @@
         fromAccount = 'cash';
         toAccount = 'nu';
         conversionDescription = 'Efectivo → Caja Nu';
-      } else {
+      } else if (conversionDetails === 'cash_to_nequi') {
         fromAccount = 'cash';
         toAccount = 'nequi';
-        conversionDescription = 'Efectivo → Nequi';
+        conversionDescription = 'Efectivo → Nequi 1';
+      } else {
+        fromAccount = 'cash';
+        toAccount = 'nequi2';
+        conversionDescription = 'Efectivo → Nequi 2';
       }
     }
     
     // Verificar saldo suficiente
     const balances = computeBalances();
-    const sourceBalance = fromAccount === 'nu' ? balances.nu : fromAccount === 'nequi' ? balances.nequi : balances.cash;
+    const sourceBalance = fromAccount === 'nu' ? balances.nu : 
+                         fromAccount === 'nequi' ? balances.nequi : 
+                         fromAccount === 'nequi2' ? balances.nequi2 : 
+                         balances.cash;
     
     if (amount > sourceBalance) {
-      showToast(`Saldo insuficiente en ${fromAccount === 'nu' ? 'Caja Nu' : fromAccount === 'nequi' ? 'Nequi' : 'Efectivo'}`, 'error');
+      const accountName = fromAccount === 'nu' ? 'Caja Nu' : 
+                         fromAccount === 'nequi' ? 'Nequi 1' : 
+                         fromAccount === 'nequi2' ? 'Nequi 2' : 
+                         'Efectivo';
+      showToast(`Saldo insuficiente en ${accountName}`, 'error');
       return;
     }
     
@@ -1089,7 +1313,6 @@
       id: uid(), 
       type: 'cash-conversion', 
       amount: Number(amount.toFixed(2)), 
-      date, 
       conversionType,
       from: fromAccount,
       to: toAccount,
@@ -1112,15 +1335,23 @@
       const tx = state.transactions.find(t => t.id === id); 
       if (!tx) return;
       
-      let message = `Transacción:\nID: ${tx.id}\nTipo: ${tx.type}\nMonto: ${formatCurrency(tx.amount, state.settings.currency)}\nFecha: ${tx.date.slice(0,10)}`;
+      let message = `Transacción:\nID: ${tx.id}\nTipo: ${tx.type}\nMonto: ${formatCurrency(tx.amount, state.settings.currency)}\nFecha: ${formatDateTime(tx.timestamp)}`;
       
       if (tx.type === 'transfer') {
-        message += `\nDe: ${tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi' : 'Efectivo'}\nA: ${tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi' : 'Efectivo'}`;
+        const fromName = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        const toName = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        message += `\nDe: ${fromName}\nA: ${toName}`;
       } else if (tx.type === 'cash-conversion') {
         message += `\nTipo: ${tx.conversionType === 'to_cash' ? 'Digital → Efectivo' : 'Efectivo → Digital'}`;
-        message += `\nDe: ${tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi' : 'Efectivo'}\nA: ${tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi' : 'Efectivo'}`;
+        const fromName = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        const toName = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        message += `\nDe: ${fromName}\nA: ${toName}`;
       } else {
-        message += `\nCuenta: ${tx.account === 'nu' ? 'Caja Nu' : tx.account === 'nequi' ? 'Nequi' : 'Efectivo'}`;
+        const accountName = tx.account === 'nu' ? 'Caja Nu' : 
+                           tx.account === 'nequi' ? 'Nequi 1' : 
+                           tx.account === 'nequi2' ? 'Nequi 2' : 
+                           'Efectivo';
+        message += `\nCuenta: ${accountName}`;
         if (tx.type === 'income') {
           message += `\nOrigen: ${tx.source}`;
           if (tx.nuAllocated > 0) message += `\nAsignado a Nu: ${formatCurrency(tx.nuAllocated, state.settings.currency)}`;
@@ -1129,13 +1360,16 @@
         }
       }
       
+      if (tx.description) {
+        message += `\nDescripción: ${tx.description}`;
+      }
+      
       alert(message);
     }
   }
   
   function handleSettingsSubmit(e) {
     e.preventDefault();
-    state.settings.nuEA = 0; // Sin intereses
     state.settings.lowThreshold = parseCurrencyFormatted($('settings-low-threshold').value || '0');
     state.settings.currency = $('settings-currency').value || 'COP';
     
@@ -1203,15 +1437,72 @@
     const name = $('user-name').value.trim(); 
     const nu = parseCurrencyFormatted($('user-nu').value || '0'); 
     const nequi = parseCurrencyFormatted($('user-nequi').value || '0'); 
+    const nequi2 = parseCurrencyFormatted($('user-nequi2').value || '0'); 
     const cash = parseCurrencyFormatted($('user-cash').value || '0');
     
-    state.user = { name, nu, nequi, cash, createdAt: nowISO() }; 
-    state.settings.nuEA = 0; // Sin intereses
+    state.user = { name, nu, nequi, nequi2, cash, createdAt: nowISO() }; 
     
     if (saveState(state)) showToast('Configuración inicial guardada', 'success'); 
     hideAllModals(); 
     populateCategorySelects(); 
     renderAll();
+  }
+
+  // ---------- Export Data ----------
+  function exportData(format = 'json') {
+    const s = state;
+    if (!s) { showToast('No hay datos para exportar', 'error'); return; }
+    let data, mimeType, filename;
+    if (format === 'json') {
+      data = JSON.stringify(s, null, 2); mimeType = 'application/json';
+      filename = `banklar-backup-${new Date().toISOString().split('T')[0]}.json`;
+    } else {
+      // csv
+      const headers = ['Fecha', 'Hora', 'Tipo', 'Monto', 'Cuenta/Origen', 'Destino', 'Categoría/Origen', 'Descripción'];
+      const rows = (s.transactions || []).map(tx => {
+        let account = '';
+        let destination = '';
+        
+        if (tx.type === 'transfer') {
+          account = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+          destination = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        } else if (tx.type === 'cash-conversion') {
+          if (tx.conversionType === 'to_cash') {
+            account = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+            destination = 'Efectivo';
+          } else {
+            account = 'Efectivo';
+            destination = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+          }
+        } else {
+          account = tx.account === 'nu' ? 'Caja Nu' : 
+                   tx.account === 'nequi' ? 'Nequi 1' : 
+                   tx.account === 'nequi2' ? 'Nequi 2' : 
+                   'Efectivo';
+        }
+        
+        const dateTime = tx.timestamp ? formatDateTime(tx.timestamp) : tx.date;
+        
+        return [
+          dateTime.split(' ')[0],
+          tx.timestamp ? formatTime(new Date(tx.timestamp)) : '',
+          tx.type === 'income' ? 'Ingreso' : tx.type === 'transfer' ? 'Transferencia' : tx.type === 'cash-conversion' ? 'Conversión' : 'Gasto',
+          tx.amount,
+          account,
+          destination,
+          tx.type === 'income' ? (tx.source || 'Ingreso') : tx.type === 'transfer' ? 'Transferencia' : tx.type === 'cash-conversion' ? 'Conversión' : (tx.category || 'Gasto'),
+          tx.description || ''
+        ];
+      });
+      data = [headers, ...rows].map(row => row.map(f => `"${String(f).replace(/"/g, '""')}"`).join(',')).join('\n');
+      mimeType = 'text/csv';
+      filename = `banklar-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+    }
+    const blob = new Blob([data], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast(`Datos exportados como ${format.toUpperCase()}`, 'success');
   }
 
   // ---------- Utilities ----------
@@ -1223,16 +1514,44 @@
     }; 
   }
 
-  // ---------- Debug / Public API ----------
-  window.__banklar_clear = function () { 
-    if (confirm('¿Borrar todos los datos locales?')) { 
-      localStorage.removeItem(STORAGE_KEY); 
-      location.reload(); 
-    } 
-  };
-
   // ---------- Initialize ----------
   window.addEventListener('load', () => { 
+    // Migrar datos antiguos si es necesario
+    const oldState = localStorage.getItem('banklar_finances_v5');
+    if (oldState && !state.user) {
+      try {
+        const parsed = JSON.parse(oldState);
+        if (parsed.user) {
+          // Migrar a nueva estructura
+          state.user = {
+            ...parsed.user,
+            nequi2: 0 // Agregar Nequi 2
+          };
+          state.transactions = parsed.transactions || [];
+          state.budgets = parsed.budgets || {};
+          state.settings = { ...parsed.settings };
+          delete state.settings.nuEA; // Eliminar interés
+          state.meta = { 
+            ...parsed.meta,
+            version: 'v6',
+            migratedFrom: 'v5'
+          };
+          
+          // Agregar timestamps a transacciones antiguas
+          state.transactions.forEach(tx => {
+            if (!tx.timestamp && tx.date) {
+              tx.timestamp = new Date(tx.date).getTime();
+            }
+          });
+          
+          saveState(state);
+          showToast('Datos migrados de versión anterior', 'info');
+        }
+      } catch (e) {
+        console.error('Error migrating data:', e);
+      }
+    }
+    
     // Configurar UI
     populateCategorySelects(); 
     initializeCurrencyMasks();
@@ -1254,4 +1573,6 @@
   window._banklar_state = state;
   window._banklar_exportData = exportData;
   window._banklar_computeBalances = computeBalances;
+  window._banklar_copyData = copyDataToClipboard;
+  window._banklar_importData = importDataFromClipboard;
 })();
