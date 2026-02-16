@@ -152,8 +152,8 @@ body {
   border-left: 3px solid #f59e0b;
 }
 
-/* Estilos para Nequi 2 */
-.balance-item.nequi2-item {
+/* Estilos para Bancolombia (anteriormente Nequi 2) */
+.balance-item.bancolombia-item {
   background: rgba(255, 255, 255, 0.25);
   border-left: 3px solid #10b981;
 }
@@ -242,13 +242,13 @@ body {
 .tx-cash-conversion { border-left: 3px solid #f59e0b; }
 .tx-cash-conversion .tx-icon { color: #f59e0b; }
 
-/* Estilos para transacciones Novaklar */
-.tx-novaklar {
+/* Estilos para transacciones Nova (anteriormente Novaklar) */
+.tx-nova {
   border-left: 3px solid #10b981;
   background: linear-gradient(180deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02));
 }
 
-.tx-novaklar:hover {
+.tx-nova:hover {
   background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.04));
 }
 
