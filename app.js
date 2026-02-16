@@ -81,7 +81,7 @@
   }
 
   // ---------- Storage ----------
-  const STORAGE_KEY = 'banklar_finances_v6'; // Nueva versión
+  const STORAGE_KEY = 'banklar_finances_v7'; // Nueva versión por cambios
   function saveState(s) {
     try { 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); 
@@ -152,9 +152,9 @@
         });
       }
       
-      // Asegurar que exista nequi2 en el usuario
-      if (!state.user.nequi2 && state.user.nequi2 !== 0) {
-        state.user.nequi2 = 0;
+      // Asegurar que exista bancolombia en el usuario
+      if (!state.user.bancolombia && state.user.bancolombia !== 0) {
+        state.user.bancolombia = 0;
       }
       
       if (saveState(state)) {
@@ -180,7 +180,7 @@
       meta: {
         ...state.meta,
         exportedAt: nowISO(),
-        version: 'v6'
+        version: 'v7'
       }
     };
     
@@ -213,18 +213,19 @@
     settings: { lowThreshold: 20000, currency: 'COP' },
     meta: { 
       lastUpdated: nowISO(),
-      version: 'v6'
+      version: 'v7'
     }
   };
 
-  const DEFAULT_CATEGORIES = ['Transporte', 'Skincare', 'Salud', 'Entretenimiento', 'Comida', 'Efectivo', 'Otros'];
+  // Nuevas categorías de gasto: Alquiler, Cocina, Hogar, Cuotas, facturas, 4thiago
+  const DEFAULT_CATEGORIES = ['Alquiler', 'Cocina', 'Hogar', 'Cuotas', 'facturas', '4thiago', 'Transporte', 'Skincare', 'Salud', 'Entretenimiento', 'Comida', 'Efectivo', 'Otros'];
 
   // ---------- Cached elements ----------
   const el = {
     greeting: $('greeting'),
     balanceNu: $('balance-nu'),
     balanceNequi: $('balance-nequi'),
-    balanceNequi2: $('balance-nequi2'),
+    balanceBancolombia: $('balance-bancolombia'), // Cambiado de balanceNequi2
     balanceCash: $('balance-cash'),
     balanceTotal: $('balance-total'),
     balanceStatus: $('balance-status'),
@@ -254,7 +255,7 @@
     totalIncomes: $('total-incomes'),
     totalExpenses: $('total-expenses'),
     suggestedSavings: $('suggested-savings'),
-    novaklarTransactions: $('novaklar-transactions'),
+    novaTransactions: $('nova-transactions'), // Cambiado de novaklarTransactions
     budgetsList: $('budgets-list'),
     btnSettings: $('btn-settings'),
     modalOverlay: $('modal-overlay'),
@@ -325,9 +326,9 @@
     tx.minute = now.getMinutes();
     tx.date = now.toISOString().split('T')[0]; // Mantener compatibilidad
     
-    // Si es ingreso de novaklar a Nequi 2
-    if (tx.type === 'income' && tx.source === 'novaklar' && tx.account === 'nequi2') {
-      tx.description = tx.description || `Ingreso Novaklar ${formatTime(now)}`;
+    // Si es ingreso de nova a Bancolombia
+    if (tx.type === 'income' && tx.source === 'nova' && tx.account === 'bancolombia') {
+      tx.description = tx.description || `Ingreso Nova ${formatTime(now)}`;
     }
     
     state.transactions.push(tx);
@@ -349,7 +350,7 @@
   function computeBalances() {
     let nu = state.user ? Number(state.user.nu || 0) : 0;
     let nequi = state.user ? Number(state.user.nequi || 0) : 0;
-    let nequi2 = state.user ? Number(state.user.nequi2 || 0) : 0;
+    let bancolombia = state.user ? Number(state.user.bancolombia || 0) : 0; // Cambiado de nequi2
     let cash = state.user ? Number(state.user.cash || 0) : 0;
     
     const txs = (state.transactions || []).slice().sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -361,19 +362,19 @@
           const rest = Number(tx.amount) - Number(tx.nuAllocated);
           if (rest > 0) {
             if (tx.account === 'nequi') nequi += rest;
-            else if (tx.account === 'nequi2') nequi2 += rest;
+            else if (tx.account === 'bancolombia') bancolombia += rest; // Cambiado
             else if (tx.account === 'cash') cash += rest;
           }
         } else { 
           if (tx.account === 'nu') nu += Number(tx.amount);
           else if (tx.account === 'nequi') nequi += Number(tx.amount);
-          else if (tx.account === 'nequi2') nequi2 += Number(tx.amount);
+          else if (tx.account === 'bancolombia') bancolombia += Number(tx.amount); // Cambiado
           else if (tx.account === 'cash') cash += Number(tx.amount);
         }
       } else if (tx.type === 'expense') {
         if (tx.account === 'nu') nu -= Number(tx.amount);
         else if (tx.account === 'nequi') nequi -= Number(tx.amount);
-        else if (tx.account === 'nequi2') nequi2 -= Number(tx.amount);
+        else if (tx.account === 'bancolombia') bancolombia -= Number(tx.amount); // Cambiado
         else if (tx.account === 'cash') cash -= Number(tx.amount);
       } else if (tx.type === 'transfer') {
         // Todas las combinaciones de transferencias
@@ -385,17 +386,17 @@
         } else if (tx.from === 'nequi' && tx.to === 'nu') {
           nequi -= amount;
           nu += amount;
-        } else if (tx.from === 'nu' && tx.to === 'nequi2') {
+        } else if (tx.from === 'nu' && tx.to === 'bancolombia') { // Cambiado
           nu -= amount;
-          nequi2 += amount;
-        } else if (tx.from === 'nequi2' && tx.to === 'nu') {
-          nequi2 -= amount;
+          bancolombia += amount;
+        } else if (tx.from === 'bancolombia' && tx.to === 'nu') { // Cambiado
+          bancolombia -= amount;
           nu += amount;
-        } else if (tx.from === 'nequi' && tx.to === 'nequi2') {
+        } else if (tx.from === 'nequi' && tx.to === 'bancolombia') { // Cambiado
           nequi -= amount;
-          nequi2 += amount;
-        } else if (tx.from === 'nequi2' && tx.to === 'nequi') {
-          nequi2 -= amount;
+          bancolombia += amount;
+        } else if (tx.from === 'bancolombia' && tx.to === 'nequi') { // Cambiado
+          bancolombia -= amount;
           nequi += amount;
         } else if (tx.from === 'cash' && tx.to === 'nu') {
           cash -= amount;
@@ -403,17 +404,17 @@
         } else if (tx.from === 'cash' && tx.to === 'nequi') {
           cash -= amount;
           nequi += amount;
-        } else if (tx.from === 'cash' && tx.to === 'nequi2') {
+        } else if (tx.from === 'cash' && tx.to === 'bancolombia') { // Cambiado
           cash -= amount;
-          nequi2 += amount;
+          bancolombia += amount;
         } else if (tx.from === 'nu' && tx.to === 'cash') {
           nu -= amount;
           cash += amount;
         } else if (tx.from === 'nequi' && tx.to === 'cash') {
           nequi -= amount;
           cash += amount;
-        } else if (tx.from === 'nequi2' && tx.to === 'cash') {
-          nequi2 -= amount;
+        } else if (tx.from === 'bancolombia' && tx.to === 'cash') { // Cambiado
+          bancolombia -= amount;
           cash += amount;
         }
       } else if (tx.type === 'cash-conversion') {
@@ -428,8 +429,8 @@
           } else if (tx.from === 'nequi') {
             nequi -= amount;
             cash += amount;
-          } else if (tx.from === 'nequi2') {
-            nequi2 -= amount;
+          } else if (tx.from === 'bancolombia') { // Cambiado
+            bancolombia -= amount;
             cash += amount;
           }
         } else if (tx.conversionType === 'from_cash') {
@@ -440,9 +441,9 @@
           } else if (tx.to === 'nequi') {
             cash -= amount;
             nequi += amount;
-          } else if (tx.to === 'nequi2') {
+          } else if (tx.to === 'bancolombia') { // Cambiado
             cash -= amount;
-            nequi2 += amount;
+            bancolombia += amount;
           }
         }
       }
@@ -451,17 +452,17 @@
     return { 
       nu: Math.max(0, nu), 
       nequi: Math.max(0, nequi), 
-      nequi2: Math.max(0, nequi2),
+      bancolombia: Math.max(0, bancolombia), // Cambiado
       cash: Math.max(0, cash), 
-      total: Math.max(0, nu + nequi + nequi2 + cash) 
+      total: Math.max(0, nu + nequi + bancolombia + cash) 
     };
   }
 
-  // ---------- Novaklar Functions ----------
-  function getNovaklarTransactions() {
+  // ---------- Nova Functions (antes Novaklar) ----------
+  function getNovaTransactions() {
     return state.transactions.filter(tx => 
-      (tx.type === 'income' && tx.source === 'novaklar') ||
-      (tx.account === 'nequi2')
+      (tx.type === 'income' && tx.source === 'nova') ||
+      (tx.account === 'bancolombia')
     ).length;
   }
 
@@ -489,7 +490,7 @@
     // Actualizar balances en UI
     if (el.balanceNu) el.balanceNu.textContent = formatCurrency(balances.nu, currency);
     if (el.balanceNequi) el.balanceNequi.textContent = formatCurrency(balances.nequi, currency);
-    if (el.balanceNequi2) el.balanceNequi2.textContent = formatCurrency(balances.nequi2, currency);
+    if (el.balanceBancolombia) el.balanceBancolombia.textContent = formatCurrency(balances.bancolombia, currency); // Cambiado
     if (el.balanceCash) el.balanceCash.textContent = formatCurrency(balances.cash, currency);
     if (el.balanceTotal) el.balanceTotal.textContent = formatCurrency(balances.total, currency);
     
@@ -505,9 +506,9 @@
       el.balanceStatus.style.color = balances.total < low ? '#ef4444' : '#10b981';
     }
 
-    // Transacciones Novaklar
-    if (el.novaklarTransactions) {
-      el.novaklarTransactions.textContent = getNovaklarTransactions();
+    // Transacciones Nova
+    if (el.novaTransactions) { // Cambiado
+      el.novaTransactions.textContent = getNovaTransactions();
     }
 
     // Últimas transacciones
@@ -526,8 +527,8 @@
             cssClass += ' tx-transfer';
           } else if (tx.type === 'cash-conversion') {
             cssClass += ' tx-cash-conversion';
-          } else if (tx.type === 'income' && tx.source === 'novaklar') {
-            cssClass += ' tx-novaklar';
+          } else if (tx.type === 'income' && tx.source === 'nova') { // Cambiado
+            cssClass += ' tx-nova';
           }
           
           li.className = cssClass;
@@ -537,25 +538,25 @@
           let amountDisplay = '';
           
           if (tx.type === 'transfer') {
-            const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
-            const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+            const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
+            const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
             description = `${fromName} → ${toName}`;
             icon = '🔄 ';
             amountDisplay = `↔ ${formatCurrency(tx.amount, currency)}`;
           } else if (tx.type === 'cash-conversion') {
             if (tx.conversionType === 'to_cash') {
-              const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+              const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Bancolombia'; // Cambiado
               description = `${fromName} → Efectivo`;
               icon = '💵 ';
             } else {
-              const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+              const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Bancolombia'; // Cambiado
               description = `Efectivo → ${toName}`;
               icon = '🏦 ';
             }
             amountDisplay = `↔ ${formatCurrency(tx.amount, currency)}`;
           } else if (tx.type === 'income') {
             description = tx.source || 'Ingreso';
-            icon = tx.source === 'novaklar' ? '💰 ' : '⬆️ ';
+            icon = tx.source === 'nova' ? '💰 ' : '⬆️ '; // Cambiado
             amountDisplay = `+ ${formatCurrency(tx.amount, currency)}`;
           } else {
             description = tx.category || 'Gasto';
@@ -568,7 +569,7 @@
           if (tx.type === 'income' || tx.type === 'expense') {
             accountInfo = tx.account === 'nu' ? 'Nu' : 
                          tx.account === 'nequi' ? 'Nequi 1' : 
-                         tx.account === 'nequi2' ? 'Nequi 2' : 
+                         tx.account === 'bancolombia' ? 'Bancolombia' : // Cambiado
                          'Efectivo';
           } else if (tx.type === 'transfer') {
             accountInfo = 'Transferencia';
@@ -736,7 +737,7 @@
   // ---------- Recommendations ----------
   function suggestSavings(totals) {
     if (totals.incomes <= 0) return { text: 'Registra tus ingresos para recomendaciones.' };
-    const recentSalary = state.transactions.find(t => t.type === 'income' && (String(t.source) === 'Salario' || String(t.source).toLowerCase() === 'novaklar'));
+    const recentSalary = state.transactions.find(t => t.type === 'income' && (String(t.source) === 'Salario' || String(t.source).toLowerCase() === 'nova')); // Cambiado
     const ratio = totals.incomes > 0 ? (totals.expenses / totals.incomes) : 0;
     if (ratio > 0.9) return { text: 'Muy alto gasto. Reduce gastos inmediatos (≥10%).' };
     if (recentSalary) {
@@ -785,14 +786,14 @@
       if (isIncome) {
         el.txAccount.innerHTML = `
           <option value="nequi">Nequi 1</option>
-          <option value="nequi2">Nequi 2 (novaklar)</option>
+          <option value="bancolombia">Bancolombia (nova)</option> <!-- Cambiado -->
           <option value="nu">Caja Nu</option>
           <option value="cash">Efectivo</option>
         `;
       } else if (isExpense) {
         el.txAccount.innerHTML = `
           <option value="nequi">Nequi 1</option>
-          <option value="nequi2">Nequi 2 (novaklar)</option>
+          <option value="bancolombia">Bancolombia (nova)</option> <!-- Cambiado -->
           <option value="nu">Caja Nu</option>
           <option value="cash">Efectivo</option>
         `;
@@ -814,14 +815,14 @@
         el.cashConversionDetails.innerHTML = `
           <option value="nu_to_cash">Caja Nu → Efectivo</option>
           <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
-          <option value="nequi2_to_cash">Nequi 2 → Efectivo</option>
+          <option value="bancolombia_to_cash">Bancolombia → Efectivo</option> <!-- Cambiado -->
         `;
       } else {
         // Efectivo → Digital
         el.cashConversionDetails.innerHTML = `
           <option value="cash_to_nu">Efectivo → Caja Nu</option>
           <option value="cash_to_nequi">Efectivo → Nequi 1</option>
-          <option value="cash_to_nequi2">Efectivo → Nequi 2</option>
+          <option value="cash_to_bancolombia">Efectivo → Bancolombia</option> <!-- Cambiado -->
         `;
       }
     }
@@ -840,7 +841,7 @@
     if (el.setupModal) el.setupModal.classList.remove('hidden'); 
     if ($('user-nu')) $('user-nu').value = state.user ? state.user.nu.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
     if ($('user-nequi')) $('user-nequi').value = state.user ? state.user.nequi.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
-    if ($('user-nequi2')) $('user-nequi2').value = state.user ? (state.user.nequi2 || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
+    if ($('user-bancolombia')) $('user-bancolombia').value = state.user ? (state.user.bancolombia || 0).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; // Cambiado
     if ($('user-cash')) $('user-cash').value = state.user ? state.user.cash.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'; 
   }
   
@@ -855,32 +856,32 @@
     if (filtered.length === 0) { container.innerHTML = '<div class="meta">No hay transacciones que coincidan con los filtros.</div>'; return; } 
     filtered.forEach(tx => { 
       const div = document.createElement('div'); 
-      div.className = `tx-row ${tx.type === 'transfer' ? 'tx-transfer' : tx.type === 'cash-conversion' ? 'tx-cash-conversion' : tx.type === 'income' && tx.source === 'novaklar' ? 'tx-novaklar' : ''}`;
+      div.className = `tx-row ${tx.type === 'transfer' ? 'tx-transfer' : tx.type === 'cash-conversion' ? 'tx-cash-conversion' : tx.type === 'income' && tx.source === 'nova' ? 'tx-nova' : ''}`; // Cambiado
       
       let description = '';
       let icon = '';
       let amountDisplay = '';
       
       if (tx.type === 'transfer') {
-        const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
-        const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
+        const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
         description = `${fromName} → ${toName}`;
         icon = '🔄 ';
         amountDisplay = `↔ ${formatCurrency(tx.amount, state.settings.currency)}`;
       } else if (tx.type === 'cash-conversion') {
         if (tx.conversionType === 'to_cash') {
-          const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+          const fromName = tx.from === 'nu' ? 'Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Bancolombia'; // Cambiado
           description = `${fromName} → Efectivo`;
           icon = '💵 ';
         } else {
-          const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+          const toName = tx.to === 'nu' ? 'Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Bancolombia'; // Cambiado
           description = `Efectivo → ${toName}`;
           icon = '🏦 ';
         }
         amountDisplay = `↔ ${formatCurrency(tx.amount, state.settings.currency)}`;
       } else if (tx.type === 'income') {
         description = tx.source || 'Ingreso';
-        icon = tx.source === 'novaklar' ? '💰 ' : '⬆️ ';
+        icon = tx.source === 'nova' ? '💰 ' : '⬆️ '; // Cambiado
         amountDisplay = `+ ${formatCurrency(tx.amount, state.settings.currency)}`;
       } else {
         description = tx.category || 'Gasto';
@@ -892,7 +893,7 @@
       if (tx.type === 'income' || tx.type === 'expense') {
         accountInfo = tx.account === 'nu' ? 'Nu' : 
                      tx.account === 'nequi' ? 'Nequi 1' : 
-                     tx.account === 'nequi2' ? 'Nequi 2' : 
+                     tx.account === 'bancolombia' ? 'Bancolombia' : // Cambiado
                      'Efectivo';
       } else if (tx.type === 'transfer') {
         accountInfo = 'Transferencia';
@@ -953,13 +954,13 @@
           // Para transferencias, verificar si involucra la cuenta seleccionada
           if (accountFilter === 'nu' && !(tx.from === 'nu' || tx.to === 'nu')) return false;
           if (accountFilter === 'nequi' && !(tx.from === 'nequi' || tx.to === 'nequi')) return false;
-          if (accountFilter === 'nequi2' && !(tx.from === 'nequi2' || tx.to === 'nequi2')) return false;
+          if (accountFilter === 'bancolombia' && !(tx.from === 'bancolombia' || tx.to === 'bancolombia')) return false; // Cambiado
           if (accountFilter === 'cash' && !(tx.from === 'cash' || tx.to === 'cash')) return false;
         } else if (tx.type === 'cash-conversion') {
           // Para conversiones, verificar según el tipo
           if (accountFilter === 'nu' && !((tx.conversionType === 'to_cash' && tx.from === 'nu') || (tx.conversionType === 'from_cash' && tx.to === 'nu'))) return false;
           if (accountFilter === 'nequi' && !((tx.conversionType === 'to_cash' && tx.from === 'nequi') || (tx.conversionType === 'from_cash' && tx.to === 'nequi'))) return false;
-          if (accountFilter === 'nequi2' && !((tx.conversionType === 'to_cash' && tx.from === 'nequi2') || (tx.conversionType === 'from_cash' && tx.to === 'nequi2'))) return false;
+          if (accountFilter === 'bancolombia' && !((tx.conversionType === 'to_cash' && tx.from === 'bancolombia') || (tx.conversionType === 'from_cash' && tx.to === 'bancolombia'))) return false; // Cambiado
           if (accountFilter === 'cash' && !((tx.conversionType === 'to_cash') || (tx.conversionType === 'from_cash'))) return false;
         } else if (tx.account !== accountFilter) {
           return false;
@@ -1110,8 +1111,8 @@
     
     const account = el.txAccount.value;
     
-    // Si es novaklar, forzar a Nequi 2
-    const finalAccount = source === 'novaklar' ? 'nequi2' : account;
+    // Si es nova, forzar a Bancolombia
+    const finalAccount = source === 'nova' ? 'bancolombia' : account; // Cambiado
     
     const tx = { 
       id: uid(), 
@@ -1120,7 +1121,7 @@
       source, 
       account: finalAccount,
       nuAllocated: nuAllocated > 0 ? Number(nuAllocated.toFixed(2)) : 0,
-      description: source === 'novaklar' ? `Ingreso Novaklar ${formatTime(new Date())}` : undefined
+      description: source === 'nova' ? `Ingreso Nova ${formatTime(new Date())}` : undefined // Cambiado
     };
     addTransaction(tx);
   }
@@ -1133,13 +1134,13 @@
     const balances = computeBalances();
     const accountBalance = account === 'nu' ? balances.nu : 
                           account === 'nequi' ? balances.nequi : 
-                          account === 'nequi2' ? balances.nequi2 : 
+                          account === 'bancolombia' ? balances.bancolombia : // Cambiado
                           balances.cash;
     
     if (amount > accountBalance) {
       const accountName = account === 'nu' ? 'Caja Nu' : 
                          account === 'nequi' ? 'Nequi 1' : 
-                         account === 'nequi2' ? 'Nequi 2' : 
+                         account === 'bancolombia' ? 'Bancolombia' : // Cambiado
                          'Efectivo';
       showToast(`Saldo insuficiente en ${accountName}`, 'error');
       return;
@@ -1171,25 +1172,25 @@
         toAccount = 'nu';
         description = 'Nequi 1 → Caja Nu';
         break;
-      case 'nequi_to_nequi2':
+      case 'nequi_to_bancolombia': // Cambiado
         fromAccount = 'nequi';
-        toAccount = 'nequi2';
-        description = 'Nequi 1 → Nequi 2';
+        toAccount = 'bancolombia';
+        description = 'Nequi 1 → Bancolombia';
         break;
-      case 'nequi2_to_nequi':
-        fromAccount = 'nequi2';
+      case 'bancolombia_to_nequi': // Cambiado
+        fromAccount = 'bancolombia';
         toAccount = 'nequi';
-        description = 'Nequi 2 → Nequi 1';
+        description = 'Bancolombia → Nequi 1';
         break;
-      case 'nu_to_nequi2':
+      case 'nu_to_bancolombia': // Cambiado
         fromAccount = 'nu';
-        toAccount = 'nequi2';
-        description = 'Caja Nu → Nequi 2';
+        toAccount = 'bancolombia';
+        description = 'Caja Nu → Bancolombia';
         break;
-      case 'nequi2_to_nu':
-        fromAccount = 'nequi2';
+      case 'bancolombia_to_nu': // Cambiado
+        fromAccount = 'bancolombia';
         toAccount = 'nu';
-        description = 'Nequi 2 → Caja Nu';
+        description = 'Bancolombia → Caja Nu';
         break;
       case 'cash_to_nu':
         fromAccount = 'cash';
@@ -1201,10 +1202,10 @@
         toAccount = 'nequi';
         description = 'Efectivo → Nequi 1';
         break;
-      case 'cash_to_nequi2':
+      case 'cash_to_bancolombia': // Cambiado
         fromAccount = 'cash';
-        toAccount = 'nequi2';
-        description = 'Efectivo → Nequi 2';
+        toAccount = 'bancolombia';
+        description = 'Efectivo → Bancolombia';
         break;
       case 'nu_to_cash':
         fromAccount = 'nu';
@@ -1216,10 +1217,10 @@
         toAccount = 'cash';
         description = 'Nequi 1 → Efectivo';
         break;
-      case 'nequi2_to_cash':
-        fromAccount = 'nequi2';
+      case 'bancolombia_to_cash': // Cambiado
+        fromAccount = 'bancolombia';
         toAccount = 'cash';
-        description = 'Nequi 2 → Efectivo';
+        description = 'Bancolombia → Efectivo';
         break;
       default:
         showToast('Opción de transferencia no válida', 'error');
@@ -1230,13 +1231,13 @@
     const balances = computeBalances();
     const sourceBalance = fromAccount === 'nu' ? balances.nu : 
                          fromAccount === 'nequi' ? balances.nequi : 
-                         fromAccount === 'nequi2' ? balances.nequi2 : 
+                         fromAccount === 'bancolombia' ? balances.bancolombia : // Cambiado
                          balances.cash;
     
     if (amount > sourceBalance) {
       const accountName = fromAccount === 'nu' ? 'Caja Nu' : 
                          fromAccount === 'nequi' ? 'Nequi 1' : 
-                         fromAccount === 'nequi2' ? 'Nequi 2' : 
+                         fromAccount === 'bancolombia' ? 'Bancolombia' : // Cambiado
                          'Efectivo';
       showToast(`Saldo insuficiente en ${accountName}`, 'error');
       return;
@@ -1272,9 +1273,9 @@
         toAccount = 'cash';
         conversionDescription = 'Nequi 1 → Efectivo';
       } else {
-        fromAccount = 'nequi2';
+        fromAccount = 'bancolombia'; // Cambiado
         toAccount = 'cash';
-        conversionDescription = 'Nequi 2 → Efectivo';
+        conversionDescription = 'Bancolombia → Efectivo';
       }
     } else {
       // Efectivo → Digital
@@ -1288,8 +1289,8 @@
         conversionDescription = 'Efectivo → Nequi 1';
       } else {
         fromAccount = 'cash';
-        toAccount = 'nequi2';
-        conversionDescription = 'Efectivo → Nequi 2';
+        toAccount = 'bancolombia'; // Cambiado
+        conversionDescription = 'Efectivo → Bancolombia';
       }
     }
     
@@ -1297,13 +1298,13 @@
     const balances = computeBalances();
     const sourceBalance = fromAccount === 'nu' ? balances.nu : 
                          fromAccount === 'nequi' ? balances.nequi : 
-                         fromAccount === 'nequi2' ? balances.nequi2 : 
+                         fromAccount === 'bancolombia' ? balances.bancolombia : // Cambiado
                          balances.cash;
     
     if (amount > sourceBalance) {
       const accountName = fromAccount === 'nu' ? 'Caja Nu' : 
                          fromAccount === 'nequi' ? 'Nequi 1' : 
-                         fromAccount === 'nequi2' ? 'Nequi 2' : 
+                         fromAccount === 'bancolombia' ? 'Bancolombia' : // Cambiado
                          'Efectivo';
       showToast(`Saldo insuficiente en ${accountName}`, 'error');
       return;
@@ -1338,18 +1339,18 @@
       let message = `Transacción:\nID: ${tx.id}\nTipo: ${tx.type}\nMonto: ${formatCurrency(tx.amount, state.settings.currency)}\nFecha: ${formatDateTime(tx.timestamp)}`;
       
       if (tx.type === 'transfer') {
-        const fromName = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
-        const toName = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        const fromName = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
+        const toName = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
         message += `\nDe: ${fromName}\nA: ${toName}`;
       } else if (tx.type === 'cash-conversion') {
         message += `\nTipo: ${tx.conversionType === 'to_cash' ? 'Digital → Efectivo' : 'Efectivo → Digital'}`;
-        const fromName = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
-        const toName = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+        const fromName = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
+        const toName = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
         message += `\nDe: ${fromName}\nA: ${toName}`;
       } else {
         const accountName = tx.account === 'nu' ? 'Caja Nu' : 
                            tx.account === 'nequi' ? 'Nequi 1' : 
-                           tx.account === 'nequi2' ? 'Nequi 2' : 
+                           tx.account === 'bancolombia' ? 'Bancolombia' : // Cambiado
                            'Efectivo';
         message += `\nCuenta: ${accountName}`;
         if (tx.type === 'income') {
@@ -1437,10 +1438,10 @@
     const name = $('user-name').value.trim(); 
     const nu = parseCurrencyFormatted($('user-nu').value || '0'); 
     const nequi = parseCurrencyFormatted($('user-nequi').value || '0'); 
-    const nequi2 = parseCurrencyFormatted($('user-nequi2').value || '0'); 
+    const bancolombia = parseCurrencyFormatted($('user-bancolombia').value || '0'); // Cambiado
     const cash = parseCurrencyFormatted($('user-cash').value || '0');
     
-    state.user = { name, nu, nequi, nequi2, cash, createdAt: nowISO() }; 
+    state.user = { name, nu, nequi, bancolombia, cash, createdAt: nowISO() }; // Cambiado
     
     if (saveState(state)) showToast('Configuración inicial guardada', 'success'); 
     hideAllModals(); 
@@ -1464,20 +1465,20 @@
         let destination = '';
         
         if (tx.type === 'transfer') {
-          account = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'nequi2' ? 'Nequi 2' : 'Efectivo';
-          destination = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'nequi2' ? 'Nequi 2' : 'Efectivo';
+          account = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : tx.from === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
+          destination = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : tx.to === 'bancolombia' ? 'Bancolombia' : 'Efectivo'; // Cambiado
         } else if (tx.type === 'cash-conversion') {
           if (tx.conversionType === 'to_cash') {
-            account = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+            account = tx.from === 'nu' ? 'Caja Nu' : tx.from === 'nequi' ? 'Nequi 1' : 'Bancolombia'; // Cambiado
             destination = 'Efectivo';
           } else {
             account = 'Efectivo';
-            destination = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Nequi 2';
+            destination = tx.to === 'nu' ? 'Caja Nu' : tx.to === 'nequi' ? 'Nequi 1' : 'Bancolombia'; // Cambiado
           }
         } else {
           account = tx.account === 'nu' ? 'Caja Nu' : 
                    tx.account === 'nequi' ? 'Nequi 1' : 
-                   tx.account === 'nequi2' ? 'Nequi 2' : 
+                   tx.account === 'bancolombia' ? 'Bancolombia' : // Cambiado
                    'Efectivo';
         }
         
@@ -1517,39 +1518,84 @@
   // ---------- Initialize ----------
   window.addEventListener('load', () => { 
     // Migrar datos antiguos si es necesario
-    const oldState = localStorage.getItem('banklar_finances_v5');
-    if (oldState && !state.user) {
+    const oldStateV6 = localStorage.getItem('banklar_finances_v6');
+    const oldStateV5 = localStorage.getItem('banklar_finances_v5');
+    
+    let migrated = false;
+    
+    if (oldStateV6 && !state.user) {
       try {
-        const parsed = JSON.parse(oldState);
+        const parsed = JSON.parse(oldStateV6);
+        if (parsed.user) {
+          // Migrar de v6 a v7 (nequi2 → bancolombia)
+          state.user = {
+            name: parsed.user.name,
+            nu: parsed.user.nu || 0,
+            nequi: parsed.user.nequi || 0,
+            bancolombia: parsed.user.nequi2 || parsed.user.bancolombia || 0, // Mapear nequi2 a bancolombia
+            cash: parsed.user.cash || 0,
+            createdAt: parsed.user.createdAt || nowISO()
+          };
+          state.transactions = (parsed.transactions || []).map(tx => {
+            // Mapear transacciones de nequi2 a bancolombia
+            if (tx.account === 'nequi2') tx.account = 'bancolombia';
+            if (tx.from === 'nequi2') tx.from = 'bancolombia';
+            if (tx.to === 'nequi2') tx.to = 'bancolombia';
+            if (tx.source === 'novaklar') tx.source = 'nova'; // Mapear novaklar a nova
+            return tx;
+          });
+          state.budgets = parsed.budgets || {};
+          state.settings = { ...parsed.settings };
+          state.meta = { 
+            ...parsed.meta,
+            version: 'v7',
+            migratedFrom: 'v6'
+          };
+          
+          migrated = true;
+        }
+      } catch (e) {
+        console.error('Error migrating v6 data:', e);
+      }
+    } else if (oldStateV5 && !state.user) {
+      try {
+        const parsed = JSON.parse(oldStateV5);
         if (parsed.user) {
           // Migrar a nueva estructura
           state.user = {
-            ...parsed.user,
-            nequi2: 0 // Agregar Nequi 2
+            name: parsed.user.name,
+            nu: parsed.user.nu || 0,
+            nequi: parsed.user.nequi || 0,
+            bancolombia: 0, // Nuevo campo
+            cash: parsed.user.cash || 0,
+            createdAt: parsed.user.createdAt || nowISO()
           };
-          state.transactions = parsed.transactions || [];
+          state.transactions = (parsed.transactions || []).map(tx => {
+            if (tx.source === 'novaklar') tx.source = 'nova'; // Mapear novaklar a nova
+            if (!tx.timestamp && tx.date) {
+              tx.timestamp = new Date(tx.date).getTime();
+            }
+            return tx;
+          });
           state.budgets = parsed.budgets || {};
           state.settings = { ...parsed.settings };
           delete state.settings.nuEA; // Eliminar interés
           state.meta = { 
             ...parsed.meta,
-            version: 'v6',
+            version: 'v7',
             migratedFrom: 'v5'
           };
           
-          // Agregar timestamps a transacciones antiguas
-          state.transactions.forEach(tx => {
-            if (!tx.timestamp && tx.date) {
-              tx.timestamp = new Date(tx.date).getTime();
-            }
-          });
-          
-          saveState(state);
-          showToast('Datos migrados de versión anterior', 'info');
+          migrated = true;
         }
       } catch (e) {
-        console.error('Error migrating data:', e);
+        console.error('Error migrating v5 data:', e);
       }
+    }
+    
+    if (migrated) {
+      saveState(state);
+      showToast('Datos migrados a nueva versión (Bancolombia / nova)', 'info');
     }
     
     // Configurar UI
