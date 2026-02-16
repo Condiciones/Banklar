@@ -40,9 +40,9 @@
             <div class="small">Principal</div>
           </div>
           <div class="balance-item">
-            <div class="label">Nequi 2</div>
-            <div class="amount" id="balance-nequi2">$0.00</div>
-            <div class="small">Para novaklar</div>
+            <div class="label">Bancolombia</div>
+            <div class="amount" id="balance-bancolombia">$0.00</div>
+            <div class="small">Para nova</div>
           </div>
           <div class="balance-item">
             <div class="label">Efectivo</div>
@@ -74,7 +74,7 @@
             <label for="income-source">Origen (Ingreso)</label>
             <select id="income-source">
               <option value="Salario">Salario</option>
-              <option value="novaklar">novaklar</option>
+              <option value="nova">nova</option>
               <option value="Efectivo">Depósito en efectivo</option>
               <option value="Otros">Otros ingresos</option>
             </select>
@@ -83,6 +83,12 @@
           <div class="row" id="expense-category-row" style="display:none">
             <label for="expense-category">Categoría (Gasto)</label>
             <select id="expense-category">
+              <option value="Alquiler">Alquiler</option>
+              <option value="Cocina">Cocina</option>
+              <option value="Hogar">Hogar</option>
+              <option value="Cuotas">Cuotas</option>
+              <option value="facturas">facturas</option>
+              <option value="4thiago">4thiago</option>
               <option value="Transporte">Transporte</option>
               <option value="Skincare">Skincare</option>
               <option value="Salud">Salud</option>
@@ -98,16 +104,16 @@
             <select id="transfer-from">
               <option value="nu">Caja Nu → Nequi 1</option>
               <option value="nequi">Nequi 1 → Caja Nu</option>
-              <option value="nequi_to_nequi2">Nequi 1 → Nequi 2</option>
-              <option value="nequi2_to_nequi">Nequi 2 → Nequi 1</option>
-              <option value="nu_to_nequi2">Caja Nu → Nequi 2</option>
-              <option value="nequi2_to_nu">Nequi 2 → Caja Nu</option>
+              <option value="nequi_to_bancolombia">Nequi 1 → Bancolombia</option>
+              <option value="bancolombia_to_nequi">Bancolombia → Nequi 1</option>
+              <option value="nu_to_bancolombia">Caja Nu → Bancolombia</option>
+              <option value="bancolombia_to_nu">Bancolombia → Caja Nu</option>
               <option value="cash_to_nu">Efectivo → Caja Nu</option>
               <option value="cash_to_nequi">Efectivo → Nequi 1</option>
-              <option value="cash_to_nequi2">Efectivo → Nequi 2</option>
+              <option value="cash_to_bancolombia">Efectivo → Bancolombia</option>
               <option value="nu_to_cash">Caja Nu → Efectivo</option>
               <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
-              <option value="nequi2_to_cash">Nequi 2 → Efectivo</option>
+              <option value="bancolombia_to_cash">Bancolombia → Efectivo</option>
             </select>
           </div>
 
@@ -124,10 +130,10 @@
             <select id="cash-conversion-details">
               <option value="nu_to_cash">Caja Nu → Efectivo</option>
               <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
-              <option value="nequi2_to_cash">Nequi 2 → Efectivo</option>
+              <option value="bancolombia_to_cash">Bancolombia → Efectivo</option>
               <option value="cash_to_nu">Efectivo → Caja Nu</option>
               <option value="cash_to_nequi">Efectivo → Nequi 1</option>
-              <option value="cash_to_nequi2">Efectivo → Nequi 2</option>
+              <option value="cash_to_bancolombia">Efectivo → Bancolombia</option>
             </select>
           </div>
 
@@ -141,7 +147,7 @@
             <label for="tx-account">Cuenta</label>
             <select id="tx-account">
               <option value="nequi">Nequi 1</option>
-              <option value="nequi2">Nequi 2 (novaklar)</option>
+              <option value="bancolombia">Bancolombia (nova)</option>
               <option value="nu">Caja Nu</option>
               <option value="cash">Efectivo</option>
             </select>
@@ -184,9 +190,9 @@
               <div class="stat-sub">Sugerencia inteligente</div>
             </div>
             <div class="stat-item stat-interest">
-              <div class="stat-label">Transacciones Novaklar</div>
-              <div class="stat-value" id="novaklar-transactions">0</div>
-              <div class="stat-sub">En Nequi 2</div>
+              <div class="stat-label">Transacciones Nova</div>
+              <div class="stat-value" id="nova-transactions">0</div>
+              <div class="stat-sub">En Bancolombia</div>
             </div>
           </div>
           <div class="chart-area">
@@ -226,7 +232,7 @@
       <div class="row"><label for="user-name">Nombre</label><input id="user-name" type="text" required placeholder="Tu nombre"></div>
       <div class="row"><label for="user-nu">Saldo en Caja Nu</label><input id="user-nu" type="text" value="0,00" required class="currency-input"></div>
       <div class="row"><label for="user-nequi">Saldo en Nequi 1</label><input id="user-nequi" type="text" value="0,00" required class="currency-input"></div>
-      <div class="row"><label for="user-nequi2">Saldo en Nequi 2 (novaklar)</label><input id="user-nequi2" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-bancolombia">Saldo en Bancolombia (nova)</label><input id="user-bancolombia" type="text" value="0,00" required class="currency-input"></div>
       <div class="row"><label for="user-cash">Saldo en Efectivo</label><input id="user-cash" type="text" value="0,00" required class="currency-input"></div>
       <div class="row actions"><button type="submit" class="btn-primary">Guardar y empezar</button></div>
     </form>
@@ -237,7 +243,7 @@
     <div class="modal-toolbar">
       <div class="filter-controls">
         <select id="tx-filter-type"><option value="all">Todas las transacciones</option><option value="income">Solo ingresos</option><option value="expense">Solo gastos</option><option value="transfer">Transferencias</option><option value="cash-conversion">Conversiones efectivo</option></select>
-        <select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Caja Nu</option><option value="nequi">Nequi 1</option><option value="nequi2">Nequi 2</option><option value="cash">Efectivo</option></select>
+        <select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Caja Nu</option><option value="nequi">Nequi 1</option><option value="bancolombia">Bancolombia</option><option value="cash">Efectivo</option></select>
       </div>
       <div class="search-control"><input type="text" id="tx-search" placeholder="Buscar..."></div>
     </div>
@@ -269,7 +275,21 @@
     <form id="budgets-form">
       <div id="budgets-form-list"></div>
       <div class="row" style="margin-top:6px;gap:8px;display:flex;align-items:center">
-        <select id="new-budget-name" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"><option value="" disabled selected>Seleccionar categoría</option></select>
+        <select id="new-budget-name" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
+          <option value="" disabled selected>Seleccionar categoría</option>
+          <option value="Alquiler">Alquiler</option>
+          <option value="Cocina">Cocina</option>
+          <option value="Hogar">Hogar</option>
+          <option value="Cuotas">Cuotas</option>
+          <option value="facturas">facturas</option>
+          <option value="4thiago">4thiago</option>
+          <option value="Transporte">Transporte</option>
+          <option value="Skincare">Skincare</option>
+          <option value="Salud">Salud</option>
+          <option value="Entretenimiento">Entretenimiento</option>
+          <option value="Comida">Comida</option>
+          <option value="Otros">Otros</option>
+        </select>
         <input id="new-budget-amt" placeholder="Monto" type="text" class="currency-input" style="width:120px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
         <button id="btn-add-budget" type="button" class="btn-ghost">Agregar</button>
       </div>
