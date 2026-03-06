@@ -30,19 +30,19 @@
         </div>
         <div class="balances">
           <div class="balance-item">
-            <div class="label">Caja Nu</div>
+            <div class="label">Nu</div>
             <div class="amount" id="balance-nu">$0.00</div>
-            <div class="small" id="nu-interest-info">Sin interés</div>
+            <div class="small">Principal</div>
           </div>
           <div class="balance-item">
-            <div class="label">Nequi 1</div>
+            <div class="label">Nequi</div>
             <div class="amount" id="balance-nequi">$0.00</div>
-            <div class="small">Principal</div>
+            <div class="small">Secundaria</div>
           </div>
           <div class="balance-item">
             <div class="label">Bancolombia</div>
             <div class="amount" id="balance-bancolombia">$0.00</div>
-            <div class="small">Para nova</div>
+            <div class="small">Tercera</div>
           </div>
           <div class="balance-item">
             <div class="label">Efectivo</div>
@@ -61,6 +61,11 @@
         <h2>Registrar Transacción</h2>
         <form id="tx-form">
           <div class="row">
+            <label for="tx-date">Fecha</label>
+            <input id="tx-date" type="date" required>
+          </div>
+
+          <div class="row">
             <label for="tx-type">Tipo</label>
             <select id="tx-type" required>
               <option value="income">Ingreso</option>
@@ -74,7 +79,6 @@
             <label for="income-source">Origen (Ingreso)</label>
             <select id="income-source">
               <option value="Salario">Salario</option>
-              <option value="nova">nova</option>
               <option value="Efectivo">Depósito en efectivo</option>
               <option value="Otros">Otros ingresos</option>
             </select>
@@ -94,6 +98,7 @@
               <option value="Salud">Salud</option>
               <option value="Entretenimiento">Entretenimiento</option>
               <option value="Comida">Comida</option>
+              <option value="Pet">Pet</option>
               <option value="Efectivo">Retiro en efectivo</option>
               <option value="Otros">Otros</option>
             </select>
@@ -102,17 +107,17 @@
           <div class="row" id="transfer-from-row" style="display:none">
             <label for="transfer-from">Transferir desde</label>
             <select id="transfer-from">
-              <option value="nu">Caja Nu → Nequi 1</option>
-              <option value="nequi">Nequi 1 → Caja Nu</option>
-              <option value="nequi_to_bancolombia">Nequi 1 → Bancolombia</option>
-              <option value="bancolombia_to_nequi">Bancolombia → Nequi 1</option>
-              <option value="nu_to_bancolombia">Caja Nu → Bancolombia</option>
-              <option value="bancolombia_to_nu">Bancolombia → Caja Nu</option>
-              <option value="cash_to_nu">Efectivo → Caja Nu</option>
-              <option value="cash_to_nequi">Efectivo → Nequi 1</option>
+              <option value="nu">Nu → Nequi</option>
+              <option value="nequi">Nequi → Nu</option>
+              <option value="nequi_to_bancolombia">Nequi → Bancolombia</option>
+              <option value="bancolombia_to_nequi">Bancolombia → Nequi</option>
+              <option value="nu_to_bancolombia">Nu → Bancolombia</option>
+              <option value="bancolombia_to_nu">Bancolombia → Nu</option>
+              <option value="cash_to_nu">Efectivo → Nu</option>
+              <option value="cash_to_nequi">Efectivo → Nequi</option>
               <option value="cash_to_bancolombia">Efectivo → Bancolombia</option>
-              <option value="nu_to_cash">Caja Nu → Efectivo</option>
-              <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
+              <option value="nu_to_cash">Nu → Efectivo</option>
+              <option value="nequi_to_cash">Nequi → Efectivo</option>
               <option value="bancolombia_to_cash">Bancolombia → Efectivo</option>
             </select>
           </div>
@@ -128,11 +133,11 @@
           <div class="row" id="cash-conversion-details-row" style="display:none">
             <label for="cash-conversion-details">Detalles</label>
             <select id="cash-conversion-details">
-              <option value="nu_to_cash">Caja Nu → Efectivo</option>
-              <option value="nequi_to_cash">Nequi 1 → Efectivo</option>
+              <option value="nu_to_cash">Nu → Efectivo</option>
+              <option value="nequi_to_cash">Nequi → Efectivo</option>
               <option value="bancolombia_to_cash">Bancolombia → Efectivo</option>
-              <option value="cash_to_nu">Efectivo → Caja Nu</option>
-              <option value="cash_to_nequi">Efectivo → Nequi 1</option>
+              <option value="cash_to_nu">Efectivo → Nu</option>
+              <option value="cash_to_nequi">Efectivo → Nequi</option>
               <option value="cash_to_bancolombia">Efectivo → Bancolombia</option>
             </select>
           </div>
@@ -146,19 +151,19 @@
           <div class="row" id="tx-account-row">
             <label for="tx-account">Cuenta</label>
             <select id="tx-account">
-              <option value="nequi">Nequi 1</option>
-              <option value="bancolombia">Bancolombia (nova)</option>
-              <option value="nu">Caja Nu</option>
+              <option value="nu">Nu</option>
+              <option value="nequi">Nequi</option>
+              <option value="bancolombia">Bancolombia</option>
               <option value="cash">Efectivo</option>
             </select>
           </div>
 
           <div class="row" id="deposit-to-nu-row" style="display:none">
-            <label><input type="checkbox" id="deposit-to-nu"> Depositar todo/parte en Caja Nu</label>
+            <label><input type="checkbox" id="deposit-to-nu"> Depositar todo/parte en Nu</label>
           </div>
 
           <div class="row" id="nu-split-row" style="display:none">
-            <label for="nu-split-amount">Monto a enviar a NU (dejar vacío para todo)</label>
+            <label for="nu-split-amount">Monto a enviar a Nu (dejar vacío para todo)</label>
             <input id="nu-split-amount" type="text" placeholder="Ej: 50,00" class="currency-input">
           </div>
 
@@ -170,7 +175,7 @@
       </article>
 
       <article class="card stats-card">
-        <h2>Estadísticas & Alertas</h2>
+        <h2>Estadísticas</h2>
         <div id="alerts" class="alerts"></div>
         <div class="stats-wrapper">
           <div class="stat-grid">
@@ -190,9 +195,9 @@
               <div class="stat-sub">Sugerencia inteligente</div>
             </div>
             <div class="stat-item stat-interest">
-              <div class="stat-label">Transacciones Nova</div>
-              <div class="stat-value" id="nova-transactions">0</div>
-              <div class="stat-sub">En Bancolombia</div>
+              <div class="stat-label">Total transacciones</div>
+              <div class="stat-value" id="total-transactions">0</div>
+              <div class="stat-sub">Registradas</div>
             </div>
           </div>
           <div class="chart-area">
@@ -222,6 +227,19 @@
         </div>
       </article>
     </section>
+
+    <section class="analytics">
+      <article class="card analytics-card">
+        <h2>Gráfica de Gastos</h2>
+        <div class="chart-container">
+          <canvas id="expenses-pie"></canvas>
+        </div>
+        <div style="margin-top:16px;">
+          <h3 style="font-size:14px;margin:0 0 10px 0;">Gastos por Período</h3>
+          <div id="period-breakdown"></div>
+        </div>
+      </article>
+    </section>
   </main>
 
   <div id="modal-overlay" class="modal-overlay hidden"></div>
@@ -230,9 +248,9 @@
     <h3 id="setup-title">Primera vez — Configura tu cuenta</h3>
     <form id="setup-form">
       <div class="row"><label for="user-name">Nombre</label><input id="user-name" type="text" required placeholder="Tu nombre"></div>
-      <div class="row"><label for="user-nu">Saldo en Caja Nu</label><input id="user-nu" type="text" value="0,00" required class="currency-input"></div>
-      <div class="row"><label for="user-nequi">Saldo en Nequi 1</label><input id="user-nequi" type="text" value="0,00" required class="currency-input"></div>
-      <div class="row"><label for="user-bancolombia">Saldo en Bancolombia (nova)</label><input id="user-bancolombia" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-nu">Saldo en Nu</label><input id="user-nu" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-nequi">Saldo en Nequi</label><input id="user-nequi" type="text" value="0,00" required class="currency-input"></div>
+      <div class="row"><label for="user-bancolombia">Saldo en Bancolombia</label><input id="user-bancolombia" type="text" value="0,00" required class="currency-input"></div>
       <div class="row"><label for="user-cash">Saldo en Efectivo</label><input id="user-cash" type="text" value="0,00" required class="currency-input"></div>
       <div class="row actions"><button type="submit" class="btn-primary">Guardar y empezar</button></div>
     </form>
@@ -243,7 +261,7 @@
     <div class="modal-toolbar">
       <div class="filter-controls">
         <select id="tx-filter-type"><option value="all">Todas las transacciones</option><option value="income">Solo ingresos</option><option value="expense">Solo gastos</option><option value="transfer">Transferencias</option><option value="cash-conversion">Conversiones efectivo</option></select>
-        <select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Caja Nu</option><option value="nequi">Nequi 1</option><option value="bancolombia">Bancolombia</option><option value="cash">Efectivo</option></select>
+        <select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Nu</option><option value="nequi">Nequi</option><option value="bancolombia">Bancolombia</option><option value="cash">Efectivo</option></select>
       </div>
       <div class="search-control"><input type="text" id="tx-search" placeholder="Buscar..."></div>
     </div>
@@ -288,6 +306,7 @@
           <option value="Salud">Salud</option>
           <option value="Entretenimiento">Entretenimiento</option>
           <option value="Comida">Comida</option>
+          <option value="Pet">Pet</option>
           <option value="Otros">Otros</option>
         </select>
         <input id="new-budget-amt" placeholder="Monto" type="text" class="currency-input" style="width:120px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)">
@@ -337,7 +356,7 @@
   </div>
 
   <footer class="app-footer">
-    <div class="footer-content"><span>Banklar &copy; 2023</span><button id="btn-export" class="btn-ghost">Exportar datos</button></div>
+    <div class="footer-content"><span>Banklar &copy; 2025</span><button id="btn-export" class="btn-ghost">Exportar datos</button></div>
   </footer>
 
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
