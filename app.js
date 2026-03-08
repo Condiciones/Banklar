@@ -85,7 +85,7 @@
     }
 
     // ---------- Storage ----------
-    const STORAGE_KEY = 'banklar_finances_v8'; // Nueva versión por cambios
+    const STORAGE_KEY = 'banklar_finances_v9'; // Nueva versión sin gráficas
 
     function saveState(s) {
         try {
@@ -182,7 +182,7 @@
             meta: {
                 ...state.meta,
                 exportedAt: nowISO(),
-                version: 'v8'
+                version: 'v9'
             }
         };
         const textarea = $('data-export-text');
@@ -217,7 +217,7 @@
         },
         meta: {
             lastUpdated: nowISO(),
-            version: 'v8'
+            version: 'v9'
         }
     };
 
@@ -274,9 +274,10 @@
         refreshBalances: $('refresh-balances'),
         btnExpensesReport: $('btn-expenses-report'),
         expensesReportModal: $('expenses-report-modal'),
-        expensesChart: $('expenses-chart'),
-        chartMonthly: $('chart-monthly'),
-        chartBiweekly: $('chart-biweekly')
+        // Nuevos elementos para el resumen de gastos
+        expensesSummaryList: $('expenses-summary-list'),
+        summaryMonthly: $('summary-monthly'),
+        summaryBiweekly: $('summary-biweekly')
     };
 
     // ---------- Categories ----------
@@ -349,6 +350,37 @@
             }
         });
         return map;
+    }
+
+    // NUEVA FUNCIÓN: Calcular gastos por período
+    function calcExpensesByPeriod() {
+        const expenses = (state.transactions || [])
+            .filter(t => t.type === 'expense' && t.timestamp);
+        
+        const monthly = {};
+        const biweekly = {};
+
+        expenses.forEach(t => {
+            const date = new Date(t.timestamp);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthName = monthNames[date.getMonth()];
+            
+            // Agrupación mensual
+            const monthKey = `${monthName} ${year}`;
+            if (!monthly[monthKey]) monthly[monthKey] = 0;
+            monthly[monthKey] += Number(t.amount);
+
+            // Agrupación quincenal
+            const day = date.getDate();
+            const quincena = day <= 15 ? 1 : 2;
+            const biweeklyKey = `${monthName} ${year} - ${quincena}ª Quincena`;
+            if (!biweekly[biweeklyKey]) biweekly[biweeklyKey] = 0;
+            biweekly[biweeklyKey] += Number(t.amount);
+        });
+
+        return { monthly, biweekly };
     }
 
     function addTransaction(tx) {
@@ -500,128 +532,70 @@
         return `${date.toLocaleDateString('es-CO')} ${formatTime(date)}`;
     }
 
-    // ---------- Chart Functions ----------
-    let currentChartPeriod = 'monthly';
+    // NUEVA FUNCIÓN: Renderizar resumen de gastos
+    let currentSummaryPeriod = 'monthly';
 
-    function renderExpensesChart() {
-        const canvas = el.expensesChart;
-        if (!canvas) return;
+    function renderExpensesSummary() {
+        if (!el.expensesSummaryList) return;
 
-        const ctx = canvas.getContext('2d');
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = Math.max(400, Math.floor(rect.width));
-        canvas.height = 200;
+        const { monthly, biweekly } = calcExpensesByPeriod();
+        const data = currentSummaryPeriod === 'monthly' ? monthly : biweekly;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        el.expensesSummaryList.innerHTML = '';
 
-        // Filtrar solo gastos
-        const expenses = (state.transactions || [])
-            .filter(t => t.type === 'expense' && t.timestamp);
+        // Actualizar estado de botones
+        if (el.summaryMonthly) {
+            el.summaryMonthly.classList.toggle('active', currentSummaryPeriod === 'monthly');
+        }
+        if (el.summaryBiweekly) {
+            el.summaryBiweekly.classList.toggle('active', currentSummaryPeriod === 'biweekly');
+        }
 
-        if (expenses.length === 0) {
-            ctx.fillStyle = 'rgba(15,9,55,0.04)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#6b7280';
-            ctx.font = '12px Inter';
-            ctx.textAlign = 'center';
-            ctx.fillText('No hay gastos para graficar', canvas.width / 2, 100);
+        if (Object.keys(data).length === 0) {
+            el.expensesSummaryList.innerHTML = '<div class="summary-placeholder">No hay gastos registrados en este período</div>';
             return;
         }
 
-        // Agrupar por período
-        const groups = {};
-        expenses.forEach(t => {
-            const date = new Date(t.timestamp);
-            let periodKey;
-
-            if (currentChartPeriod === 'monthly') {
-                periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            } else {
-                // Quincenal
-                const day = date.getDate();
-                const quincena = day <= 15 ? 1 : 2;
-                periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-Q${quincena}`;
-            }
-
-            if (!groups[periodKey]) groups[periodKey] = 0;
-            groups[periodKey] += Number(t.amount);
+        // Ordenar por fecha (los más recientes primero)
+        const sortedEntries = Object.entries(data).sort((a, b) => {
+            // Extraer año para ordenar (asumiendo formato "Mes Año")
+            const yearA = parseInt(a[0].match(/\d{4}/)?.[0] || '0');
+            const yearB = parseInt(b[0].match(/\d{4}/)?.[0] || '0');
+            if (yearA !== yearB) return yearB - yearA;
+            
+            // Si mismo año, ordenar por mes
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthA = monthNames.findIndex(m => a[0].includes(m));
+            const monthB = monthNames.findIndex(m => b[0].includes(m));
+            return monthB - monthA;
         });
 
-        // Ordenar períodos
-        const periods = Object.keys(groups).sort();
-        const values = periods.map(p => groups[p]);
-
-        if (periods.length === 0) return;
-
-        // Configurar gráfico de barras
-        const barWidth = Math.min(40, (canvas.width - 100) / periods.length);
-        const startX = 60;
-        const maxValue = Math.max(...values, 1);
-        const chartHeight = 150;
-        const bottomY = canvas.height - 40;
-
-        // Dibujar ejes
-        ctx.beginPath();
-        ctx.strokeStyle = '#e5e7eb';
-        ctx.lineWidth = 1;
-        ctx.moveTo(40, 20);
-        ctx.lineTo(40, bottomY);
-        ctx.lineTo(canvas.width - 20, bottomY);
-        ctx.stroke();
-
-        // Dibujar barras
-        values.forEach((value, i) => {
-            const barHeight = (value / maxValue) * chartHeight;
-            const x = startX + i * (barWidth + 10);
-            const y = bottomY - barHeight;
-
-            // Gradiente para la barra
-            const gradient = ctx.createLinearGradient(x, y, x, bottomY);
-            gradient.addColorStop(0, '#ef4444');
-            gradient.addColorStop(1, '#f87171');
-
-            ctx.fillStyle = gradient;
-            ctx.fillRect(x, y, barWidth, barHeight);
-
-            // Etiqueta del período
-            ctx.fillStyle = '#374151';
-            ctx.font = '10px Inter';
-            ctx.textAlign = 'center';
-            ctx.fillText(periods[i].slice(-5), x + barWidth / 2, bottomY + 15);
-
-            // Valor
-            ctx.fillStyle = '#ef4444';
-            ctx.font = 'bold 10px Inter';
-            ctx.fillText(
-                formatCurrency(value, state.settings.currency).replace('$', ''),
-                x + barWidth / 2,
-                y - 5
-            );
+        sortedEntries.forEach(([period, amount]) => {
+            const div = document.createElement('div');
+            div.className = 'summary-item';
+            div.innerHTML = `
+                <span class="summary-period">${period}</span>
+                <span class="summary-amount">${formatCurrency(amount, state.settings.currency)}</span>
+            `;
+            el.expensesSummaryList.appendChild(div);
         });
 
-        // Título según período
-        ctx.fillStyle = '#1f2937';
-        ctx.font = 'bold 12px Inter';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-            currentChartPeriod === 'monthly' ? 'Gastos por Mes' : 'Gastos por Quincena',
-            canvas.width / 2,
-            25
-        );
+        // Añadir total al final
+        const total = Object.values(data).reduce((sum, val) => sum + val, 0);
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'summary-item';
+        totalDiv.style.background = 'linear-gradient(90deg, rgba(124,58,237,0.1), rgba(124,58,237,0.05))';
+        totalDiv.style.borderTop = '2px solid var(--accent)';
+        totalDiv.innerHTML = `
+            <span class="summary-period" style="font-weight:700;">Total</span>
+            <span class="summary-amount" style="background:var(--accent); color:white;">${formatCurrency(total, state.settings.currency)}</span>
+        `;
+        el.expensesSummaryList.appendChild(totalDiv);
     }
 
-    function setChartPeriod(period) {
-        currentChartPeriod = period;
-        
-        // Actualizar botones
-        if (el.chartMonthly) {
-            el.chartMonthly.classList.toggle('active', period === 'monthly');
-        }
-        if (el.chartBiweekly) {
-            el.chartBiweekly.classList.toggle('active', period === 'biweekly');
-        }
-        
-        renderExpensesChart();
+    function setSummaryPeriod(period) {
+        currentSummaryPeriod = period;
+        renderExpensesSummary();
     }
 
     // ---------- Rendering ----------
@@ -759,10 +733,10 @@
         const rec = suggestSavings(totals);
         if (el.suggestedSavings) el.suggestedSavings.textContent = rec.text;
 
-        // Renderizar alertas, presupuestos y gráfica
+        // Renderizar alertas, presupuestos y resumen de gastos
         renderAlerts(balances, totals);
         renderBudgets();
-        renderExpensesChart();
+        renderExpensesSummary();
 
         populateCategorySelects();
         state.meta.lastUpdated = nowISO();
@@ -1809,12 +1783,12 @@
         const closeExpBtn = $('close-expenses-report');
         if (closeExpBtn) closeExpBtn.addEventListener('click', hideAllModals);
 
-        // Controles de gráfica
-        if (el.chartMonthly) {
-            el.chartMonthly.addEventListener('click', () => setChartPeriod('monthly'));
+        // NUEVOS LISTENERS: Controles de resumen de gastos
+        if (el.summaryMonthly) {
+            el.summaryMonthly.addEventListener('click', () => setSummaryPeriod('monthly'));
         }
-        if (el.chartBiweekly) {
-            el.chartBiweekly.addEventListener('click', () => setChartPeriod('biweekly'));
+        if (el.summaryBiweekly) {
+            el.summaryBiweekly.addEventListener('click', () => setSummaryPeriod('biweekly'));
         }
     }
 
@@ -1830,15 +1804,15 @@
     // ---------- Initialize ----------
     window.addEventListener('load', () => {
         // Migrar datos antiguos si es necesario
+        const oldStateV8 = localStorage.getItem('banklar_finances_v8');
         const oldStateV7 = localStorage.getItem('banklar_finances_v7');
-        const oldStateV6 = localStorage.getItem('banklar_finances_v6');
         let migrated = false;
 
-        if (oldStateV7 && !state.user) {
+        if (oldStateV8 && !state.user) {
             try {
-                const parsed = JSON.parse(oldStateV7);
+                const parsed = JSON.parse(oldStateV8);
                 if (parsed.user) {
-                    // Migrar de v7 a v8 (eliminar intereses, actualizar nombres)
+                    // Migrar de v8 a v9 (eliminar referencias a gráficas)
                     state.user = {
                         name: parsed.user.name,
                         nu: parsed.user.nu || 0,
@@ -1849,31 +1823,26 @@
                     };
                     
                     state.transactions = (parsed.transactions || []).map(tx => {
-                        // Eliminar referencias a nova y actualizar nombres
-                        if (tx.source === 'nova') tx.source = 'Salario';
-                        if (tx.account === 'nequi1') tx.account = 'nequi';
-                        if (tx.account === 'caja_nu') tx.account = 'nu';
                         return tx;
                     });
                     
                     state.budgets = parsed.budgets || {};
                     state.settings = { ...parsed.settings };
-                    delete state.settings.nuEA; // Eliminar interés
                     
                     state.meta = {
                         ...parsed.meta,
-                        version: 'v8',
-                        migratedFrom: 'v7'
+                        version: 'v9',
+                        migratedFrom: 'v8'
                     };
                     
                     migrated = true;
                 }
             } catch (e) {
-                console.error('Error migrating v7 data:', e);
+                console.error('Error migrating v8 data:', e);
             }
-        } else if (oldStateV6 && !state.user) {
+        } else if (oldStateV7 && !state.user) {
             try {
-                const parsed = JSON.parse(oldStateV6);
+                const parsed = JSON.parse(oldStateV7);
                 if (parsed.user) {
                     state.user = {
                         name: parsed.user.name,
@@ -1885,9 +1854,9 @@
                     };
                     
                     state.transactions = (parsed.transactions || []).map(tx => {
-                        if (!tx.timestamp && tx.date) {
-                            tx.timestamp = new Date(tx.date).getTime();
-                        }
+                        if (tx.source === 'nova') tx.source = 'Salario';
+                        if (tx.account === 'nequi1') tx.account = 'nequi';
+                        if (tx.account === 'caja_nu') tx.account = 'nu';
                         return tx;
                     });
                     
@@ -1897,14 +1866,14 @@
                     
                     state.meta = {
                         ...parsed.meta,
-                        version: 'v8',
-                        migratedFrom: 'v6'
+                        version: 'v9',
+                        migratedFrom: 'v7'
                     };
                     
                     migrated = true;
                 }
             } catch (e) {
-                console.error('Error migrating v6 data:', e);
+                console.error('Error migrating v7 data:', e);
             }
         }
 
@@ -1941,5 +1910,4 @@
     window._banklar_computeBalances = computeBalances;
     window._banklar_copyData = copyDataToClipboard;
     window._banklar_importData = importDataFromClipboard;
-    window._banklar_setChartPeriod = setChartPeriod;
 })();
