@@ -85,7 +85,7 @@
     }
 
     // ---------- Storage ----------
-    const STORAGE_KEY = 'banklar_finances_v9'; // Nueva versión sin gráficas
+    const STORAGE_KEY = 'banklar_finances_v9';
 
     function saveState(s) {
         try {
@@ -129,32 +129,29 @@
 
         try {
             const imported = JSON.parse(textarea.value);
-            // Validar estructura básica
             if (!imported.user || !imported.transactions) {
                 showToast('Datos inválidos', 'error');
                 return;
             }
 
-            // Confirmar sobreescritura
             if (!confirm('⚠️ ¿Estás seguro de importar estos datos? Se perderán todos los datos actuales.')) {
                 return;
             }
 
-            // Actualizar estado
             state = imported;
 
-            // Migrar transacciones antiguas si es necesario
             if (!state.transactions[0]?.timestamp) {
                 state.transactions.forEach(tx => {
                     if (tx.date && !tx.timestamp) {
-                        tx.timestamp = new Date(tx.date).getTime();
-                        tx.hour = new Date(tx.date).getHours();
-                        tx.minute = new Date(tx.date).getMinutes();
+                        const [year, month, day] = tx.date.split('-').map(Number);
+                        const dateObj = new Date(year, month - 1, day, 12, 0, 0);
+                        tx.timestamp = dateObj.getTime();
+                        tx.hour = 12;
+                        tx.minute = 0;
                     }
                 });
             }
 
-            // Asegurar que existan todas las cuentas
             if (!state.user.bancolombia && state.user.bancolombia !== 0) {
                 state.user.bancolombia = 0;
             }
@@ -176,7 +173,6 @@
         const modal = $('portability-modal');
         if (!modal) return;
 
-        // Generar datos actualizados
         const exportData = {
             ...state,
             meta: {
@@ -221,7 +217,6 @@
         }
     };
 
-    // Nuevas categorías de gasto incluyendo "Pet"
     const DEFAULT_CATEGORIES = [
         'Alquiler', 'Cocina', 'Hogar', 'Cuotas', 'facturas', '4thiago',
         'Transporte', 'Pet', 'Skincare', 'Salud', 'Entretenimiento',
@@ -274,7 +269,6 @@
         refreshBalances: $('refresh-balances'),
         btnExpensesReport: $('btn-expenses-report'),
         expensesReportModal: $('expenses-report-modal'),
-        // Nuevos elementos para el resumen de gastos
         expensesSummaryList: $('expenses-summary-list'),
         summaryMonthly: $('summary-monthly'),
         summaryBiweekly: $('summary-biweekly')
@@ -352,46 +346,24 @@
         return map;
     }
 
-    // NUEVA FUNCIÓN: Calcular gastos por período
-    function calcExpensesByPeriod() {
-        const expenses = (state.transactions || [])
-            .filter(t => t.type === 'expense' && t.timestamp);
-        
-        const monthly = {};
-        const biweekly = {};
-
-        expenses.forEach(t => {
-            const date = new Date(t.timestamp);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            const monthName = monthNames[date.getMonth()];
-            
-            // Agrupación mensual
-            const monthKey = `${monthName} ${year}`;
-            if (!monthly[monthKey]) monthly[monthKey] = 0;
-            monthly[monthKey] += Number(t.amount);
-
-            // Agrupación quincenal
-            const day = date.getDate();
-            const quincena = day <= 15 ? 1 : 2;
-            const biweeklyKey = `${monthName} ${year} - ${quincena}ª Quincena`;
-            if (!biweekly[biweeklyKey]) biweekly[biweeklyKey] = 0;
-            biweekly[biweeklyKey] += Number(t.amount);
-        });
-
-        return { monthly, biweekly };
-    }
-
     function addTransaction(tx) {
-        // Usar la fecha seleccionada o la actual
         const selectedDate = el.txDate ? el.txDate.value : null;
-        const dateObj = selectedDate ? new Date(selectedDate) : new Date();
         
-        tx.timestamp = dateObj.getTime();
-        tx.hour = dateObj.getHours();
-        tx.minute = dateObj.getMinutes();
-        tx.date = dateObj.toISOString().split('T')[0];
+        if (selectedDate) {
+            const [year, month, day] = selectedDate.split('-').map(Number);
+            const dateObj = new Date(year, month - 1, day, 12, 0, 0);
+            
+            tx.timestamp = dateObj.getTime();
+            tx.hour = 12;
+            tx.minute = 0;
+            tx.date = selectedDate;
+        } else {
+            const dateObj = new Date();
+            tx.timestamp = dateObj.getTime();
+            tx.hour = dateObj.getHours();
+            tx.minute = dateObj.getMinutes();
+            tx.date = dateObj.toISOString().split('T')[0];
+        }
         
         state.transactions.push(tx);
         if (saveState(state)) showToast('Transacción registrada correctamente', 'success');
@@ -519,21 +491,56 @@
 
     // ---------- Formatting Functions ----------
     function formatTime(date) {
-        return date.toLocaleTimeString('es-CO', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
+        if (!date || isNaN(date.getTime())) return '';
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
     }
 
     function formatDateTime(timestamp) {
         if (!timestamp) return '';
         const date = new Date(timestamp);
-        return `${date.toLocaleDateString('es-CO')} ${formatTime(date)}`;
+        if (isNaN(date.getTime())) return 'Fecha inválida';
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
     }
 
-    // NUEVA FUNCIÓN: Renderizar resumen de gastos
+    // ---------- Expenses Summary ----------
     let currentSummaryPeriod = 'monthly';
+
+    function calcExpensesByPeriod() {
+        const expenses = (state.transactions || [])
+            .filter(t => t.type === 'expense' && t.timestamp);
+        
+        const monthly = {};
+        const biweekly = {};
+
+        expenses.forEach(t => {
+            if (!t.timestamp) return;
+            
+            const date = new Date(t.timestamp);
+            if (isNaN(date.getTime())) return;
+            
+            const year = date.getFullYear();
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const monthName = monthNames[date.getMonth()];
+            const day = date.getDate();
+            
+            const monthKey = `${monthName} ${year}`;
+            if (!monthly[monthKey]) monthly[monthKey] = 0;
+            monthly[monthKey] += Number(t.amount);
+
+            const quincena = day <= 15 ? 1 : 2;
+            const biweeklyKey = `${monthName} ${year} - ${quincena}ª Quincena`;
+            if (!biweekly[biweeklyKey]) biweekly[biweeklyKey] = 0;
+            biweekly[biweeklyKey] += Number(t.amount);
+        });
+
+        return { monthly, biweekly };
+    }
 
     function renderExpensesSummary() {
         if (!el.expensesSummaryList) return;
@@ -543,7 +550,6 @@
 
         el.expensesSummaryList.innerHTML = '';
 
-        // Actualizar estado de botones
         if (el.summaryMonthly) {
             el.summaryMonthly.classList.toggle('active', currentSummaryPeriod === 'monthly');
         }
@@ -556,14 +562,11 @@
             return;
         }
 
-        // Ordenar por fecha (los más recientes primero)
         const sortedEntries = Object.entries(data).sort((a, b) => {
-            // Extraer año para ordenar (asumiendo formato "Mes Año")
             const yearA = parseInt(a[0].match(/\d{4}/)?.[0] || '0');
             const yearB = parseInt(b[0].match(/\d{4}/)?.[0] || '0');
             if (yearA !== yearB) return yearB - yearA;
             
-            // Si mismo año, ordenar por mes
             const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             const monthA = monthNames.findIndex(m => a[0].includes(m));
             const monthB = monthNames.findIndex(m => b[0].includes(m));
@@ -580,7 +583,6 @@
             el.expensesSummaryList.appendChild(div);
         });
 
-        // Añadir total al final
         const total = Object.values(data).reduce((sum, val) => sum + val, 0);
         const totalDiv = document.createElement('div');
         totalDiv.className = 'summary-item';
@@ -613,26 +615,22 @@
         const balances = computeBalances(),
               currency = state.settings.currency || 'COP';
 
-        // Actualizar balances en UI
         if (el.balanceNu) el.balanceNu.textContent = formatCurrency(balances.nu, currency);
         if (el.balanceNequi) el.balanceNequi.textContent = formatCurrency(balances.nequi, currency);
         if (el.balanceBancolombia) el.balanceBancolombia.textContent = formatCurrency(balances.bancolombia, currency);
         if (el.balanceCash) el.balanceCash.textContent = formatCurrency(balances.cash, currency);
         if (el.balanceTotal) el.balanceTotal.textContent = formatCurrency(balances.total, currency);
 
-        // Mostrar estado del saldo
         const low = Number(state.settings.lowThreshold || 0);
         if (el.balanceStatus) {
             el.balanceStatus.textContent = balances.total < low ? 'Saldo bajo' : 'Estable';
             el.balanceStatus.style.color = balances.total < low ? '#ef4444' : '#10b981';
         }
 
-        // Total de transacciones
         if (el.totalTransactions) {
             el.totalTransactions.textContent = state.transactions.length;
         }
 
-        // Últimas transacciones
         if (el.lastTxList) {
             el.lastTxList.innerHTML = '';
             const sorted = (state.transactions || [])
@@ -704,7 +702,8 @@
                         accountInfo = 'Conversión';
                     }
 
-                    const timeDisplay = tx.timestamp ? formatDateTime(tx.timestamp) : tx.date;
+                    const dateObj = new Date(tx.timestamp);
+                    const timeDisplay = !isNaN(dateObj.getTime()) ? formatDateTime(tx.timestamp) : tx.date;
 
                     li.innerHTML = `
                         <div>
@@ -725,7 +724,6 @@
             }
         }
 
-        // Estadísticas
         const totals = calcTotals();
         if (el.totalIncomes) el.totalIncomes.textContent = formatCurrency(totals.incomes, currency);
         if (el.totalExpenses) el.totalExpenses.textContent = formatCurrency(totals.expenses, currency);
@@ -733,7 +731,6 @@
         const rec = suggestSavings(totals);
         if (el.suggestedSavings) el.suggestedSavings.textContent = rec.text;
 
-        // Renderizar alertas, presupuestos y resumen de gastos
         renderAlerts(balances, totals);
         renderBudgets();
         renderExpensesSummary();
@@ -747,7 +744,6 @@
         if (!el.alerts) return;
         el.alerts.innerHTML = '';
 
-        // Alerta de saldo bajo en efectivo
         if (balances.cash < 10000 && balances.cash > 0) {
             const d = document.createElement('div');
             d.className = 'alert warning';
@@ -755,7 +751,6 @@
             el.alerts.appendChild(d);
         }
 
-        // Alerta de saldo total bajo
         if (balances.total < Number(state.settings.lowThreshold || 0)) {
             const d = document.createElement('div');
             d.className = 'alert danger';
@@ -768,7 +763,6 @@
             el.alerts.appendChild(d);
         }
 
-        // Alerta de gastos mayores que ingresos
         if (totals.expenses > totals.incomes) {
             const d = document.createElement('div');
             d.className = 'alert danger';
@@ -784,7 +778,6 @@
             }
         }
 
-        // Alertas de presupuesto
         const spentByCat = calcExpensesByCategory();
         Object.keys(state.budgets).forEach(cat => {
             const spent = spentByCat[cat] || 0,
@@ -888,29 +881,24 @@
         const isTransfer = type === 'transfer';
         const isCashConversion = type === 'cash-conversion';
 
-        // Mostrar/ocultar filas según el tipo de transacción
         if (el.incomeSourceRow) el.incomeSourceRow.style.display = isIncome ? 'block' : 'none';
         if (el.expenseCategoryRow) el.expenseCategoryRow.style.display = isExpense ? 'block' : 'none';
         if (el.transferFromRow) el.transferFromRow.style.display = isTransfer ? 'block' : 'none';
         if (el.cashConversionRow) el.cashConversionRow.style.display = isCashConversion ? 'block' : 'none';
         if (el.cashConversionDetailsRow) el.cashConversionDetailsRow.style.display = isCashConversion ? 'block' : 'none';
 
-        // Mostrar fila de cuenta para ingresos y gastos
         if (el.txAccountRow) {
             el.txAccountRow.style.display = (isIncome || isExpense) ? 'block' : 'none';
         }
 
-        // Mostrar opción de depósito en Nu solo para ingresos
         if (el.depositToNu && el.depositToNu.parentElement) {
             el.depositToNu.parentElement.style.display = isIncome ? 'block' : 'none';
         }
 
-        // Mostrar split de Nu si está marcado
         if (el.nuSplitRow) {
             el.nuSplitRow.style.display = (isIncome && el.depositToNu && el.depositToNu.checked) ? 'block' : 'none';
         }
 
-        // Actualizar opciones de cuenta según el tipo
         if (el.txAccount) {
             const currentValue = el.txAccount.value;
             el.txAccount.innerHTML = '';
@@ -924,13 +912,11 @@
                 `;
             }
 
-            // Mantener el valor anterior si existe
             if (currentValue && Array.from(el.txAccount.options).some(opt => opt.value === currentValue)) {
                 el.txAccount.value = currentValue;
             }
         }
 
-        // Actualizar opciones de conversión de efectivo
         if (el.cashConversionDetails) {
             const conversionType = el.cashConversionType ? el.cashConversionType.value : 'to_cash';
             el.cashConversionDetails.innerHTML = '';
@@ -1057,7 +1043,8 @@
                 accountInfo = 'Conversión';
             }
 
-            const timeDisplay = tx.timestamp ? formatDateTime(tx.timestamp) : tx.date;
+            const dateObj = new Date(tx.timestamp);
+            const timeDisplay = !isNaN(dateObj.getTime()) ? formatDateTime(tx.timestamp) : tx.date;
 
             div.innerHTML = `
                 <div>
@@ -1222,11 +1209,13 @@
             handleCashConversionTransaction(amount);
         }
 
-        // Resetear formulario y actualizar UI
         el.txForm.reset();
-        // Establecer fecha actual por defecto
         if (el.txDate) {
-            el.txDate.value = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            el.txDate.value = `${year}-${month}-${day}`;
         }
         updateFormVisibility();
         initializeCurrencyMasks();
@@ -1261,7 +1250,6 @@
         const category = el.expenseCategory ? el.expenseCategory.value : 'Otros';
         const account = el.txAccount.value;
 
-        // Verificar saldo suficiente
         const balances = computeBalances();
         const accountBalance = account === 'nu' ? balances.nu :
                               account === 'nequi' ? balances.nequi :
@@ -1357,7 +1345,6 @@
                 return;
         }
 
-        // Verificar saldo suficiente en cuenta de origen
         const balances = computeBalances();
         const sourceBalance = fromAccount === 'nu' ? balances.nu :
                              fromAccount === 'nequi' ? balances.nequi :
@@ -1420,7 +1407,6 @@
             }
         }
 
-        // Verificar saldo suficiente
         const balances = computeBalances();
         const sourceBalance = fromAccount === 'nu' ? balances.nu :
                              fromAccount === 'nequi' ? balances.nequi :
@@ -1693,97 +1679,74 @@
 
     // ---------- Event Listeners ----------
     function initializeEventListeners() {
-        // Cambios en el tipo de transacción
         if (el.txType) {
             el.txType.addEventListener('change', updateFormVisibility);
         }
 
-        // Cambios en el tipo de conversión de efectivo
         if (el.cashConversionType) {
             el.cashConversionType.addEventListener('change', updateFormVisibility);
         }
 
-        // Checkbox de depósito en Nu
         if (el.depositToNu) {
             el.depositToNu.addEventListener('change', updateFormVisibility);
         }
 
-        // Formulario principal de transacción
         if (el.txForm) {
             el.txForm.addEventListener('submit', handleTransactionSubmit);
         }
 
-        // Event delegation para acciones en transacciones
         document.addEventListener('click', handleTransactionActions);
 
-        // Botones de vista
         if (el.btnViewAll) el.btnViewAll.addEventListener('click', showViewAll);
         if (el.btnViewAll2) el.btnViewAll2.addEventListener('click', showViewAll);
 
-        // Filtros en vista completa
         if ($('tx-filter-type')) {
             $('tx-filter-type').addEventListener('change', showViewAll);
             $('tx-filter-account').addEventListener('change', showViewAll);
             $('tx-search').addEventListener('input', debounce(showViewAll, 300));
         }
 
-        // Cerrar modales
         on('close-all-tx', 'click', hideAllModals);
         if (el.modalOverlay) el.modalOverlay.addEventListener('click', hideAllModals);
 
-        // Ajustes
         if (el.btnSettings) el.btnSettings.addEventListener('click', showSettings);
-
-        // Formulario de ajustes
         on('settings-form', 'submit', handleSettingsSubmit);
 
-        // Presupuestos
         on('btn-edit-budgets', 'click', showBudgets);
         on('btn-close-budgets', 'click', hideAllModals);
 
-        // Portabilidad de datos
         on('btn-data-portability', 'click', showPortabilityModal);
         on('btn-copy-data', 'click', copyDataToClipboard);
         on('btn-close-portability', 'click', hideAllModals);
 
-        // Importar datos
         on('btn-import-data', 'click', showImportModal);
         on('btn-import-confirm', 'click', importDataFromClipboard);
         on('btn-close-import', 'click', hideAllModals);
 
-        // Exportar
         on('btn-export', 'click', showExportModal);
         on('btn-close-export', 'click', hideAllModals);
         on('btn-export-csv', 'click', () => exportData('csv'));
         on('btn-export-json', 'click', () => exportData('json'));
 
-        // Agregar presupuesto
         on('btn-add-budget', 'click', handleAddBudget);
 
-        // Eliminar presupuesto
         const budgetsListEl = $('budgets-form-list');
         if (budgetsListEl) budgetsListEl.addEventListener('click', handleBudgetRemoval);
 
-        // Guardar presupuestos
         if ($('budgets-form')) $('budgets-form').addEventListener('submit', handleBudgetsSubmit);
 
-        // Setup inicial
         if ($('setup-form')) $('setup-form').addEventListener('submit', handleSetupSubmit);
 
-        // Refrescar balances
         if (el.refreshBalances) el.refreshBalances.addEventListener('click', () => {
             renderAll();
             showToast('Balances actualizados', 'success');
         });
 
-        // Reporte de gastos
         if (el.btnExpensesReport) el.btnExpensesReport.addEventListener('click', showExpensesReport);
 
-        // Cerrar reporte de gastos
         const closeExpBtn = $('close-expenses-report');
         if (closeExpBtn) closeExpBtn.addEventListener('click', hideAllModals);
 
-        // NUEVOS LISTENERS: Controles de resumen de gastos
         if (el.summaryMonthly) {
             el.summaryMonthly.addEventListener('click', () => setSummaryPeriod('monthly'));
         }
@@ -1792,7 +1755,6 @@
         }
     }
 
-    // ---------- Utilities ----------
     function debounce(func, wait) {
         let timeout;
         return function (...args) {
@@ -1803,7 +1765,6 @@
 
     // ---------- Initialize ----------
     window.addEventListener('load', () => {
-        // Migrar datos antiguos si es necesario
         const oldStateV8 = localStorage.getItem('banklar_finances_v8');
         const oldStateV7 = localStorage.getItem('banklar_finances_v7');
         let migrated = false;
@@ -1812,7 +1773,6 @@
             try {
                 const parsed = JSON.parse(oldStateV8);
                 if (parsed.user) {
-                    // Migrar de v8 a v9 (eliminar referencias a gráficas)
                     state.user = {
                         name: parsed.user.name,
                         nu: parsed.user.nu || 0,
@@ -1823,6 +1783,13 @@
                     };
                     
                     state.transactions = (parsed.transactions || []).map(tx => {
+                        if (!tx.timestamp && tx.date) {
+                            const [year, month, day] = tx.date.split('-').map(Number);
+                            const dateObj = new Date(year, month - 1, day, 12, 0, 0);
+                            tx.timestamp = dateObj.getTime();
+                            tx.hour = 12;
+                            tx.minute = 0;
+                        }
                         return tx;
                     });
                     
@@ -1857,6 +1824,14 @@
                         if (tx.source === 'nova') tx.source = 'Salario';
                         if (tx.account === 'nequi1') tx.account = 'nequi';
                         if (tx.account === 'caja_nu') tx.account = 'nu';
+                        
+                        if (!tx.timestamp && tx.date) {
+                            const [year, month, day] = tx.date.split('-').map(Number);
+                            const dateObj = new Date(year, month - 1, day, 12, 0, 0);
+                            tx.timestamp = dateObj.getTime();
+                            tx.hour = 12;
+                            tx.minute = 0;
+                        }
                         return tx;
                     });
                     
@@ -1882,21 +1857,21 @@
             showToast('Datos migrados a nueva versión', 'info');
         }
 
-        // Configurar UI
         populateCategorySelects();
         initializeCurrencyMasks();
         updateFormVisibility();
         initializeEventListeners();
 
-        // Establecer fecha actual en el selector
         if (el.txDate) {
-            el.txDate.value = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            el.txDate.value = `${year}-${month}-${day}`;
         }
 
-        // Renderizar UI
         renderAll();
 
-        // Verificar cuando la página gana foco
         window.addEventListener('focus', () => {
             setTimeout(() => {
                 renderAll();
@@ -1904,7 +1879,6 @@
         });
     });
 
-    // ---------- Public API for debugging ----------
     window._banklar_state = state;
     window._banklar_exportData = exportData;
     window._banklar_computeBalances = computeBalances;
