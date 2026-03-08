@@ -183,14 +183,23 @@
 <div class="stat-sub">Totales</div> 
 </div> 
 </div> 
-<div class="chart-area"> 
-<canvas id="expenses-chart" width="400" height="200"></canvas> 
-</div> 
-<div class="chart-controls"> 
-<button id="chart-monthly" class="btn-chart active">Por Mes</button> 
-<button id="chart-biweekly" class="btn-chart">Por Quincena</button> 
-</div> 
-</div> 
+
+<!-- NUEVA SECCIÓN: Resumen de Gastos por Mes/Quincena -->
+<div class="expenses-summary">
+  <div class="summary-header">
+    <h3 class="summary-title">Resumen de Gastos</h3>
+    <div class="summary-controls">
+      <button id="summary-monthly" class="btn-summary active">Por Mes</button>
+      <button id="summary-biweekly" class="btn-summary">Por Quincena</button>
+    </div>
+  </div>
+  <div id="expenses-summary-list" class="summary-list">
+    <!-- Aquí se mostrarán los gastos por período -->
+    <div class="summary-placeholder">Cargando datos...</div>
+  </div>
+  <button id="btn-expenses-report" class="btn-ghost btn-small" style="margin-top: 10px; width: 100%;">Ver reporte completo por categorías</button>
+</div>
+
 </article> 
 </section> 
 <section class="transactions"> 
