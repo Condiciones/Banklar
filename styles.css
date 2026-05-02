@@ -224,7 +224,7 @@ body {
   border-left: 3px solid #f59e0b;
 }
 
-.balance-item.bancolombia-item {
+.balance-item.davivienda-item {
   background: rgba(255, 255, 255, 0.25);
   border-left: 3px solid #10b981;
 }
@@ -243,6 +243,7 @@ body {
 .row input[type="text"],
 .row input[type="number"],
 .row input[type="date"],
+.row input[type="datetime-local"],
 .row select {
   width:100%;
   padding:10px;
@@ -253,12 +254,14 @@ body {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.row input[type="date"] {
+.row input[type="date"],
+.row input[type="datetime-local"] {
   font-family: 'Inter', sans-serif;
   cursor: pointer;
 }
 
-.row input[type="date"]::-webkit-calendar-picker-indicator {
+.row input[type="date"]::-webkit-calendar-picker-indicator,
+.row input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   background: transparent;
   color: var(--accent);
   cursor: pointer;
@@ -266,13 +269,15 @@ body {
   transition: opacity 0.2s ease;
 }
 
-.row input[type="date"]::-webkit-calendar-picker-indicator:hover {
+.row input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.row input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
 .row input[type="text"]:focus,
 .row input[type="number"]:focus,
 .row input[type="date"]:focus,
+.row input[type="datetime-local"]:focus,
 .row select:focus {
   outline:none;
   border-color:var(--accent);
@@ -389,6 +394,15 @@ body {
   padding: 2px 6px;
   border-radius: 12px;
   margin-left: 6px;
+}
+
+.tx-item .time-badge {
+  font-size: 11px;
+  color: var(--muted);
+  background: rgba(124, 58, 237, 0.08);
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-left: 4px;
 }
 
 .tx-item .actions {
@@ -647,6 +661,7 @@ body {
 .modal input[type="text"],
 .modal input[type="number"],
 .modal input[type="date"],
+.modal input[type="datetime-local"],
 .modal textarea,
 .modal select {
   background: #ffffff;
@@ -936,6 +951,7 @@ body {
   .row input[type="text"],
   .row input[type="number"],
   .row input[type="date"],
+  .row input[type="datetime-local"],
   .row select {
     background: rgba(255,255,255,0.05);
     color: var(--text);
@@ -995,7 +1011,8 @@ body {
 .modal input,
 .modal select,
 .modal textarea,
-.modal input[type="date"] {
+.modal input[type="date"],
+.modal input[type="datetime-local"] {
   color: #000 !important;
   background: #fff !important;
   border-color: rgba(15,9,55,0.12) !important;
@@ -1032,26 +1049,33 @@ body {
   background: #fff !important;
 }
 
-input[type="date"] {
+input[type="date"],
+input[type="datetime-local"] {
   font-family: 'Inter', sans-serif;
   min-height: 38px;
 }
 
-input[type="date"]::-webkit-datetime-edit {
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit {
   color: var(--text);
 }
 
-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
   color: var(--text);
 }
 
-input[type="date"]::-webkit-datetime-edit-text {
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="datetime-local"]::-webkit-datetime-edit-text {
   color: var(--muted);
 }
 
 input[type="date"]::-webkit-datetime-edit-month-field,
 input[type="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field {
+input[type="date"]::-webkit-datetime-edit-year-field,
+input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+input[type="datetime-local"]::-webkit-datetime-edit-year-field {
   color: var(--text);
 }
 
