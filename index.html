@@ -37,8 +37,8 @@
 <div class="amount" id="balance-nequi">$0.00</div> 
 </div> 
 <div class="balance-item"> 
-<div class="label">Bancolombia</div> 
-<div class="amount" id="balance-bancolombia">$0.00</div> 
+<div class="label">Davivienda</div> 
+<div class="amount" id="balance-davivienda">$0.00</div> 
 </div> 
 <div class="balance-item"> 
 <div class="label">Efectivo</div> 
@@ -87,6 +87,7 @@
 <option value="Salud">Salud</option> 
 <option value="Entretenimiento">Entretenimiento</option> 
 <option value="Comida">Comida</option> 
+<option value="Impuestos">Impuestos</option> 
 <option value="Efectivo">Retiro en efectivo</option> 
 <option value="Otros">Otros</option> 
 </select> 
@@ -96,16 +97,16 @@
 <select id="transfer-from"> 
 <option value="nu">Nu → Nequi</option> 
 <option value="nequi">Nequi → Nu</option> 
-<option value="nequi_to_bancolombia">Nequi → Bancolombia</option> 
-<option value="bancolombia_to_nequi">Bancolombia → Nequi</option> 
-<option value="nu_to_bancolombia">Nu → Bancolombia</option> 
-<option value="bancolombia_to_nu">Bancolombia → Nu</option> 
+<option value="nequi_to_davivienda">Nequi → Davivienda</option> 
+<option value="davivienda_to_nequi">Davivienda → Nequi</option> 
+<option value="nu_to_davivienda">Nu → Davivienda</option> 
+<option value="davivienda_to_nu">Davivienda → Nu</option> 
 <option value="cash_to_nu">Efectivo → Nu</option> 
 <option value="cash_to_nequi">Efectivo → Nequi</option> 
-<option value="cash_to_bancolombia">Efectivo → Bancolombia</option> 
+<option value="cash_to_davivienda">Efectivo → Davivienda</option> 
 <option value="nu_to_cash">Nu → Efectivo</option> 
 <option value="nequi_to_cash">Nequi → Efectivo</option> 
-<option value="bancolombia_to_cash">Bancolombia → Efectivo</option> 
+<option value="davivienda_to_cash">Davivienda → Efectivo</option> 
 </select> 
 </div> 
 <div class="row" id="cash-conversion-row" style="display:none"> 
@@ -120,10 +121,10 @@
 <select id="cash-conversion-details"> 
 <option value="nu_to_cash">Nu → Efectivo</option> 
 <option value="nequi_to_cash">Nequi → Efectivo</option> 
-<option value="bancolombia_to_cash">Bancolombia → Efectivo</option> 
+<option value="davivienda_to_cash">Davivienda → Efectivo</option> 
 <option value="cash_to_nu">Efectivo → Nu</option> 
 <option value="cash_to_nequi">Efectivo → Nequi</option> 
-<option value="cash_to_bancolombia">Efectivo → Bancolombia</option> 
+<option value="cash_to_davivienda">Efectivo → Davivienda</option> 
 </select> 
 </div> 
 <div class="row"> 
@@ -132,15 +133,15 @@
 <div class="currency-hint">Escribe números sin puntos ni comas</div> 
 </div> 
 <div class="row"> 
-<label for="tx-date">Fecha</label> 
-<input id="tx-date" type="date" required class="date-input"> 
+<label for="tx-date">Fecha y Hora</label> 
+<input id="tx-date" type="datetime-local" required class="date-input"> 
 </div> 
 <div class="row" id="tx-account-row"> 
 <label for="tx-account">Cuenta</label> 
 <select id="tx-account"> 
 <option value="nu">Nu</option> 
 <option value="nequi">Nequi</option> 
-<option value="bancolombia">Bancolombia</option> 
+<option value="davivienda">Davivienda</option> 
 <option value="cash">Efectivo</option> 
 </select> 
 </div> 
@@ -229,7 +230,7 @@
 <div class="row"><label for="user-name">Nombre</label><input id="user-name" type="text" required placeholder="Tu nombre"></div> 
 <div class="row"><label for="user-nu">Saldo en Nu</label><input id="user-nu" type="text" value="0,00" required class="currency-input"></div> 
 <div class="row"><label for="user-nequi">Saldo en Nequi</label><input id="user-nequi" type="text" value="0,00" required class="currency-input"></div> 
-<div class="row"><label for="user-bancolombia">Saldo en Bancolombia</label><input id="user-bancolombia" type="text" value="0,00" required class="currency-input"></div> 
+<div class="row"><label for="user-davivienda">Saldo en Davivienda</label><input id="user-davivienda" type="text" value="0,00" required class="currency-input"></div> 
 <div class="row"><label for="user-cash">Saldo en Efectivo</label><input id="user-cash" type="text" value="0,00" required class="currency-input"></div> 
 <div class="row actions"><button type="submit" class="btn-primary">Guardar y empezar</button></div> 
 </form> 
@@ -239,7 +240,7 @@
 <div class="modal-toolbar"> 
 <div class="filter-controls"> 
 <select id="tx-filter-type"><option value="all">Todas las transacciones</option><option value="income">Solo ingresos</option><option value="expense">Solo gastos</option><option value="transfer">Transferencias</option><option value="cash-conversion">Conversiones efectivo</option></select> 
-<select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Nu</option><option value="nequi">Nequi</option><option value="bancolombia">Bancolombia</option><option value="cash">Efectivo</option></select> 
+<select id="tx-filter-account"><option value="all">Todas las cuentas</option><option value="nu">Nu</option><option value="nequi">Nequi</option><option value="davivienda">Davivienda</option><option value="cash">Efectivo</option></select> 
 </div> 
 <div class="search-control"><input type="text" id="tx-search" placeholder="Buscar..."></div> 
 </div> 
@@ -282,6 +283,7 @@
 <option value="Salud">Salud</option> 
 <option value="Entretenimiento">Entretenimiento</option> 
 <option value="Comida">Comida</option> 
+<option value="Impuestos">Impuestos</option> 
 <option value="Otros">Otros</option> 
 </select> 
 <input id="new-budget-amt" placeholder="Monto" type="text" class="currency-input" style="width:120px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)"> 
