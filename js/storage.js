@@ -46,44 +46,11 @@ function resetAllData() {
     }
     
     try {
-        // 1. Eliminar TODAS las keys de banklar en localStorage
-        const keysToRemove = [];
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('banklar_finances_')) {
-                keysToRemove.push(key);
-            }
-        }
-        keysToRemove.forEach(key => {
-            localStorage.removeItem(key);
-            console.log('🗑️ Eliminada key:', key);
-        });
-        
-        // 2. Forzar un estado completamente limpio en memoria
-        state = {
-            user: null,
-            transactions: [],
-            budgets: {},
-            settings: {
-                lowThreshold: 20000,
-                currency: 'COP'
-            },
-            meta: {
-                lastUpdated: nowISO(),
-                version: 'v10'
-            }
-        };
-        
-        // 3. Guardar el estado limpio en localStorage
-        saveState(state);
-        
-        showToast('✅ Todos los datos han sido eliminados correctamente', 'success');
-        
-        // 4. Recargar la página para empezar desde cero
+        localStorage.removeItem(STORAGE_KEY);
+        showToast('Todos los datos han sido eliminados correctamente', 'success');
         setTimeout(() => {
             location.reload();
         }, 1500);
-        
     } catch (e) {
         console.error('Error resetting data:', e);
         showToast('Error al resetear los datos', 'error');
