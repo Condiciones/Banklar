@@ -35,6 +35,28 @@ let state = loadState() || {
     }
 };
 
+// ---------- Reset All Data ----------
+function resetAllData() {
+    if (!confirm('⚠️ ¿Estás completamente seguro?\n\nEsta acción borrará TODOS tus datos:\n• Transacciones\n• Presupuestos\n• Balances\n• Configuración\n\nNo se puede deshacer.')) {
+        return;
+    }
+    
+    if (!confirm('🚨 ÚLTIMA ADVERTENCIA\n\n¿Realmente deseas eliminar todos tus datos financieros de forma permanente?')) {
+        return;
+    }
+    
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        showToast('Todos los datos han sido eliminados correctamente', 'success');
+        setTimeout(() => {
+            location.reload();
+        }, 1500);
+    } catch (e) {
+        console.error('Error resetting data:', e);
+        showToast('Error al resetear los datos', 'error');
+    }
+}
+
 // ---------- Migración de versiones anteriores ----------
 function migrateFromOldVersions() {
     const oldStateV9 = localStorage.getItem('banklar_finances_v9');
