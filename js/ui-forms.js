@@ -534,6 +534,9 @@ function initializeEventListeners() {
 
     if ($('setup-form')) $('setup-form').addEventListener('submit', handleSetupSubmit);
 
+    // Botón de resetear todos los datos
+    on('btn-reset-data', 'click', resetAllData);
+
     if (el.refreshBalances) el.refreshBalances.addEventListener('click', () => {
         renderAll();
         showToast('Balances actualizados', 'success');
