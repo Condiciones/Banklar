@@ -46,7 +46,24 @@ function resetAllData() {
     }
     
     try {
+        // Eliminar la versión actual
         localStorage.removeItem(STORAGE_KEY);
+        
+        // Eliminar todas las versiones anteriores conocidas
+        localStorage.removeItem('banklar_finances_v9');
+        localStorage.removeItem('banklar_finances_v8');
+        localStorage.removeItem('banklar_finances_v7');
+        
+        // Eliminar cualquier otra key de banklar que pudiera existir
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('banklar_finances_')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
         showToast('Todos los datos han sido eliminados correctamente', 'success');
         setTimeout(() => {
             location.reload();
