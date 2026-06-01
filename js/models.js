@@ -1,10 +1,6 @@
 // ---------- Cached elements ----------
 const el = {
     greeting: $('greeting'),
-    balanceNu: $('balance-nu'),
-    balanceNequi: $('balance-nequi'),
-    balanceDavivienda: $('balance-davivienda'),
-    balanceCash: $('balance-cash'),
     balanceTotal: $('balance-total'),
     balanceStatus: $('balance-status'),
     txForm: $('tx-form'),
@@ -23,9 +19,9 @@ const el = {
     txDate: $('tx-date'),
     txAccount: $('tx-account'),
     txAccountRow: $('tx-account-row'),
-    depositToNu: $('deposit-to-nu'),
-    nuSplitRow: $('nu-split-row'),
-    nuSplitAmount: $('nu-split-amount'),
+    depositToPrincipal: $('deposit-to-principal'),
+    principalSplitRow: $('principal-split-row'),
+    principalSplitAmount: $('principal-split-amount'),
     lastTxList: $('last-tx-list'),
     btnViewAll: $('btn-view-all'),
     btnViewAll2: $('btn-view-all-2'),
@@ -98,6 +94,90 @@ function populateCategorySelects() {
     }
 }
 
+// ---------- Currency Input (Nu Bank style) ----------
+let currencyInputRaw = 0;
+
+function currencyInputPush(digit) {
+    currencyInputRaw = currencyInputRaw * 10 + digit;
+    return currencyInputRaw / 100;
+}
+
+function currencyInputBackspace() {
+    currencyInputRaw = Math.floor(currencyInputRaw / 10);
+    return currencyInputRaw / 100;
+}
+
+function currencyInputClear() {
+    currencyInputRaw = 0;
+}
+
+function currencyInputGetValue() {
+    return currencyInputRaw / 100;
+}
+
+function currencyInputSetValue(value) {
+    currencyInputRaw = Math.round(value * 100);
+}
+
+function formatCurrencyInput() {
+    const value = currencyInputRaw / 100;
+    return new Intl.NumberFormat(state.settings.locale || 'es-CO', {
+        style: 'decimal',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+}
+
+// ---------- Formatting ----------
+function formatCurrency(amount, currencyCode) {
+    const code = currencyCode || (state.settings && state.settings.currency) || 'COP';
+    const locale = (state.settings && state.settings.locale) || 'es-CO';
+    
+    try {
+        return new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: code,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    } catch (e) {
+        // Fallback si el locale/currency no es soportado
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    }
+}
+
+function formatDateTime(timestamp) {
+    const d = new Date(timestamp);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hour = String(d.getHours()).padStart(2, '0');
+    const minute = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function formatTime(hour, minute) {
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function nowISO() {
+    return new Date().toISOString();
+}
+
+function formatDateShort(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+}
+
 // ---------- Transactions / totals ----------
 function calcTotals() {
     let incomes = 0, expenses = 0, transfers = 0, conversions = 0;
@@ -138,6 +218,11 @@ function addTransaction(tx) {
         tx.date = dateObj.toISOString().split('T')[0];
     }
     
+    // Asignar ID único
+    if (!tx.id) {
+        tx.id = generateId();
+    }
+    
     state.transactions.push(tx);
     if (saveState(state)) showToast('Transacción registrada correctamente', 'success');
     populateCategorySelects();
@@ -154,136 +239,164 @@ function removeTransactionById(id) {
     }
 }
 
-// ---------- Balances ----------
+// ---------- Balances (dinámicos, basados en accounts[]) ----------
 function computeBalances() {
-    let nu = state.user ? Number(state.user.nu || 0) : 0;
-    let nequi = state.user ? Number(state.user.nequi || 0) : 0;
-    let davivienda = state.user ? Number(state.user.davivienda || 0) : 0;
-    let cash = state.user ? Number(state.user.cash || 0) : 0;
-
+    const accounts = getActiveAccounts();
+    const balances = {};
+    
+    // Inicializar saldos desde el estado guardado de las cuentas
+    accounts.forEach(acc => {
+        balances[acc.id] = Number(acc.balance || 0);
+    });
+    
+    // Ordenar transacciones cronológicamente
     const txs = (state.transactions || [])
         .slice()
         .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-
+    
     txs.forEach(tx => {
-        if (tx.account === 'bancolombia') tx.account = 'davivienda';
-        if (tx.from === 'bancolombia') tx.from = 'davivienda';
-        if (tx.to === 'bancolombia') tx.to = 'davivienda';
+        const amount = Number(tx.amount);
         
         if (tx.type === 'income') {
-            if (tx.nuAllocated && tx.nuAllocated > 0) {
-                nu += Number(tx.nuAllocated);
-                const rest = Number(tx.amount) - Number(tx.nuAllocated);
-                if (rest > 0) {
-                    if (tx.account === 'nequi') nequi += rest;
-                    else if (tx.account === 'davivienda') davivienda += rest;
-                    else if (tx.account === 'cash') cash += rest;
+            // Ingreso con posible reparto a cuenta principal
+            if (tx.principalAllocated && tx.principalAllocated > 0 && tx.toAccountId) {
+                if (balances[tx.toAccountId] !== undefined) {
+                    balances[tx.toAccountId] += Number(tx.principalAllocated);
+                }
+                const rest = amount - Number(tx.principalAllocated);
+                if (rest > 0 && tx.accountId && balances[tx.accountId] !== undefined) {
+                    balances[tx.accountId] += rest;
                 }
             } else {
-                if (tx.account === 'nu') nu += Number(tx.amount);
-                else if (tx.account === 'nequi') nequi += Number(tx.amount);
-                else if (tx.account === 'davivienda') davivienda += Number(tx.amount);
-                else if (tx.account === 'cash') cash += Number(tx.amount);
+                if (tx.accountId && balances[tx.accountId] !== undefined) {
+                    balances[tx.accountId] += amount;
+                }
             }
         } else if (tx.type === 'expense') {
-            if (tx.account === 'nu') nu -= Number(tx.amount);
-            else if (tx.account === 'nequi') nequi -= Number(tx.amount);
-            else if (tx.account === 'davivienda') davivienda -= Number(tx.amount);
-            else if (tx.account === 'cash') cash -= Number(tx.amount);
+            if (tx.accountId && balances[tx.accountId] !== undefined) {
+                balances[tx.accountId] -= amount;
+            }
         } else if (tx.type === 'transfer') {
-            const amount = Number(tx.amount);
-            if (tx.from === 'nu' && tx.to === 'nequi') {
-                nu -= amount;
-                nequi += amount;
-            } else if (tx.from === 'nequi' && tx.to === 'nu') {
-                nequi -= amount;
-                nu += amount;
-            } else if (tx.from === 'nu' && tx.to === 'davivienda') {
-                nu -= amount;
-                davivienda += amount;
-            } else if (tx.from === 'davivienda' && tx.to === 'nu') {
-                davivienda -= amount;
-                nu += amount;
-            } else if (tx.from === 'nequi' && tx.to === 'davivienda') {
-                nequi -= amount;
-                davivienda += amount;
-            } else if (tx.from === 'davivienda' && tx.to === 'nequi') {
-                davivienda -= amount;
-                nequi += amount;
-            } else if (tx.from === 'cash' && tx.to === 'nu') {
-                cash -= amount;
-                nu += amount;
-            } else if (tx.from === 'cash' && tx.to === 'nequi') {
-                cash -= amount;
-                nequi += amount;
-            } else if (tx.from === 'cash' && tx.to === 'davivienda') {
-                cash -= amount;
-                davivienda += amount;
-            } else if (tx.from === 'nu' && tx.to === 'cash') {
-                nu -= amount;
-                cash += amount;
-            } else if (tx.from === 'nequi' && tx.to === 'cash') {
-                nequi -= amount;
-                cash += amount;
-            } else if (tx.from === 'davivienda' && tx.to === 'cash') {
-                davivienda -= amount;
-                cash += amount;
+            const fromId = tx.fromAccountId;
+            const toId = tx.toAccountId;
+            
+            if (fromId && balances[fromId] !== undefined) {
+                balances[fromId] -= amount;
+            }
+            if (toId && balances[toId] !== undefined) {
+                balances[toId] += amount;
             }
         } else if (tx.type === 'cash-conversion') {
-            const amount = Number(tx.amount);
             if (tx.conversionType === 'to_cash') {
-                if (tx.from === 'nu') {
-                    nu -= amount;
-                    cash += amount;
-                } else if (tx.from === 'nequi') {
-                    nequi -= amount;
-                    cash += amount;
-                } else if (tx.from === 'davivienda') {
-                    davivienda -= amount;
-                    cash += amount;
+                const fromId = tx.fromAccountId;
+                const cashAccount = accounts.find(a => a.name.toLowerCase() === 'efectivo');
+                if (fromId && balances[fromId] !== undefined) {
+                    balances[fromId] -= amount;
+                }
+                if (cashAccount && balances[cashAccount.id] !== undefined) {
+                    balances[cashAccount.id] += amount;
                 }
             } else if (tx.conversionType === 'from_cash') {
-                if (tx.to === 'nu') {
-                    cash -= amount;
-                    nu += amount;
-                } else if (tx.to === 'nequi') {
-                    cash -= amount;
-                    nequi += amount;
-                } else if (tx.to === 'davivienda') {
-                    cash -= amount;
-                    davivienda += amount;
+                const toId = tx.toAccountId;
+                const cashAccount = accounts.find(a => a.name.toLowerCase() === 'efectivo');
+                if (cashAccount && balances[cashAccount.id] !== undefined) {
+                    balances[cashAccount.id] -= amount;
+                }
+                if (toId && balances[toId] !== undefined) {
+                    balances[toId] += amount;
                 }
             }
         }
     });
-
+    
+    // Asegurar valores no negativos
+    Object.keys(balances).forEach(id => {
+        balances[id] = Math.max(0, balances[id]);
+    });
+    
+    // Calcular total
+    let total = 0;
+    Object.values(balances).forEach(v => { total += v; });
+    
     return {
-        nu: Math.max(0, nu),
-        nequi: Math.max(0, nequi),
-        davivienda: Math.max(0, davivienda),
-        cash: Math.max(0, cash),
-        total: Math.max(0, nu + nequi + davivienda + cash)
+        accounts: balances,
+        total: Math.max(0, total)
     };
+}
+
+function getBalanceForAccount(accountId) {
+    const balances = computeBalances();
+    return balances.accounts[accountId] || 0;
+}
+
+// ---------- Obtener cuenta por nombre (para compatibilidad) ----------
+function getAccountByName(name) {
+    const nameLower = (name || '').toLowerCase();
+    const accounts = getActiveAccounts();
+    
+    // Buscar por nombre exacto
+    let found = accounts.find(a => a.name.toLowerCase() === nameLower);
+    
+    // Compatibilidad con nombres antiguos
+    if (!found) {
+        const legacyMap = {
+            'nu': 'nu',
+            'nequi': 'nequi',
+            'davivienda': 'davivienda',
+            'bancolombia': 'davivienda',
+            'efectivo': 'efectivo',
+            'cash': 'efectivo'
+        };
+        const mappedName = legacyMap[nameLower];
+        if (mappedName) {
+            found = accounts.find(a => a.name.toLowerCase() === mappedName);
+        }
+    }
+    
+    return found || null;
+}
+
+function getAccountIdByName(name) {
+    const account = getAccountByName(name);
+    return account ? account.id : null;
 }
 
 // ---------- Filter transactions ----------
 function filterTransactions(typeFilter, accountFilter, searchFilter) {
+    const activeAccounts = getActiveAccounts();
+    
     return (state.transactions || []).filter(tx => {
         if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
 
         if (accountFilter !== 'all') {
+            const account = getAccountById(accountFilter);
+            if (!account) return false;
+            
+            const accountName = account.name.toLowerCase();
+            
             if (tx.type === 'transfer') {
-                if (accountFilter === 'nu' && !(tx.from === 'nu' || tx.to === 'nu')) return false;
-                if (accountFilter === 'nequi' && !(tx.from === 'nequi' || tx.to === 'nequi')) return false;
-                if (accountFilter === 'davivienda' && !(tx.from === 'davivienda' || tx.to === 'davivienda')) return false;
-                if (accountFilter === 'cash' && !(tx.from === 'cash' || tx.to === 'cash')) return false;
+                const fromAcc = tx.fromAccountId ? getAccountById(tx.fromAccountId) : null;
+                const toAcc = tx.toAccountId ? getAccountById(tx.toAccountId) : null;
+                const fromName = fromAcc ? fromAcc.name.toLowerCase() : '';
+                const toName = toAcc ? toAcc.name.toLowerCase() : '';
+                
+                if (fromName !== accountName && toName !== accountName) return false;
             } else if (tx.type === 'cash-conversion') {
-                if (accountFilter === 'nu' && !((tx.conversionType === 'to_cash' && tx.from === 'nu') || (tx.conversionType === 'from_cash' && tx.to === 'nu'))) return false;
-                if (accountFilter === 'nequi' && !((tx.conversionType === 'to_cash' && tx.from === 'nequi') || (tx.conversionType === 'from_cash' && tx.to === 'nequi'))) return false;
-                if (accountFilter === 'davivienda' && !((tx.conversionType === 'to_cash' && tx.from === 'davivienda') || (tx.conversionType === 'from_cash' && tx.to === 'davivienda'))) return false;
-                if (accountFilter === 'cash' && !((tx.conversionType === 'to_cash') || (tx.conversionType === 'from_cash'))) return false;
-            } else if (tx.account !== accountFilter) {
-                return false;
+                const fromAcc = tx.fromAccountId ? getAccountById(tx.fromAccountId) : null;
+                const toAcc = tx.toAccountId ? getAccountById(tx.toAccountId) : null;
+                const fromName = fromAcc ? fromAcc.name.toLowerCase() : '';
+                const toName = toAcc ? toAcc.name.toLowerCase() : '';
+                const cashName = 'efectivo';
+                
+                if (tx.conversionType === 'to_cash') {
+                    if (fromName !== accountName && cashName !== accountName) return false;
+                } else {
+                    if (toName !== accountName && cashName !== accountName) return false;
+                }
+            } else {
+                const txAcc = tx.accountId ? getAccountById(tx.accountId) : null;
+                const txAccName = txAcc ? txAcc.name.toLowerCase() : '';
+                if (txAccName !== accountName) return false;
             }
         }
 
@@ -314,4 +427,430 @@ function suggestSavings(totals) {
 
     const savingsAmount = totals.incomes * (recommendedPercent / 100);
     return { text: `${recommendedPercent}% de tus ingresos (${formatCurrency(savingsAmount, state.settings.currency)}) como ahorro.` };
+}
+
+// ---------- Investment Engine ----------
+function getDailyRate(annualRate) {
+    // Tasa diaria = (1 + EA)^(1/365) - 1
+    const rate = Number(annualRate) / 100;
+    return Math.pow(1 + rate, 1 / 365) - 1;
+}
+
+function calculateInvestmentFutureValue(principal, dailyRate, days) {
+    return principal * Math.pow(1 + dailyRate, days);
+}
+
+function processAllInvestmentsOnStartup() {
+    const investments = getActiveInvestments();
+    if (investments.length === 0) return;
+    
+    const now = new Date();
+    let anyUpdate = false;
+    
+    investments.forEach(inv => {
+        const lastUpdate = inv.lastAccreditationDate ? new Date(inv.lastAccreditationDate) : new Date(inv.createdAt);
+        const elapsedMs = now.getTime() - lastUpdate.getTime();
+        const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+        
+        if (elapsedDays <= 0) return;
+        
+        // Calcular rendimientos acumulados desde la última actualización
+        let currentValue = Number(inv.currentValue || inv.initialAmount);
+        let totalYield = 0;
+        let processDate = new Date(lastUpdate);
+        
+        // Revisar cambios de tasa en el período
+        const rateChanges = (state.rateHistory || [])
+            .filter(r => r.investmentId === inv.id && new Date(r.changeDate) > lastUpdate && new Date(r.changeDate) <= now)
+            .sort((a, b) => new Date(a.changeDate).getTime() - new Date(b.changeDate).getTime());
+        
+        if (rateChanges.length > 0) {
+            rateChanges.forEach(change => {
+                const changeDate = new Date(change.changeDate);
+                const segmentDays = Math.floor((changeDate.getTime() - processDate.getTime()) / (1000 * 60 * 60 * 24));
+                
+                if (segmentDays > 0) {
+                    const dailyRate = getDailyRate(change.oldRate);
+                    const newValue = calculateInvestmentFutureValue(currentValue, dailyRate, segmentDays);
+                    totalYield += newValue - currentValue;
+                    currentValue = newValue;
+                }
+                processDate = changeDate;
+            });
+        }
+        
+        // Tramo final con tasa actual
+        const finalDays = Math.floor((now.getTime() - processDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (finalDays > 0) {
+            const dailyRate = getDailyRate(inv.annualRate);
+            const newValue = calculateInvestmentFutureValue(currentValue, dailyRate, finalDays);
+            totalYield += newValue - currentValue;
+            currentValue = newValue;
+        }
+        
+        // Verificar si toca acreditar
+        const shouldAccredit = checkAccreditationDue(inv, elapsedDays);
+        
+        if (shouldAccredit && totalYield > 0) {
+            accreditInvestmentYield(inv, totalYield);
+        }
+        
+        // Actualizar valor actual
+        inv.currentValue = currentValue;
+        inv.lastAccreditationDate = nowISO();
+        inv.updatedAt = nowISO();
+        
+        // Guardar en state
+        const idx = state.investments.findIndex(i => i.id === inv.id);
+        if (idx >= 0) {
+            state.investments[idx] = inv;
+        }
+        
+        anyUpdate = true;
+    });
+    
+    if (anyUpdate) {
+        saveState(state);
+    }
+}
+
+function checkAccreditationDue(investment, elapsedDays) {
+    let accreditationDays;
+    
+    if (investment.accreditationFrequency === 'custom') {
+        accreditationDays = investment.accreditationDays || 30;
+    } else {
+        const freqMap = {
+            'daily': 1,
+            'weekly': 7,
+            'monthly': 30,
+            'quarterly': 90,
+            'semiannually': 180,
+            'annually': 365
+        };
+        accreditationDays = freqMap[investment.accreditationFrequency] || 30;
+    }
+    
+    const lastAccreditation = investment.lastAccreditationDate 
+        ? new Date(investment.lastAccreditationDate) 
+        : new Date(investment.createdAt);
+    const now = new Date();
+    const daysSinceLastAccreditation = Math.floor((now.getTime() - lastAccreditation.getTime()) / (1000 * 60 * 60 * 24));
+    
+    return daysSinceLastAccreditation >= accreditationDays;
+}
+
+function accreditInvestmentYield(investment, yieldAmount) {
+    // Registrar rendimiento
+    state.returns.push({
+        id: generateId(),
+        investmentId: investment.id,
+        date: nowISO(),
+        amount: yieldAmount,
+        type: 'compound'
+    });
+    
+    // Registrar movimiento
+    state.investmentMovements.push({
+        id: generateId(),
+        investmentId: investment.id,
+        type: 'accreditation',
+        amount: yieldAmount,
+        date: nowISO(),
+        description: `Acreditación de rendimientos: ${investment.name}`
+    });
+}
+
+function addCapitalToInvestment(investmentId, amount) {
+    const inv = getInvestmentById(investmentId);
+    if (!inv) return false;
+    
+    inv.currentValue = Number(inv.currentValue) + Number(amount);
+    inv.initialAmount = Number(inv.initialAmount) + Number(amount);
+    inv.updatedAt = nowISO();
+    
+    state.investmentMovements.push({
+        id: generateId(),
+        investmentId: investmentId,
+        type: 'contribution',
+        amount: Number(amount),
+        date: nowISO(),
+        description: `Aporte a: ${inv.name}`
+    });
+    
+    saveState(state);
+    return true;
+}
+
+function withdrawFromInvestment(investmentId, amount) {
+    const inv = getInvestmentById(investmentId);
+    if (!inv) return false;
+    if (Number(amount) > Number(inv.currentValue)) return false;
+    
+    inv.currentValue = Number(inv.currentValue) - Number(amount);
+    inv.updatedAt = nowISO();
+    
+    state.investmentMovements.push({
+        id: generateId(),
+        investmentId: investmentId,
+        type: 'withdrawal',
+        amount: -Number(amount),
+        date: nowISO(),
+        description: `Retiro de: ${inv.name}`
+    });
+    
+    saveState(state);
+    return true;
+}
+
+function updateInvestmentRate(investmentId, newRate) {
+    const inv = getInvestmentById(investmentId);
+    if (!inv) return false;
+    
+    const oldRate = inv.annualRate;
+    
+    state.rateHistory.push({
+        id: generateId(),
+        investmentId: investmentId,
+        oldRate: oldRate,
+        newRate: Number(newRate),
+        changeDate: nowISO()
+    });
+    
+    inv.annualRate = Number(newRate);
+    inv.updatedAt = nowISO();
+    
+    state.investmentMovements.push({
+        id: generateId(),
+        investmentId: investmentId,
+        type: 'rate_change',
+        amount: 0,
+        date: nowISO(),
+        description: `Cambio de tasa: ${oldRate}% → ${newRate}%`
+    });
+    
+    saveState(state);
+    return true;
+}
+
+function cancelInvestment(investmentId) {
+    const inv = getInvestmentById(investmentId);
+    if (!inv) return false;
+    
+    inv.status = 'cancelled';
+    inv.updatedAt = nowISO();
+    
+    state.investmentMovements.push({
+        id: generateId(),
+        investmentId: investmentId,
+        type: 'cancellation',
+        amount: inv.currentValue,
+        date: nowISO(),
+        description: `Cancelación de inversión: ${inv.name}`
+    });
+    
+    saveState(state);
+    return true;
+}
+
+function getInvestmentSummary(investmentId) {
+    const inv = getInvestmentById(investmentId);
+    if (!inv) return null;
+    
+    const returns = (state.returns || []).filter(r => r.investmentId === investmentId);
+    const totalReturns = returns.reduce((sum, r) => sum + Number(r.amount), 0);
+    const profitability = Number(inv.initialAmount) > 0 
+        ? (totalReturns / Number(inv.initialAmount)) * 100 
+        : 0;
+    
+    return {
+        ...inv,
+        totalReturns,
+        profitability,
+        returns
+    };
+}
+
+// ---------- Account Management ----------
+function addAccount(accountData) {
+    const newAccount = {
+        id: generateId(),
+        name: accountData.name,
+        entityId: accountData.entityId || null,
+        entityName: accountData.entityName || accountData.name,
+        type: accountData.type || 'additional',
+        balance: Number(accountData.balance) || 0,
+        isActive: true,
+        displayOrder: (state.accounts || []).length,
+        createdAt: nowISO(),
+        updatedAt: nowISO()
+    };
+    
+    state.accounts.push(newAccount);
+    saveState(state);
+    return newAccount;
+}
+
+function updateAccount(accountId, updates) {
+    const idx = state.accounts.findIndex(a => a.id === accountId);
+    if (idx < 0) return false;
+    
+    state.accounts[idx] = {
+        ...state.accounts[idx],
+        ...updates,
+        updatedAt: nowISO()
+    };
+    
+    saveState(state);
+    return true;
+}
+
+function deleteAccount(accountId) {
+    const account = getAccountById(accountId);
+    if (!account) return false;
+    
+    // No permitir eliminar la cuenta principal si hay otras activas
+    if (account.type === 'principal') {
+        const otherAccounts = getActiveAccounts().filter(a => a.id !== accountId);
+        if (otherAccounts.length > 0) {
+            // Promover otra cuenta a principal
+            otherAccounts[0].type = 'principal';
+            updateAccount(otherAccounts[0].id, { type: 'principal' });
+        }
+    }
+    
+    // Soft delete
+    state.accounts = state.accounts.map(a => {
+        if (a.id === accountId) {
+            return { ...a, isActive: false, updatedAt: nowISO() };
+        }
+        return a;
+    });
+    
+    // Actualizar transacciones huérfanas
+    state.transactions = state.transactions.map(tx => {
+        const newTx = { ...tx };
+        if (tx.accountId === accountId) {
+            newTx.accountId = null;
+            newTx._orphanedAccount = account.name;
+        }
+        if (tx.fromAccountId === accountId) {
+            newTx.fromAccountId = null;
+            newTx._orphanedFrom = account.name;
+        }
+        if (tx.toAccountId === accountId) {
+            newTx.toAccountId = null;
+            newTx._orphanedTo = account.name;
+        }
+        return newTx;
+    });
+    
+    // Pausar inversiones vinculadas
+    state.investments = state.investments.map(inv => {
+        if (inv.sourceAccountId === accountId && inv.status === 'active') {
+            return {
+                ...inv,
+                status: 'paused',
+                notes: (inv.notes || '') + ` | Cuenta origen "${account.name}" eliminada el ${new Date().toLocaleDateString('es-CO')}`,
+                updatedAt: nowISO()
+            };
+        }
+        return inv;
+    });
+    
+    saveState(state);
+    return true;
+}
+
+function addFinancialEntity(name) {
+    const existing = (state.financialEntities || []).find(
+        e => e.name.toLowerCase() === name.toLowerCase()
+    );
+    if (existing) return existing;
+    
+    const entity = {
+        id: generateId(),
+        name: name,
+        createdAt: nowISO()
+    };
+    
+    state.financialEntities.push(entity);
+    saveState(state);
+    return entity;
+}
+
+function getFinancialEntities() {
+    return state.financialEntities || [];
+}
+
+// ---------- Investment Creation ----------
+function createInvestment(data) {
+    const inv = {
+        id: generateId(),
+        userId: state.user ? state.user.name : '',
+        typeId: data.typeId,
+        customTypeName: data.customTypeName || null,
+        entityId: data.entityId,
+        sourceAccountId: data.sourceAccountId || null,
+        name: data.name,
+        initialAmount: Number(data.initialAmount),
+        currentValue: Number(data.initialAmount),
+        annualRate: Number(data.annualRate),
+        accreditationFrequency: data.accreditationFrequency,
+        accreditationDays: Number(data.accreditationDays) || 30,
+        status: 'active',
+        notes: data.notes || '',
+        createdAt: nowISO(),
+        updatedAt: nowISO(),
+        lastAccreditationDate: nowISO()
+    };
+    
+    state.investments.push(inv);
+    
+    // Registrar movimiento de creación
+    state.investmentMovements.push({
+        id: generateId(),
+        investmentId: inv.id,
+        type: 'creation',
+        amount: Number(data.initialAmount),
+        date: nowISO(),
+        description: `Creación de inversión: ${inv.name}`
+    });
+    
+    saveState(state);
+    return inv;
+}
+
+// ---------- Theme Management ----------
+function getTheme() {
+    return (state.settings && state.settings.theme) || 'system';
+}
+
+function setTheme(theme) {
+    state.settings.theme = theme;
+    saveState(state);
+    applyTheme(theme);
+}
+
+function applyTheme(theme) {
+    const root = document.documentElement;
+    
+    if (theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        theme = prefersDark ? 'dark' : 'light';
+    }
+    
+    root.setAttribute('data-theme', theme);
+}
+
+function initTheme() {
+    const savedTheme = getTheme();
+    applyTheme(savedTheme);
+    
+    // Escuchar cambios del sistema si está en modo 'system'
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (getTheme() === 'system') {
+            applyTheme('system');
+        }
+    });
 }
