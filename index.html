@@ -1,567 +1,481 @@
-<!doctype html>
-<html lang="es" data-theme="system">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Banklar — Finanzas personales</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+<!doctype html> 
+<html lang="es" data-theme="light"> 
+<head> 
+<meta charset="utf-8" /> 
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" /> 
+<meta name="theme-color" content="#7c3aed" />
+<meta name="description" content="Banklar — Tu app de finanzas personales. Controla tus cuentas, inversiones y presupuestos desde un solo lugar." />
+<title>Banklar — Finanzas personales</title> 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head> 
+<body> 
 
-<!-- ═══════════════════════════════════════════
-     PANTALLA: PRIVACIDAD
-═══════════════════════════════════════════ -->
-<div id="privacy-screen" class="screen">
-  <div class="onboarding-wrap">
-    <div class="onboarding-card privacy-card">
-      <div class="privacy-lock">🔒</div>
-      <h2>Privacidad y control de tus datos</h2>
-      <p class="privacy-lead">Tu información es únicamente tuya.</p>
-      <div class="privacy-body">
-        <p>Todos los datos que registres se almacenan <strong>localmente en tu dispositivo</strong>. No se envían a servidores externos, servicios en la nube ni bases de datos de terceros.</p>
-        <p>La aplicación no comparte tus movimientos financieros, saldos, cuentas, presupuestos o registros con ninguna entidad externa.</p>
-        <p>La app funciona sin sincronización en línea y no tiene acceso a tus cuentas bancarias reales.</p>
-      </div>
-      <div class="privacy-box">
-        <h4>⚠️ Importante</h4>
-        <ul>
-          <li>Tus datos pertenecen únicamente a ti.</li>
-          <li>Si cambias de dispositivo, deberás exportar y trasladar manualmente tus datos.</li>
-          <li>Si eliminas la app sin exportar, los datos se perderán de forma permanente.</li>
-          <li>No existen copias en servidores externos.</li>
-        </ul>
-      </div>
-      <p class="privacy-footer-note">Al continuar, confirmas que entiendes cómo se almacenan y gestionan tus datos.</p>
-      <button onclick="acceptPrivacyAndContinue()" class="btn-primary btn-full">Entiendo y acepto →</button>
+<!-- ========== PANTALLA: PRIVACIDAD ========== -->
+<div id="privacy-screen" class="screen active">
+    <div class="privacy-container">
+        <div class="privacy-card">
+            <div class="privacy-icon">🔒</div>
+            <h1 class="privacy-title">Privacidad y control de tus datos</h1>
+            
+            <p class="privacy-text">Tu información es únicamente tuya.</p>
+            
+            <p class="privacy-text">Todos los datos que registres en esta aplicación se almacenan localmente en tu dispositivo. Esto significa que la información permanece guardada dentro de la memoria de tu teléfono o tablet y no se envía automáticamente a servidores externos, servicios en la nube ni bases de datos de terceros.</p>
+            
+            <p class="privacy-text">La aplicación no comparte tus movimientos financieros, saldos, cuentas, presupuestos o registros personales con ninguna entidad externa.</p>
+            
+            <p class="privacy-text">Actualmente, la aplicación funciona de manera independiente y sin sincronización en línea. Tus datos permanecen exclusivamente en el dispositivo donde fueron creados.</p>
+            
+            <p class="privacy-text">La aplicación no tiene acceso a tus cuentas bancarias reales, no puede consultar movimientos bancarios y tampoco puede realizar transacciones en tu nombre.</p>
+            
+            <div class="privacy-warning">
+                <h3>⚠️ IMPORTANTE</h3>
+                <ul>
+                    <li>Tus datos pertenecen únicamente a ti.</li>
+                    <li>La aplicación no conserva copias externas de tu información.</li>
+                    <li>Si cambias de dispositivo, deberás exportar y trasladar manualmente tus datos al nuevo equipo utilizando las herramientas disponibles dentro de la aplicación.</li>
+                    <li>Si eliminas los datos de la aplicación, borras su almacenamiento o la desinstalas sin haber exportado previamente tu información, todos los registros se perderán de forma permanente.</li>
+                    <li>Una vez eliminados, los datos no podrán recuperarse porque no existen copias almacenadas en servidores externos.</li>
+                </ul>
+            </div>
+            
+            <p class="privacy-confirm-text">Al continuar, confirmas que entiendes cómo se almacenan y gestionan tus datos dentro de la aplicación.</p>
+            
+            <button onclick="acceptPrivacyAndContinue()" class="btn-primary btn-large">
+                Entiendo y acepto
+            </button>
+        </div>
     </div>
-  </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     PANTALLA: ONBOARDING
-═══════════════════════════════════════════ -->
-<div id="onboarding-screen" class="screen hidden">
-  <div class="onboarding-wrap">
-    <div class="onboarding-card">
-      <div class="brand-mark">B</div>
-      <div id="onboarding-container">
-        <!-- Renderizado dinámico por JS -->
-      </div>
+<!-- ========== PANTALLA: ONBOARDING ========== -->
+<div id="onboarding-screen" class="screen">
+    <div class="onboarding-container" id="onboarding-container">
+        <!-- Se llena dinámicamente con ui-forms.js -->
     </div>
-  </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     PANTALLA: SETUP (legacy fallback)
-═══════════════════════════════════════════ -->
-<div id="setup-screen" class="screen hidden">
-  <div class="onboarding-wrap">
-    <div class="onboarding-card">
-      <div class="brand-mark">B</div>
-      <h2>Primera vez — Configura tu cuenta</h2>
-      <form id="setup-form">
-        <div class="form-group">
-          <label for="user-name">Nombre</label>
-          <input id="user-name" type="text" class="form-input" required placeholder="Tu nombre">
-        </div>
-        <div class="form-group">
-          <label for="user-nu">Saldo en Nu</label>
-          <input id="user-nu" type="text" value="0,00" required class="form-input currency-input">
-        </div>
-        <div class="form-group">
-          <label for="user-nequi">Saldo en Nequi</label>
-          <input id="user-nequi" type="text" value="0,00" required class="form-input currency-input">
-        </div>
-        <div class="form-group">
-          <label for="user-davivienda">Saldo en Davivienda</label>
-          <input id="user-davivienda" type="text" value="0,00" required class="form-input currency-input">
-        </div>
-        <div class="form-group">
-          <label for="user-cash">Saldo en Efectivo</label>
-          <input id="user-cash" type="text" value="0,00" required class="form-input currency-input">
-        </div>
-        <button type="submit" class="btn-primary btn-full">Guardar y empezar</button>
-      </form>
-    </div>
-  </div>
+<!-- ========== PANTALLA: DASHBOARD ========== -->
+<div id="dashboard-screen" class="screen">
+    <header class="app-header"> 
+        <div class="brand"> 
+            <div class="logo" aria-hidden="true">B</div> 
+            <div> 
+                <h1>Banklar</h1> 
+                <p id="greeting">Bienvenido</p> 
+            </div> 
+        </div> 
+        <div class="header-actions"> 
+            <button id="btn-settings" class="btn-ghost" aria-label="Ajustes">⚙️</button> 
+        </div> 
+    </header> 
+
+    <main class="container"> 
+        <!-- Cuentas dinámicas -->
+        <section class="cards">
+            <article class="card balance-card"> 
+                <div class="card-header"> 
+                    <h2>Mis Cuentas</h2> 
+                    <button id="refresh-balances" class="refresh-btn" aria-label="Actualizar balances">↻</button> 
+                </div> 
+                <div class="balances" id="balances-container">
+                    <!-- Compatibilidad legacy -->
+                    <div class="balance-item" id="balance-nu-item">
+                        <div class="label">Nu <span class="badge badge-principal">Principal</span></div> 
+                        <div class="amount" id="balance-nu">$0</div> 
+                    </div> 
+                    <div class="balance-item" id="balance-nequi-item">
+                        <div class="label">Nequi</div> 
+                        <div class="amount" id="balance-nequi">$0</div> 
+                    </div> 
+                    <div class="balance-item" id="balance-davivienda-item">
+                        <div class="label">Davivienda</div> 
+                        <div class="amount" id="balance-davivienda">$0</div> 
+                    </div> 
+                    <div class="balance-item" id="balance-cash-item">
+                        <div class="label">Efectivo</div> 
+                        <div class="amount" id="balance-cash">$0</div> 
+                        <div class="small">En mano</div> 
+                    </div>
+                    <!-- Contenedor para cuentas adicionales dinámicas -->
+                    <div id="accounts-container"></div>
+                    <div class="balance-item total-item"> 
+                        <div class="label">Patrimonio Total</div> 
+                        <div class="amount" id="balance-total">$0</div> 
+                        <div class="small" id="balance-status">Estable</div> 
+                    </div> 
+                </div> 
+            </article> 
+
+            <!-- Formulario de transacción -->
+            <article class="card quick-add"> 
+                <h2>Registrar Transacción</h2> 
+                <form id="tx-form"> 
+                    <div class="row"> 
+                        <label for="tx-type">Tipo</label> 
+                        <select id="tx-type" required> 
+                            <option value="income">💰 Ingreso</option> 
+                            <option value="expense">💳 Gasto</option> 
+                            <option value="transfer">🔄 Transferencia</option> 
+                            <option value="cash-conversion">💵 Conversión Efectivo</option> 
+                        </select> 
+                    </div> 
+                    <div class="row" id="income-source-row"> 
+                        <label for="income-source">Origen del ingreso</label> 
+                        <select id="income-source"> 
+                            <option value="Salario">Salario</option> 
+                            <option value="Honorarios">Honorarios</option> 
+                            <option value="Venta">Venta</option> 
+                            <option value="Regalo">Regalo</option> 
+                            <option value="Otros">Otros ingresos</option> 
+                        </select> 
+                    </div> 
+                    <div class="row" id="expense-category-row" style="display:none"> 
+                        <label for="expense-category">Categoría</label> 
+                        <select id="expense-category"> 
+                            <!-- Se llena dinámicamente --> 
+                        </select> 
+                    </div> 
+                    <div class="row" id="transfer-from-row" style="display:none"> 
+                        <label for="transfer-from">Cuenta origen</label> 
+                        <select id="transfer-from"> 
+                            <!-- Se llena dinámicamente --> 
+                        </select> 
+                    </div>
+                    <div class="row" id="transfer-to-row" style="display:none">
+                        <label for="transfer-to">Cuenta destino</label>
+                        <select id="transfer-to">
+                            <!-- Se llena dinámicamente -->
+                        </select>
+                    </div>
+                    <div class="row" id="cash-conversion-row" style="display:none"> 
+                        <label for="cash-conversion-type">Tipo de conversión</label> 
+                        <select id="cash-conversion-type"> 
+                            <option value="to_cash">Digital → Efectivo</option> 
+                            <option value="from_cash">Efectivo → Digital</option> 
+                        </select> 
+                    </div> 
+                    <div class="row" id="cash-conversion-details-row" style="display:none"> 
+                        <label for="cash-conversion-details">Cuenta</label> 
+                        <select id="cash-conversion-details"> 
+                            <!-- Se llena dinámicamente --> 
+                        </select> 
+                    </div> 
+                    <div class="row"> 
+                        <label for="tx-amount">Monto</label> 
+                        <div class="currency-input-wrapper">
+                            <span class="currency-symbol">$</span>
+                            <input id="tx-amount" type="text" placeholder="0,00" required class="currency-input" data-currency-display="tx-amount-display"> 
+                            <span id="tx-amount-display" class="currency-display">0,00</span>
+                        </div>
+                        <div class="currency-hint">Escribe los números sin puntos ni comas</div> 
+                    </div> 
+                    <div class="row"> 
+                        <label for="tx-date">Fecha y Hora</label> 
+                        <input id="tx-date" type="datetime-local" required class="date-input"> 
+                    </div> 
+                    <div class="row" id="tx-account-row"> 
+                        <label for="tx-account">Cuenta</label> 
+                        <select id="tx-account"> 
+                            <!-- Se llena dinámicamente --> 
+                        </select> 
+                    </div> 
+                    <div class="row" id="principal-deposit-row" style="display:none"> 
+                        <label>
+                            <input type="checkbox" id="deposit-to-principal"> Depositar en cuenta principal
+                        </label> 
+                    </div>
+                    <div class="row" id="principal-split-row" style="display:none"> 
+                        <label for="principal-split-amount">Monto a enviar a cuenta principal</label> 
+                        <input id="principal-split-amount" type="text" placeholder="Ej: 50,00" class="currency-input"> 
+                    </div>
+                    <!-- Compatibilidad legacy -->
+                    <div class="row" id="deposit-to-nu-row" style="display:none"> 
+                        <label><input type="checkbox" id="deposit-to-nu"> Depositar todo/parte en Nu</label> 
+                    </div> 
+                    <div class="row" id="nu-split-row" style="display:none"> 
+                        <label for="nu-split-amount">Monto a enviar a Nu</label> 
+                        <input id="nu-split-amount" type="text" placeholder="Ej: 50,00" class="currency-input"> 
+                    </div> 
+                    <div class="row actions"> 
+                        <button type="submit" class="btn-primary">Registrar</button> 
+                        <button type="button" id="btn-view-all" class="btn-ghost">Ver todas</button> 
+                    </div> 
+                </form> 
+            </article> 
+
+            <!-- Estadísticas -->
+            <article class="card stats-card"> 
+                <h2>Estadísticas & Alertas</h2> 
+                <div id="alerts" class="alerts"></div> 
+                <div class="stats-wrapper"> 
+                    <div class="stat-grid"> 
+                        <div class="stat-item stat-income"> 
+                            <div class="stat-label">Ingresos</div> 
+                            <div class="stat-value" id="total-incomes">$0</div> 
+                            <div class="stat-sub">Total recibido</div> 
+                        </div> 
+                        <div class="stat-item stat-expense"> 
+                            <div class="stat-label">Gastos</div> 
+                            <div class="stat-value" id="total-expenses">$0</div> 
+                            <div class="stat-sub">Total gastado</div> 
+                        </div> 
+                        <div class="stat-item stat-saved"> 
+                            <div class="stat-label">Ahorro sugerido</div> 
+                            <div class="stat-value" id="suggested-savings">—</div> 
+                            <div class="stat-sub">Sugerencia inteligente</div> 
+                        </div> 
+                        <div class="stat-item"> 
+                            <div class="stat-label">Transacciones</div> 
+                            <div class="stat-value" id="total-transactions">0</div> 
+                            <div class="stat-sub">Totales</div> 
+                        </div> 
+                    </div> 
+
+                    <!-- Resumen de Gastos por Mes/Quincena -->
+                    <div class="expenses-summary">
+                        <div class="summary-header">
+                            <h3 class="summary-title">Resumen de Gastos</h3>
+                            <div class="summary-controls">
+                                <button id="summary-monthly" class="btn-summary active">Por Mes</button>
+                                <button id="summary-biweekly" class="btn-summary">Por Quincena</button>
+                            </div>
+                        </div>
+                        <div id="expenses-summary-list" class="summary-list">
+                            <div class="summary-placeholder">Cargando datos...</div>
+                        </div>
+                        <button id="btn-expenses-report" class="btn-ghost btn-small" style="margin-top: 10px; width: 100%;">Ver reporte por categorías</button>
+                    </div>
+                </div> 
+            </article> 
+        </section> 
+
+        <!-- Inversiones -->
+        <section class="cards" style="margin-top:16px;">
+            <article class="card investments-card">
+                <div class="card-header">
+                    <h2>📈 Mis Inversiones</h2>
+                    <button id="btn-new-investment" class="btn-ghost" aria-label="Nueva inversión">+ Nueva</button>
+                </div>
+                <div id="investments-summary-container">
+                    <div class="meta" style="padding:16px;text-align:center;">No tienes inversiones activas</div>
+                </div>
+            </article>
+        </section>
+
+        <!-- Últimas transacciones y Presupuestos -->
+        <section class="transactions"> 
+            <article class="card tx-list"> 
+                <h2>Últimas transacciones</h2> 
+                <div class="tx-container"> 
+                    <ul id="last-tx-list" class="tx-items"></ul> 
+                </div> 
+                <div class="center"> 
+                    <button id="btn-view-all-2" class="btn-ghost">Ver todas las transacciones</button> 
+                </div> 
+            </article> 
+            <article class="card budgets"> 
+                <h2>Presupuestos</h2> 
+                <div id="budgets-list"></div> 
+                <div class="center"> 
+                    <button id="btn-edit-budgets" class="btn-ghost">Editar presupuestos</button> 
+                    <button id="btn-data-portability" class="btn-ghost" style="margin-top:8px;">📋 Copiar datos</button> 
+                </div> 
+            </article> 
+        </section> 
+    </main> 
+
+    <footer class="app-footer"> 
+        <div class="footer-content">
+            <span>Banklar © 2026</span>
+            <div class="footer-actions">
+                <button id="btn-export" class="btn-ghost">Exportar</button>
+                <button id="btn-import-data" class="btn-ghost">Importar</button>
+            </div>
+        </div> 
+    </footer> 
 </div>
 
-<!-- ═══════════════════════════════════════════
-     PANTALLA: DASHBOARD
-═══════════════════════════════════════════ -->
-<div id="dashboard-screen" class="screen hidden">
+<!-- ========== OVERLAY ========== -->
+<div id="modal-overlay" class="modal-overlay hidden"></div> 
 
-  <!-- HEADER -->
-  <header class="app-header">
-    <div class="header-brand">
-      <div class="logo-mark">B</div>
-      <div class="header-text">
-        <span class="app-name">Banklar</span>
-        <span id="greeting" class="greeting">Bienvenido</span>
-      </div>
+<!-- ========== MODALES ========== -->
+
+<!-- Modal: Ver todas las transacciones -->
+<div id="view-all-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="viewall-title"> 
+    <div class="modal-header">
+        <h3 id="viewall-title">Todas las transacciones</h3>
+        <button id="close-all-tx" class="btn-ghost btn-close-modal">✕</button>
     </div>
-    <div class="header-actions">
-      <button id="refresh-balances" class="icon-btn" aria-label="Actualizar balances" title="Actualizar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-      </button>
-      <button id="btn-settings" class="icon-btn" aria-label="Ajustes">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
+    <div class="modal-toolbar"> 
+        <div class="filter-controls"> 
+            <select id="tx-filter-type">
+                <option value="all">Todas</option>
+                <option value="income">Ingresos</option>
+                <option value="expense">Gastos</option>
+                <option value="transfer">Transferencias</option>
+                <option value="cash-conversion">Conversiones</option>
+            </select> 
+            <select id="tx-filter-account">
+                <option value="all">Todas las cuentas</option>
+                <!-- Se llena dinámicamente -->
+            </select> 
+        </div> 
+        <div class="search-control">
+            <input type="text" id="tx-search" placeholder="Buscar...">
+        </div> 
+    </div> 
+    <div id="all-tx-container" class="all-tx"></div> 
+</div> 
+
+<!-- Modal: Ajustes -->
+<div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title"> 
+    <div class="modal-header">
+        <h3 id="settings-title">⚙️ Ajustes</h3>
+        <button onclick="hideAllModals()" class="btn-ghost btn-close-modal">✕</button>
     </div>
-  </header>
-
-  <main class="dashboard-main">
-
-    <!-- FILA 1: PATRIMONIO + CUENTAS -->
-    <section class="dash-row dash-row--top">
-
-      <!-- Patrimonio total -->
-      <article class="dash-card patrimony-card">
-        <div class="patrimony-label">Patrimonio total</div>
-        <div class="patrimony-amount" id="balance-total">$0</div>
-        <div class="patrimony-status" id="balance-status">Estable</div>
-        <div class="patrimony-investments" id="investments-summary-container">
-          <!-- Renderizado dinámico -->
-        </div>
-      </article>
-
-      <!-- Cuentas bancarias -->
-      <article class="dash-card accounts-card">
-        <div class="card-title-row">
-          <h2>Cuentas</h2>
-        </div>
-        <!-- Compatibilidad con IDs legacy -->
-        <div id="accounts-container" class="accounts-list">
-          <!-- Renderizado dinámico por renderAccountBalances() -->
-          <!-- Fallback estático para compatibilidad -->
-          <div class="account-item" id="balance-nu-row">
-            <span class="account-item-name">Nu <span class="badge badge-principal">Principal</span></span>
-            <span class="account-item-balance" id="balance-nu">$0</span>
-          </div>
-          <div class="account-item" id="balance-nequi-row">
-            <span class="account-item-name">Nequi</span>
-            <span class="account-item-balance" id="balance-nequi">$0</span>
-          </div>
-          <div class="account-item" id="balance-davivienda-row">
-            <span class="account-item-name">Davivienda</span>
-            <span class="account-item-balance" id="balance-davivienda">$0</span>
-          </div>
-          <div class="account-item" id="balance-cash-row">
-            <span class="account-item-name">Efectivo <span class="meta-tag">En mano</span></span>
-            <span class="account-item-balance" id="balance-cash">$0</span>
-          </div>
-        </div>
-      </article>
-
-    </section>
-
-    <!-- FILA 2: FORMULARIO DE TRANSACCIÓN -->
-    <section class="dash-row">
-      <article class="dash-card tx-form-card">
-        <div class="card-title-row">
-          <h2>Registrar transacción</h2>
-        </div>
-        <form id="tx-form" autocomplete="off">
-
-          <div class="form-group">
-            <label for="tx-type">Tipo</label>
-            <select id="tx-type" class="form-input" required>
-              <option value="income">⬆️ Ingreso</option>
-              <option value="expense">⬇️ Gasto</option>
-              <option value="transfer">🔄 Transferencia entre cuentas</option>
-              <option value="cash-conversion">💵 Conversión Efectivo</option>
+    <form id="settings-form"> 
+        <div class="row">
+            <label for="settings-low-threshold">Umbral de alerta (saldo bajo)</label>
+            <div class="currency-input-wrapper">
+                <span class="currency-symbol">$</span>
+                <input id="settings-low-threshold" type="text" required class="currency-input">
+            </div>
+        </div> 
+        <div class="row">
+            <label for="settings-currency">Moneda principal</label>
+            <select id="settings-currency">
+                <!-- Se llena dinámicamente -->
             </select>
-          </div>
-
-          <div class="form-group" id="income-source-row">
-            <label for="income-source">Origen del ingreso</label>
-            <select id="income-source" class="form-input">
-              <option value="Salario">Salario</option>
-              <option value="Efectivo">Depósito en efectivo</option>
-              <option value="Freelance">Freelance</option>
-              <option value="Otros">Otros ingresos</option>
+        </div> 
+        <div class="row">
+            <label for="settings-theme">Tema de la interfaz</label>
+            <select id="settings-theme">
+                <option value="system">🌓 Sistema</option>
+                <option value="light">☀️ Claro</option>
+                <option value="dark">🌙 Oscuro</option>
             </select>
-          </div>
-
-          <div class="form-group" id="expense-category-row" style="display:none">
-            <label for="expense-category">Categoría del gasto</label>
-            <select id="expense-category" class="form-input">
-              <!-- Poblado dinámicamente por populateCategorySelects() -->
-            </select>
-          </div>
-
-          <div class="form-group" id="transfer-from-row" style="display:none">
-            <label for="transfer-from">Cuenta origen</label>
-            <select id="transfer-from" class="form-input">
-              <option value="">Seleccionar origen</option>
-            </select>
-          </div>
-
-          <div class="form-group" id="transfer-to-row" style="display:none">
-            <label for="transfer-to">Cuenta destino</label>
-            <select id="transfer-to" class="form-input">
-              <option value="">Seleccionar destino</option>
-            </select>
-          </div>
-
-          <div class="form-group" id="cash-conversion-row" style="display:none">
-            <label for="cash-conversion-type">Dirección de la conversión</label>
-            <select id="cash-conversion-type" class="form-input">
-              <option value="to_cash">Digital → Efectivo</option>
-              <option value="from_cash">Efectivo → Digital</option>
-            </select>
-          </div>
-
-          <div class="form-group" id="cash-conversion-details-row" style="display:none">
-            <label for="cash-conversion-details">Cuenta involucrada</label>
-            <select id="cash-conversion-details" class="form-input">
-              <!-- Poblado dinámicamente -->
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="tx-amount">Monto</label>
-            <input id="tx-amount" type="text" class="form-input currency-input" placeholder="0,00" required autocomplete="off">
-            <span class="input-hint">Escribe solo números — formato automático</span>
-          </div>
-
-          <div class="form-group">
-            <label for="tx-date">Fecha y hora</label>
-            <input id="tx-date" type="datetime-local" class="form-input" required>
-          </div>
-
-          <div class="form-group" id="tx-account-row">
-            <label for="tx-account">Cuenta</label>
-            <select id="tx-account" class="form-input">
-              <!-- Poblado dinámicamente -->
-            </select>
-          </div>
-
-          <div class="form-group form-check" id="deposit-principal-row">
-            <label class="check-label">
-              <input type="checkbox" id="deposit-to-principal" class="check-input">
-              <span>Distribuir parte a cuenta principal</span>
-            </label>
-          </div>
-
-          <div class="form-group" id="principal-split-row" style="display:none">
-            <label for="principal-split-amount">Monto para cuenta principal</label>
-            <input id="principal-split-amount" type="text" class="form-input currency-input" placeholder="0,00">
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Registrar</button>
-            <button type="button" id="btn-view-all" class="btn-ghost">Ver todas</button>
-          </div>
-
-        </form>
-      </article>
-    </section>
-
-    <!-- FILA 3: ESTADÍSTICAS + ALERTAS -->
-    <section class="dash-row dash-row--stats">
-
-      <article class="dash-card stats-card">
-        <div class="card-title-row">
-          <h2>Estadísticas</h2>
         </div>
-        <div class="stat-grid">
-          <div class="stat-item stat-income">
-            <div class="stat-label">Ingresos</div>
-            <div class="stat-value" id="total-incomes">$0</div>
-            <div class="stat-sub">Total recibido</div>
-          </div>
-          <div class="stat-item stat-expense">
-            <div class="stat-label">Gastos</div>
-            <div class="stat-value" id="total-expenses">$0</div>
-            <div class="stat-sub">Total gastado</div>
-          </div>
-          <div class="stat-item stat-saved">
-            <div class="stat-label">Ahorro sugerido</div>
-            <div class="stat-value" id="suggested-savings">—</div>
-            <div class="stat-sub">Recomendación</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Transacciones</div>
-            <div class="stat-value" id="total-transactions">0</div>
-            <div class="stat-sub">Registradas</div>
-          </div>
-        </div>
-      </article>
+        <div class="row actions"> 
+            <button type="submit" class="btn-primary">Guardar</button> 
+        </div> 
+        <div class="row actions danger-zone"> 
+            <button id="btn-reset-data" type="button" class="btn-danger">🗑️ Resetear todos los datos</button> 
+        </div> 
+    </form> 
+</div> 
 
-      <article class="dash-card alerts-card">
-        <div class="card-title-row">
-          <h2>Alertas</h2>
-        </div>
-        <div id="alerts" class="alerts-list"></div>
-      </article>
-
-    </section>
-
-    <!-- FILA 4: RESUMEN DE GASTOS -->
-    <section class="dash-row">
-      <article class="dash-card summary-card">
-        <div class="card-title-row">
-          <h2>Resumen de gastos</h2>
-          <div class="toggle-group">
-            <button id="summary-monthly" class="toggle-btn active">Por mes</button>
-            <button id="summary-biweekly" class="toggle-btn">Por quincena</button>
-          </div>
-        </div>
-        <div id="expenses-summary-list" class="summary-list">
-          <div class="summary-placeholder">Cargando datos...</div>
-        </div>
-        <button id="btn-expenses-report" class="btn-ghost btn-block" style="margin-top:12px;">Ver reporte por categorías →</button>
-      </article>
-    </section>
-
-    <!-- FILA 5: ÚLTIMAS TRANSACCIONES + PRESUPUESTOS -->
-    <section class="dash-row dash-row--bottom">
-
-      <article class="dash-card tx-list-card">
-        <div class="card-title-row">
-          <h2>Últimas transacciones</h2>
-          <button id="btn-view-all-2" class="btn-link">Ver todas →</button>
-        </div>
-        <ul id="last-tx-list" class="tx-list"></ul>
-      </article>
-
-      <article class="dash-card budgets-card">
-        <div class="card-title-row">
-          <h2>Presupuestos</h2>
-          <button id="btn-edit-budgets" class="btn-link">Editar →</button>
-        </div>
-        <div id="budgets-list" class="budgets-list"></div>
-        <div class="card-footer-actions">
-          <button id="btn-new-investment" class="btn-ghost btn-sm">📊 Nueva inversión</button>
-          <button id="btn-data-portability" class="btn-ghost btn-sm">📋 Exportar datos</button>
-        </div>
-      </article>
-
-    </section>
-
-  </main>
-
-  <footer class="app-footer">
-    <span class="footer-brand">Banklar</span>
-    <div class="footer-actions">
-      <button id="btn-export" class="btn-link">Exportar datos</button>
+<!-- Modal: Presupuestos -->
+<div id="budgets-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="budgets-title"> 
+    <div class="modal-header">
+        <h3 id="budgets-title">Editar Presupuestos</h3>
+        <button id="btn-close-budgets" class="btn-ghost btn-close-modal">✕</button>
     </div>
-  </footer>
+    <form id="budgets-form"> 
+        <div id="budgets-form-list"></div> 
+        <div class="row" style="margin-top:12px;gap:8px;display:flex;align-items:center"> 
+            <select id="new-budget-name" style="flex:1;">
+                <option value="" disabled selected>Seleccionar categoría</option>
+                <!-- Se llena dinámicamente -->
+            </select> 
+            <input id="new-budget-amt" placeholder="Monto" type="text" class="currency-input" style="width:130px;"> 
+            <button id="btn-add-budget" type="button" class="btn-ghost">Agregar</button> 
+        </div> 
+        <div class="row actions" style="margin-top:16px;">
+            <button type="submit" class="btn-primary">Guardar</button>
+        </div> 
+    </form> 
+</div> 
 
-</div><!-- /#dashboard-screen -->
+<!-- Modal: Exportar -->
+<div id="export-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="export-title"> 
+    <div class="modal-header">
+        <h3 id="export-title">Exportar datos</h3>
+        <button id="btn-close-export" class="btn-ghost btn-close-modal">✕</button>
+    </div>
+    <p style="margin-bottom:16px;">Selecciona el formato para exportar tus datos financieros:</p>
+    <div class="row actions">
+        <button id="btn-export-csv" class="btn-primary">📊 Exportar CSV</button>
+        <button id="btn-export-json" class="btn-ghost">📄 Exportar JSON</button>
+    </div> 
+</div> 
 
-<!-- ═══════════════════════════════════════════
-     OVERLAY GLOBAL
-═══════════════════════════════════════════ -->
-<div id="modal-overlay" class="modal-overlay hidden"></div>
+<!-- Modal: Reporte de gastos -->
+<div id="expenses-report-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="report-title"> 
+    <div class="modal-header">
+        <h3 id="report-title">Reporte de Gastos</h3>
+        <button id="close-expenses-report" class="btn-ghost btn-close-modal">✕</button>
+    </div>
+    <p class="meta" style="margin-bottom:12px;">Resumen por categoría (porcentaje y monto)</p>
+    <div id="expenses-report-container" class="all-tx"></div> 
+</div> 
 
-<!-- ═══════════════════════════════════════════
-     MODAL: VER TODAS LAS TRANSACCIONES
-═══════════════════════════════════════════ -->
-<div id="view-all-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="viewall-title">
-  <div class="modal-header">
-    <h3 id="viewall-title">Todas las transacciones</h3>
-    <button class="modal-close" onclick="hideAllModals()" aria-label="Cerrar">✕</button>
-  </div>
-  <div class="modal-toolbar">
-    <select id="tx-filter-type" class="form-input form-input--sm">
-      <option value="all">Todas</option>
-      <option value="income">Ingresos</option>
-      <option value="expense">Gastos</option>
-      <option value="transfer">Transferencias</option>
-      <option value="cash-conversion">Conversiones</option>
-    </select>
-    <select id="tx-filter-account" class="form-input form-input--sm">
-      <option value="all">Todas las cuentas</option>
-    </select>
-    <input type="text" id="tx-search" class="form-input form-input--sm" placeholder="Buscar...">
-  </div>
-  <div id="all-tx-container" class="modal-scroll"></div>
-  <div class="modal-footer">
-    <button id="close-all-tx" class="btn-ghost">Cerrar</button>
-  </div>
+<!-- Modal: Portabilidad de datos -->
+<div id="portability-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="portability-title"> 
+    <div class="modal-header">
+        <h3 id="portability-title">Portabilidad de Datos</h3>
+        <button id="btn-close-portability" class="btn-ghost btn-close-modal">✕</button>
+    </div>
+    <p style="margin-bottom:8px;">Copia todos los datos al portapapeles:</p>
+    <textarea id="data-export-text" rows="8" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-family:monospace;font-size:12px;background:var(--bg-secondary);color:var(--text);"></textarea>
+    <div class="row actions" style="margin-top:12px;"> 
+        <button id="btn-copy-data" class="btn-primary">📋 Copiar al portapapeles</button> 
+    </div> 
+    <div class="info-box"> 
+        <p><strong>Instrucciones:</strong><br>1. Haz clic en "Copiar"<br>2. En la nueva versión, ve a Importar datos<br>3. Pega los datos y confirma</p> 
+    </div> 
+</div> 
+
+<!-- Modal: Importar datos -->
+<div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="import-title"> 
+    <div class="modal-header">
+        <h3 id="import-title">Importar Datos</h3>
+        <button id="btn-close-import" class="btn-ghost btn-close-modal">✕</button>
+    </div>
+    <p style="margin-bottom:8px;">Pega los datos exportados anteriormente:</p>
+    <textarea id="data-import-text" rows="8" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-family:monospace;font-size:12px;background:var(--bg-secondary);color:var(--text);" placeholder="Pega aquí los datos copiados..."></textarea>
+    <div class="row actions" style="margin-top:12px;"> 
+        <button id="btn-import-confirm" class="btn-primary">📥 Importar datos</button> 
+    </div> 
+    <div class="warning-box"> 
+        <p><strong>⚠️ Advertencia:</strong> Esta acción sobreescribirá todos tus datos actuales.</p> 
+    </div> 
+</div> 
+
+<!-- Modal: Inversión -->
+<div id="investment-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="investment-title"> 
+    <div class="modal-header">
+        <h3 id="investment-title">📈 Nueva Inversión</h3>
+        <button onclick="hideAllModals()" class="btn-ghost btn-close-modal">✕</button>
+    </div>
+    <div id="investment-form-container">
+        <!-- Se llena dinámicamente con ui-modals.js -->
+    </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     MODAL: CONFIGURACIÓN
-═══════════════════════════════════════════ -->
-<div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-  <div class="modal-header">
-    <h3 id="settings-title">Ajustes</h3>
-    <button class="modal-close" onclick="hideAllModals()" aria-label="Cerrar">✕</button>
-  </div>
-  <form id="settings-form" class="modal-body">
-    <div class="form-group">
-      <label for="settings-low-threshold">Umbral alerta saldo bajo</label>
-      <input id="settings-low-threshold" type="text" class="form-input currency-input" required>
-    </div>
-    <div class="form-group">
-      <label for="settings-currency">Moneda principal</label>
-      <select id="settings-currency" class="form-input">
-        <!-- Poblado dinámicamente -->
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="settings-theme">Tema</label>
-      <select id="settings-theme" class="form-input">
-        <option value="system">Automático (sistema)</option>
-        <option value="light">Claro</option>
-        <option value="dark">Oscuro</option>
-      </select>
-    </div>
-    <div class="modal-footer">
-      <button type="submit" class="btn-primary">Guardar</button>
-      <button id="btn-import-data" type="button" class="btn-ghost">Importar datos</button>
-    </div>
-    <div class="danger-zone">
-      <button id="btn-reset-data" type="button" class="btn-danger">🗑️ Resetear todos los datos</button>
-    </div>
-  </form>
-</div>
+<!-- ========== SETUP MODAL (LEGACY - oculto) ========== -->
+<div id="setup-modal" class="modal hidden" role="dialog" aria-modal="true"> 
+    <h3>Primera vez — Configura tu cuenta</h3> 
+    <form id="setup-form"> 
+        <div class="row"><label for="user-name">Nombre</label><input id="user-name" type="text" required placeholder="Tu nombre"></div> 
+        <div class="row"><label for="user-nu">Saldo en Nu</label><input id="user-nu" type="text" value="0,00" class="currency-input"></div> 
+        <div class="row"><label for="user-nequi">Saldo en Nequi</label><input id="user-nequi" type="text" value="0,00" class="currency-input"></div> 
+        <div class="row"><label for="user-davivienda">Saldo en Davivienda</label><input id="user-davivienda" type="text" value="0,00" class="currency-input"></div> 
+        <div class="row"><label for="user-cash">Saldo en Efectivo</label><input id="user-cash" type="text" value="0,00" class="currency-input"></div> 
+        <div class="row actions"><button type="submit" class="btn-primary">Guardar y empezar</button></div> 
+    </form> 
+</div> 
 
-<!-- ═══════════════════════════════════════════
-     MODAL: PRESUPUESTOS
-═══════════════════════════════════════════ -->
-<div id="budgets-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="budgets-title">
-  <div class="modal-header">
-    <h3 id="budgets-title">Presupuestos por categoría</h3>
-    <button class="modal-close" onclick="hideAllModals()" aria-label="Cerrar">✕</button>
-  </div>
-  <form id="budgets-form" class="modal-body">
-    <div id="budgets-form-list" class="modal-scroll"></div>
-    <div class="budget-add-row">
-      <select id="new-budget-name" class="form-input">
-        <option value="" disabled selected>Seleccionar categoría</option>
-      </select>
-      <input id="new-budget-amt" placeholder="Monto" type="text" class="form-input currency-input budget-amt-field">
-      <button id="btn-add-budget" type="button" class="btn-ghost">+ Agregar</button>
-    </div>
-    <div class="modal-footer">
-      <button type="submit" class="btn-primary">Guardar presupuestos</button>
-      <button id="btn-close-budgets" class="btn-ghost" type="button">Cancelar</button>
-    </div>
-  </form>
-</div>
+<!-- ========== TOAST ========== -->
+<div id="toast-container" class="toast-container" aria-live="polite"></div> 
 
-<!-- ═══════════════════════════════════════════
-     MODAL: EXPORTAR DATOS
-═══════════════════════════════════════════ -->
-<div id="export-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="export-title">
-  <div class="modal-header">
-    <h3 id="export-title">Exportar datos</h3>
-    <button class="modal-close" onclick="hideAllModals()" aria-label="Cerrar">✕</button>
-  </div>
-  <div class="modal-body">
-    <p class="modal-desc">Selecciona el formato para exportar tus datos financieros:</p>
-    <div class="export-options">
-      <button id="btn-export-csv" class="export-option-btn">
-        <span class="export-icon">📊</span>
-        <span class="export-label">CSV</span>
-        <span class="export-desc">Para Excel / Sheets</span>
-      </button>
-      <button id="btn-export-json" class="export-option-btn">
-        <span class="export-icon">📦</span>
-        <span class="export-label">JSON</span>
-        <span class="export-desc">Backup completo</span>
-      </button>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button id="btn-close-export" class="btn-ghost">Cancelar</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     MODAL: PORTABILIDAD DE DATOS
-═══════════════════════════════════════════ -->
-<div id="portability-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="portability-title">
-  <div class="modal-header">
-    <h3 id="portability-title">Portabilidad de datos</h3>
-    <button class="modal-close" onclick="hideAllModals()" aria-label="Cerrar">✕</button>
-  </div>
-  <div class="modal-body">
-    <p class="modal-desc">Copia todos tus datos para trasladarlos a una nueva versión de la app.</p>
-    <textarea id="data-export-text" class="data-textarea" rows="8" readonly placeholder="Los datos aparecerán aquí..."></textarea>
-    <div class="info-box">
-      <strong>Instrucciones:</strong>
-      <ol>
-        <li>Haz clic en "Copiar al portapapeles"</li>
-        <li>En la nueva versión, ve a Ajustes → Importar datos</li>
-        <li>Pega los datos copiados y confirma</li>
-      </ol>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button id="btn-copy-data" class="btn-primary">📋 Copiar al portapapeles</button>
-    <button id="btn-close-portability" class="btn-ghost">Cerrar</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     MODAL: IMPORTAR DATOS
-═══════════════════════════════════════════ -->
-<div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="import-title">
-  <div class="modal-header">
-    <h3 id="import-title">Importar datos</h3>
-    <button class="modal-close" onclick="hideAllModals()" aria-label="Cerrar">✕</button>
-  </div>
-  <div class="modal-body">
-    <p class="modal-desc">Pega los datos exportados de una versión anterior:</p>
-    <textarea id="data-import-text" class="data-textarea" rows="8" placeholder="Pega aquí los datos copiados..."></textarea>
-    <div class="warning-box">
-      <strong>⚠️ Advertencia:</strong> Esta acción sobreescribirá todos tus datos actuales y no se puede deshacer.
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button id="btn-import-confirm" class="btn-primary">Importar datos</button>
-    <button id="btn-close-import" class="btn-ghost">Cancelar</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     MODAL: REPORTE DE GASTOS
-═══════════════════════════════════════════ -->
-<div id="expenses-report-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="report-title">
-  <div class="modal-header">
-    <h3 id="report-title">Reporte de gastos por categoría</h3>
-    <button class="modal-close" onclick="hideAllModals()" aria-label="Cerrar">✕</button>
-  </div>
-  <div id="expenses-report-container" class="modal-scroll modal-body"></div>
-  <div class="modal-footer">
-    <button id="close-expenses-report" class="btn-ghost">Cerrar</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     MODAL: NUEVA INVERSIÓN
-═══════════════════════════════════════════ -->
-<div id="investment-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="investment-title">
-  <div class="modal-header">
-    <h3 id="investment-title">Nueva inversión</h3>
-    <button id="btn-close-investment" class="modal-close" aria-label="Cerrar">✕</button>
-  </div>
-  <div id="investment-form-container" class="modal-body modal-scroll">
-    <!-- Renderizado dinámico por showNewInvestmentForm() -->
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     TOAST CONTAINER
-═══════════════════════════════════════════ -->
-<div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
-
-<!-- ═══════════════════════════════════════════
-     SCRIPTS
-═══════════════════════════════════════════ -->
+<!-- Archivos JavaScript modulares -->
 <script src="js/core.js"></script>
 <script src="js/storage.js"></script>
-<script src="js/app.js"></script>
+<script src="js/models.js"></script>
 <script src="js/ui-render.js"></script>
 <script src="js/ui-modals.js"></script>
 <script src="js/ui-forms.js"></script>
 
-</body>
+</body> 
 </html>
