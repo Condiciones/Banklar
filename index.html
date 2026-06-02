@@ -1,481 +1,1245 @@
-<!doctype html> 
-<html lang="es" data-theme="light"> 
-<head> 
-<meta charset="utf-8" /> 
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" /> 
-<meta name="theme-color" content="#7c3aed" />
-<meta name="description" content="Banklar — Tu app de finanzas personales. Controla tus cuentas, inversiones y presupuestos desde un solo lugar." />
-<title>Banklar — Finanzas personales</title> 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-</head> 
-<body> 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Banklar - Finanzas e Inversiones</title>
+    <style>
+        :root {
+            /* Modo Oscuro: Tonos Pizarra/Morado profundo */
+            --bg-main: #0F172A; 
+            --bg-card: #1E293B; 
+            --bg-input: #334155; 
+            --text-main: #F8FAFC; 
+            --text-muted: #94A3B8; 
+            --accent: #A855F7; /* Morado vibrante */
+            --accent-hover: #9333EA; 
+            --danger: #EF4444; 
+            --warning: #F59E0B; 
+            --success: #10B981;
+            --border-radius: 14px;
+            --transition: all 0.25s ease;
+        }
 
-<!-- ========== PANTALLA: PRIVACIDAD ========== -->
-<div id="privacy-screen" class="screen active">
-    <div class="privacy-container">
-        <div class="privacy-card">
-            <div class="privacy-icon">🔒</div>
-            <h1 class="privacy-title">Privacidad y control de tus datos</h1>
+        body.light-theme {
+            /* Modo Claro: Optimizado (Pizarra Claro) */
+            --bg-main: #F8FAFC; 
+            --bg-card: #FFFFFF; 
+            --bg-input: #F1F5F9; 
+            --text-main: #1E293B; 
+            --text-muted: #64748B; 
+            --accent: #7E22CE; /* Morado elegante */
+            --accent-hover: #6B21A8; 
+            --danger: #DC2626; 
+            --warning: #D97706; 
+            --success: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            overflow-x: hidden;
+            transition: var(--transition);
+        }
+
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hidden { display: none !important; }
+
+        h1, h2, h3, h4 { font-weight: 700; margin-bottom: 8px; }
+        h1 { font-size: 26px; color: var(--accent); text-align: center; margin-bottom: 15px; }
+        h2 { font-size: 20px; border-left: 4px solid var(--accent); padding-left: 10px; margin-top: 10px; margin-bottom: 15px; }
+        h3 { font-size: 16px; color: var(--text-main); }
+        .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 15px; }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            border: 1px solid var(--bg-input);
+            transition: var(--transition);
+        }
+
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+        input, select, textarea {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid transparent;
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: var(--transition);
+            outline: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background-color: var(--accent);
+            color: #FFFFFF;
+            font-weight: 600;
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 8px;
+        }
+        .btn:hover, .btn:active { background-color: var(--accent-hover); }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--text-muted); color: var(--text-main); }
+        .btn-danger { background-color: var(--danger); color: white; border: none; }
+        .btn-sm { padding: 6px 10px; font-size: 12px; width: auto; display: inline-flex; margin-top: 0; }
+
+        .privacy-list { list-style: none; margin-bottom: 15px; }
+        .privacy-list li { position: relative; padding-left: 18px; margin-bottom: 10px; font-size: 13px; }
+        .privacy-list li::before { content: "•"; color: var(--accent); font-size: 18px; position: absolute; left: 0; top: -3px; }
+
+        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--bg-input); margin-bottom: 15px; }
+        .net-worth { text-align: right; }
+        .net-worth .amount { font-size: 24px; font-weight: 800; color: var(--accent); }
+
+        .nav-tabs { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-card); border-top: 1px solid var(--bg-input); z-index: 100; max-width: 600px; margin: 0 auto; }
+        .nav-tab { padding: 10px 2px; text-align: center; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+        .nav-tab.active { color: var(--accent); font-weight: bold; }
+        .nav-tab-icon { width: 22px; height: 22px; display: block; margin: 0 auto 3px auto; }
+
+        .tab-content { padding-bottom: 75px; }
+
+        .alert-box { padding: 12px; border-radius: 10px; margin-bottom: 12px; font-size: 12px; border-left: 4px solid var(--warning); background: rgba(245, 158, 11, 0.08); display: flex; align-items: flex-start; gap: 8px; }
+        .alert-box.danger { border-left-color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+        .alert-box.success { border-left-color: var(--success); background: rgba(16, 185, 129, 0.08); }
+        .alert-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .mini-card { background: var(--bg-input); padding: 12px; border-radius: 10px; position: relative; }
+        .mini-card .m-title { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+        .mini-card .m-balance { font-size: 15px; font-weight: 700; }
+
+        .search-container { position: relative; margin-bottom: 10px; }
+        .search-container input { padding-left: 36px; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; width: 16px; height: 16px; }
+
+        .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 140px; overflow-y: auto; background: var(--bg-input); padding: 8px; border-radius: 10px; margin-bottom: 10px; }
+        .category-item { padding: 8px 6px; background: var(--bg-card); border-radius: 8px; font-size: 11px; text-align: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent; transition: all 0.2s; }
+        .category-item.selected { border-color: var(--accent); color: var(--accent); background: rgba(168, 85, 247, 0.1); font-weight: 600; }
+
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--bg-input); font-size: 13px; }
+        .history-item:last-child { border-bottom: none; }
+        .tx-details h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .tx-details p { font-size: 11px; color: var(--text-muted); }
+        .tx-amt { font-weight: 700; font-size: 14px; margin-bottom: 4px;}
+        .tx-expense .tx-amt { color: var(--danger); }
+        .tx-income .tx-amt { color: var(--success); }
+
+        .type-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
+        .type-btn { background: var(--bg-input); border: none; color: var(--text-muted); padding: 10px 2px; font-size: 10px; font-weight: 700; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .type-btn.active { background: var(--accent); color: #FFFFFF; box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3); }
+
+        .budget-bar { margin-bottom: 12px; font-size: 12px; }
+        .budget-bar-fill { height: 6px; background: var(--accent); width: 0%; border-radius: 3px; transition: width 0.3s; }
+        .budget-bar-fill.over { background: var(--danger); }
+
+        .inv-card { border: 1px solid var(--bg-input); margin-bottom: 12px; }
+        .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .inv-badge { font-size: 10px; padding: 3px 8px; background: var(--bg-input); border-radius: 6px; font-weight: 600; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div id="screen-privacy" class="screen">
+        <h1 style="margin-top:20px;">Banklar</h1>
+        <div class="card">
+            <h2>Privacidad y control de tus datos</h2>
+            <p class="subtitle">Tu información es únicamente tuya.</p>
+            <p style="font-size:13px; margin-bottom:10px;">Todos los datos que registres en esta aplicación se almacenan localmente en tu dispositivo. Esto significa que la información permanece guardada dentro de la memoria de tu teléfono o tablet y no se envía automáticamente a servidores externos, servicios en la nube ni bases de datos de terceros.</p>
+            <p style="font-size:13px; margin-bottom:10px;">La aplicación no comparte tus movimientos financieros, saldos, cuentas, presupuestos o registros personales con ninguna entidad externa.</p>
+            <p style="font-size:13px; margin-bottom:10px;">Actualmente, la aplicación funciona de manera independiente y sin sincronización en línea. Tus datos permanecen exclusivamente en el dispositivo donde fueron creados.</p>
+            <p style="font-size:13px; margin-bottom:15px;">La aplicación no tiene acceso a tus cuentas bancarias reales, no puede consultar movimientos bancarios y tampoco puede realizar transacciones en tu nombre.</p>
             
-            <p class="privacy-text">Tu información es únicamente tuya.</p>
-            
-            <p class="privacy-text">Todos los datos que registres en esta aplicación se almacenan localmente en tu dispositivo. Esto significa que la información permanece guardada dentro de la memoria de tu teléfono o tablet y no se envía automáticamente a servidores externos, servicios en la nube ni bases de datos de terceros.</p>
-            
-            <p class="privacy-text">La aplicación no comparte tus movimientos financieros, saldos, cuentas, presupuestos o registros personales con ninguna entidad externa.</p>
-            
-            <p class="privacy-text">Actualmente, la aplicación funciona de manera independiente y sin sincronización en línea. Tus datos permanecen exclusivamente en el dispositivo donde fueron creados.</p>
-            
-            <p class="privacy-text">La aplicación no tiene acceso a tus cuentas bancarias reales, no puede consultar movimientos bancarios y tampoco puede realizar transacciones en tu nombre.</p>
-            
-            <div class="privacy-warning">
-                <h3>⚠️ IMPORTANTE</h3>
-                <ul>
-                    <li>Tus datos pertenecen únicamente a ti.</li>
-                    <li>La aplicación no conserva copias externas de tu información.</li>
-                    <li>Si cambias de dispositivo, deberás exportar y trasladar manualmente tus datos al nuevo equipo utilizando las herramientas disponibles dentro de la aplicación.</li>
-                    <li>Si eliminas los datos de la aplicación, borras su almacenamiento o la desinstalas sin haber exportado previamente tu información, todos los registros se perderán de forma permanente.</li>
-                    <li>Una vez eliminados, los datos no podrán recuperarse porque no existen copias almacenadas en servidores externos.</li>
-                </ul>
-            </div>
-            
-            <p class="privacy-confirm-text">Al continuar, confirmas que entiendes cómo se almacenan y gestionan tus datos dentro de la aplicación.</p>
-            
-            <button onclick="acceptPrivacyAndContinue()" class="btn-primary btn-large">
-                Entiendo y acepto
-            </button>
+            <h4 style="color:var(--warning); margin-bottom:6px;">IMPORTANTE</h4>
+            <ul class="privacy-list">
+                <li>Tus datos pertenecen únicamente a ti.</li>
+                <li>La aplicación no conserva copias externas de tu información.</li>
+                <li>Si cambias de dispositivo, deberás exportar manualmente tus datos utilizando las herramientas de la aplicación.</li>
+                <li>Si eliminas los datos de la aplicación o la desinstalas sin exportar, todos los registros se perderán de forma permanente.</li>
+                <li>Una vez eliminados, los datos no podrán recuperarse porque no existen copias en servidores externos.</li>
+            </ul>
+            <p style="font-size:11px; color:var(--text-muted); margin-bottom:16px;">Al continuar, confirmas que entiendes cómo se almacenan y gestionan tus datos.</p>
+            <button class="btn" id="btn-accept-privacy">Confirmar y Continuar</button>
         </div>
     </div>
-</div>
 
-<!-- ========== PANTALLA: ONBOARDING ========== -->
-<div id="onboarding-screen" class="screen">
-    <div class="onboarding-container" id="onboarding-container">
-        <!-- Se llena dinámicamente con ui-forms.js -->
+    <div id="screen-onboarding" class="screen hidden">
+        <h1>Configuración Inicial</h1>
+        <div class="card" id="ob-step-1">
+            <h2>Paso 1: Tu Nombre</h2>
+            <div class="form-group">
+                <label for="ob-name">¿Cómo te llamas? *</label>
+                <input type="text" id="ob-name" placeholder="Ejemplo: Alejandro">
+            </div>
+            <button class="btn" id="btn-ob-next-1" style="margin-top:16px;">Siguiente</button>
+        </div>
+
+        <div class="card id-onboarding-step-2 hidden" id="ob-step-2">
+            <h2>Paso 2: Estructura Financiera</h2>
+            <div style="background:rgba(168, 85, 247, 0.05); padding:12px; border-radius:10px; border:1px solid rgba(168, 85, 247, 0.2); margin-bottom:16px;">
+                <h4 style="color:var(--accent);">Efectivo / Caja (Por Defecto)</h4>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">Dinero físico en tu billetera o bolsillo de libre disponibilidad.</p>
+                <div class="form-group">
+                    <label>Saldo Inicial de Efectivo *</label>
+                    <input type="text" class="currency-input" id="ob-cash-bal" placeholder="$ 0" data-raw="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="ob-count">¿Cuántas cuentas bancarias adicionales deseas registrar?</label>
+                <select id="ob-count">
+                    <option value="1">1 Cuenta</option><option value="2">2 Cuentas</option><option value="3">3 Cuentas</option>
+                    <option value="4">4 Cuentas</option><option value="5">5 Cuentas</option><option value="6">6 Cuentas</option>
+                    <option value="7">7 Cuentas</option><option value="8">8 Cuentas</option><option value="9">9 Cuentas</option>
+                    <option value="10">10 Cuentas</option>
+                </select>
+            </div>
+            <div id="ob-dynamic-accounts"></div>
+            <button class="btn" id="btn-ob-finish" style="margin-top:20px;">Finalizar Configuración</button>
+        </div>
     </div>
-</div>
 
-<!-- ========== PANTALLA: DASHBOARD ========== -->
-<div id="dashboard-screen" class="screen">
-    <header class="app-header"> 
-        <div class="brand"> 
-            <div class="logo" aria-hidden="true">B</div> 
-            <div> 
-                <h1>Banklar</h1> 
-                <p id="greeting">Bienvenido</p> 
-            </div> 
-        </div> 
-        <div class="header-actions"> 
-            <button id="btn-settings" class="btn-ghost" aria-label="Ajustes">⚙️</button> 
-        </div> 
-    </header> 
+    <div id="screen-app" class="screen hidden">
+        <div class="app-header">
+            <div>
+                <span style="font-size:12px; color:var(--text-muted);">Hola,</span>
+                <h3 id="display-username" style="margin:0; color:var(--accent);">Usuario</h3>
+            </div>
+            <div class="net-worth">
+                <span style="font-size:11px; color:var(--text-muted);">Patrimonio Total</span>
+                <div class="amount" id="display-net-worth">$ 0</div>
+            </div>
+        </div>
 
-    <main class="container"> 
-        <!-- Cuentas dinámicas -->
-        <section class="cards">
-            <article class="card balance-card"> 
-                <div class="card-header"> 
-                    <h2>Mis Cuentas</h2> 
-                    <button id="refresh-balances" class="refresh-btn" aria-label="Actualizar balances">↻</button> 
-                </div> 
-                <div class="balances" id="balances-container">
-                    <!-- Compatibilidad legacy -->
-                    <div class="balance-item" id="balance-nu-item">
-                        <div class="label">Nu <span class="badge badge-principal">Principal</span></div> 
-                        <div class="amount" id="balance-nu">$0</div> 
-                    </div> 
-                    <div class="balance-item" id="balance-nequi-item">
-                        <div class="label">Nequi</div> 
-                        <div class="amount" id="balance-nequi">$0</div> 
-                    </div> 
-                    <div class="balance-item" id="balance-davivienda-item">
-                        <div class="label">Davivienda</div> 
-                        <div class="amount" id="balance-davivienda">$0</div> 
-                    </div> 
-                    <div class="balance-item" id="balance-cash-item">
-                        <div class="label">Efectivo</div> 
-                        <div class="amount" id="balance-cash">$0</div> 
-                        <div class="small">En mano</div> 
+        <div id="alerts-area"></div>
+
+        <div id="tab-dashboard" class="tab-content">
+            <div class="card">
+                <h2>Cuentas Disponibles</h2>
+                <div class="grid-cards" id="dash-accounts-list"></div>
+            </div>
+            <div class="card">
+                <h2>Resumen de Inversiones</h2>
+                <div class="grid-cards" id="dash-inv-list"></div>
+            </div>
+            <div class="card">
+                <h2>Métricas y Períodos</h2>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <div style="background:var(--bg-input); padding:12px; border-radius:10px;">
+                        <span style="font-size:11px; color:var(--text-muted);">Ingresos Periodo</span>
+                        <div style="font-weight:800; font-size:15px; color:var(--success);" id="m-inc">$ 0</div>
                     </div>
-                    <!-- Contenedor para cuentas adicionales dinámicas -->
-                    <div id="accounts-container"></div>
-                    <div class="balance-item total-item"> 
-                        <div class="label">Patrimonio Total</div> 
-                        <div class="amount" id="balance-total">$0</div> 
-                        <div class="small" id="balance-status">Estable</div> 
-                    </div> 
-                </div> 
-            </article> 
-
-            <!-- Formulario de transacción -->
-            <article class="card quick-add"> 
-                <h2>Registrar Transacción</h2> 
-                <form id="tx-form"> 
-                    <div class="row"> 
-                        <label for="tx-type">Tipo</label> 
-                        <select id="tx-type" required> 
-                            <option value="income">💰 Ingreso</option> 
-                            <option value="expense">💳 Gasto</option> 
-                            <option value="transfer">🔄 Transferencia</option> 
-                            <option value="cash-conversion">💵 Conversión Efectivo</option> 
-                        </select> 
-                    </div> 
-                    <div class="row" id="income-source-row"> 
-                        <label for="income-source">Origen del ingreso</label> 
-                        <select id="income-source"> 
-                            <option value="Salario">Salario</option> 
-                            <option value="Honorarios">Honorarios</option> 
-                            <option value="Venta">Venta</option> 
-                            <option value="Regalo">Regalo</option> 
-                            <option value="Otros">Otros ingresos</option> 
-                        </select> 
-                    </div> 
-                    <div class="row" id="expense-category-row" style="display:none"> 
-                        <label for="expense-category">Categoría</label> 
-                        <select id="expense-category"> 
-                            <!-- Se llena dinámicamente --> 
-                        </select> 
-                    </div> 
-                    <div class="row" id="transfer-from-row" style="display:none"> 
-                        <label for="transfer-from">Cuenta origen</label> 
-                        <select id="transfer-from"> 
-                            <!-- Se llena dinámicamente --> 
-                        </select> 
+                    <div style="background:var(--bg-input); padding:12px; border-radius:10px;">
+                        <span style="font-size:11px; color:var(--text-muted);">Gastos Periodo</span>
+                        <div style="font-weight:800; font-size:15px; color:var(--danger);" id="m-exp">$ 0</div>
                     </div>
-                    <div class="row" id="transfer-to-row" style="display:none">
-                        <label for="transfer-to">Cuenta destino</label>
-                        <select id="transfer-to">
-                            <!-- Se llena dinámicamente -->
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div style="background:var(--bg-input); padding:12px; border-radius:10px;">
+                        <span style="font-size:11px; color:var(--text-muted);">Gasto Mensual</span>
+                        <div style="font-weight:700; font-size:14px;" id="m-month">$ 0</div>
+                    </div>
+                    <div style="background:var(--bg-input); padding:12px; border-radius:10px;">
+                        <span style="font-size:11px; color:var(--text-muted);">Gasto Quincenal</span>
+                        <div style="font-weight:700; font-size:14px;" id="m-fortnight">$ 0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Distribución de Gastos</h2>
+                <div id="dash-cat-summary"></div>
+            </div>
+        </div>
+
+        <div id="tab-transactions" class="tab-content hidden">
+            <div class="card">
+                <h2>Registrar Operación</h2>
+                <div class="type-selector">
+                    <button class="type-btn active" data-type="expense">GASTO</button>
+                    <button class="type-btn" data-type="income">INGRESO</button>
+                    <button class="type-btn" data-type="transfer">TRANSF.</button>
+                    <button class="type-btn" data-type="conversion">CONVER.</button>
+                </div>
+                <form id="form-tx" onsubmit="return false;">
+                    <div class="form-group">
+                        <label>Monto / Cantidad *</label>
+                        <input type="text" id="tx-amount" class="currency-input" placeholder="$ 0" data-raw="0" required>
+                    </div>
+                    <div class="form-group" id="group-origin">
+                        <label id="label-origin">Cuenta de Origen</label>
+                        <select id="tx-origin"></select>
+                    </div>
+                    <div class="form-group hidden" id="group-dest">
+                        <label>Cuenta Destino</label>
+                        <select id="tx-dest"></select>
+                    </div>
+                    <div id="group-cat">
+                        <div class="search-container">
+                            <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <input type="text" id="tx-cat-search" placeholder="Buscar categoría...">
+                        </div>
+                        <div class="category-grid" id="tx-cat-list"></div>
+                        <div style="display:flex; gap:8px; margin-bottom:12px;">
+                            <input type="text" id="new-cat-name" placeholder="Nueva categoría...">
+                            <button class="btn btn-sm" id="btn-add-cat">Añadir</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha *</label>
+                        <input type="date" id="tx-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nota / Comentario</label>
+                        <input type="text" id="tx-note" placeholder="Ej: Supermercado Semanal">
+                    </div>
+                    <button class="btn" id="btn-save-tx" style="margin-top:16px;">Guardar Movimiento</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="tab-investments" class="tab-content hidden">
+            <div class="card">
+                <h2>Nueva Inversión</h2>
+                <form id="form-inv" onsubmit="return false;">
+                    <div class="form-group">
+                        <label>Tipo de Inversión</label>
+                        <select id="inv-type">
+                            <option value="Cajita con rendimiento">Cajita con rendimiento</option>
+                            <option value="Bolsillo con rendimiento">Bolsillo con rendimiento</option>
+                            <option value="Cuenta de ahorro con rendimiento">Cuenta de ahorro con rendimiento</option>
+                            <option value="CDT">CDT</option>
+                            <option value="CDAT">CDAT</option>
+                            <option value="Fiduenta">Fiduenta</option>
+                            <option value="Fondo de inversión colectiva">Fondo de inversión colectiva</option>
+                            <option value="Fondo de liquidez">Fondo de liquidez</option>
+                            <option value="Fondo de renta fija">Fondo de renta fija</option>
+                            <option value="Personalizado">Personalizado</option>
                         </select>
                     </div>
-                    <div class="row" id="cash-conversion-row" style="display:none"> 
-                        <label for="cash-conversion-type">Tipo de conversión</label> 
-                        <select id="cash-conversion-type"> 
-                            <option value="to_cash">Digital → Efectivo</option> 
-                            <option value="from_cash">Efectivo → Digital</option> 
-                        </select> 
-                    </div> 
-                    <div class="row" id="cash-conversion-details-row" style="display:none"> 
-                        <label for="cash-conversion-details">Cuenta</label> 
-                        <select id="cash-conversion-details"> 
-                            <!-- Se llena dinámicamente --> 
-                        </select> 
-                    </div> 
-                    <div class="row"> 
-                        <label for="tx-amount">Monto</label> 
-                        <div class="currency-input-wrapper">
-                            <span class="currency-symbol">$</span>
-                            <input id="tx-amount" type="text" placeholder="0,00" required class="currency-input" data-currency-display="tx-amount-display"> 
-                            <span id="tx-amount-display" class="currency-display">0,00</span>
-                        </div>
-                        <div class="currency-hint">Escribe los números sin puntos ni comas</div> 
-                    </div> 
-                    <div class="row"> 
-                        <label for="tx-date">Fecha y Hora</label> 
-                        <input id="tx-date" type="datetime-local" required class="date-input"> 
-                    </div> 
-                    <div class="row" id="tx-account-row"> 
-                        <label for="tx-account">Cuenta</label> 
-                        <select id="tx-account"> 
-                            <!-- Se llena dinámicamente --> 
-                        </select> 
-                    </div> 
-                    <div class="row" id="principal-deposit-row" style="display:none"> 
-                        <label>
-                            <input type="checkbox" id="deposit-to-principal"> Depositar en cuenta principal
-                        </label> 
+                    <div class="form-group hidden" id="group-inv-custom-type">
+                        <label>Escribe el tipo personalizado</label>
+                        <input type="text" id="inv-custom-type-name" placeholder="Ej: Crowdfunding">
                     </div>
-                    <div class="row" id="principal-split-row" style="display:none"> 
-                        <label for="principal-split-amount">Monto a enviar a cuenta principal</label> 
-                        <input id="principal-split-amount" type="text" placeholder="Ej: 50,00" class="currency-input"> 
+                    <div class="form-group">
+                        <label>Entidad Financiera</label>
+                        <select id="inv-entity"></select>
                     </div>
-                    <!-- Compatibilidad legacy -->
-                    <div class="row" id="deposit-to-nu-row" style="display:none"> 
-                        <label><input type="checkbox" id="deposit-to-nu"> Depositar todo/parte en Nu</label> 
-                    </div> 
-                    <div class="row" id="nu-split-row" style="display:none"> 
-                        <label for="nu-split-amount">Monto a enviar a Nu</label> 
-                        <input id="nu-split-amount" type="text" placeholder="Ej: 50,00" class="currency-input"> 
-                    </div> 
-                    <div class="row actions"> 
-                        <button type="submit" class="btn-primary">Registrar</button> 
-                        <button type="button" id="btn-view-all" class="btn-ghost">Ver todas</button> 
-                    </div> 
-                </form> 
-            </article> 
-
-            <!-- Estadísticas -->
-            <article class="card stats-card"> 
-                <h2>Estadísticas & Alertas</h2> 
-                <div id="alerts" class="alerts"></div> 
-                <div class="stats-wrapper"> 
-                    <div class="stat-grid"> 
-                        <div class="stat-item stat-income"> 
-                            <div class="stat-label">Ingresos</div> 
-                            <div class="stat-value" id="total-incomes">$0</div> 
-                            <div class="stat-sub">Total recibido</div> 
-                        </div> 
-                        <div class="stat-item stat-expense"> 
-                            <div class="stat-label">Gastos</div> 
-                            <div class="stat-value" id="total-expenses">$0</div> 
-                            <div class="stat-sub">Total gastado</div> 
-                        </div> 
-                        <div class="stat-item stat-saved"> 
-                            <div class="stat-label">Ahorro sugerido</div> 
-                            <div class="stat-value" id="suggested-savings">—</div> 
-                            <div class="stat-sub">Sugerencia inteligente</div> 
-                        </div> 
-                        <div class="stat-item"> 
-                            <div class="stat-label">Transacciones</div> 
-                            <div class="stat-value" id="total-transactions">0</div> 
-                            <div class="stat-sub">Totales</div> 
-                        </div> 
-                    </div> 
-
-                    <!-- Resumen de Gastos por Mes/Quincena -->
-                    <div class="expenses-summary">
-                        <div class="summary-header">
-                            <h3 class="summary-title">Resumen de Gastos</h3>
-                            <div class="summary-controls">
-                                <button id="summary-monthly" class="btn-summary active">Por Mes</button>
-                                <button id="summary-biweekly" class="btn-summary">Por Quincena</button>
-                            </div>
-                        </div>
-                        <div id="expenses-summary-list" class="summary-list">
-                            <div class="summary-placeholder">Cargando datos...</div>
-                        </div>
-                        <button id="btn-expenses-report" class="btn-ghost btn-small" style="margin-top: 10px; width: 100%;">Ver reporte por categorías</button>
+                    <div class="form-group hidden" id="group-inv-new-entity">
+                        <label>Nombre de la Nueva Entidad</label>
+                        <input type="text" id="inv-new-entity-name" placeholder="Ej: Lulo Bank">
                     </div>
-                </div> 
-            </article> 
-        </section> 
-
-        <!-- Inversiones -->
-        <section class="cards" style="margin-top:16px;">
-            <article class="card investments-card">
-                <div class="card-header">
-                    <h2>📈 Mis Inversiones</h2>
-                    <button id="btn-new-investment" class="btn-ghost" aria-label="Nueva inversión">+ Nueva</button>
-                </div>
-                <div id="investments-summary-container">
-                    <div class="meta" style="padding:16px;text-align:center;">No tienes inversiones activas</div>
-                </div>
-            </article>
-        </section>
-
-        <!-- Últimas transacciones y Presupuestos -->
-        <section class="transactions"> 
-            <article class="card tx-list"> 
-                <h2>Últimas transacciones</h2> 
-                <div class="tx-container"> 
-                    <ul id="last-tx-list" class="tx-items"></ul> 
-                </div> 
-                <div class="center"> 
-                    <button id="btn-view-all-2" class="btn-ghost">Ver todas las transacciones</button> 
-                </div> 
-            </article> 
-            <article class="card budgets"> 
-                <h2>Presupuestos</h2> 
-                <div id="budgets-list"></div> 
-                <div class="center"> 
-                    <button id="btn-edit-budgets" class="btn-ghost">Editar presupuestos</button> 
-                    <button id="btn-data-portability" class="btn-ghost" style="margin-top:8px;">📋 Copiar datos</button> 
-                </div> 
-            </article> 
-        </section> 
-    </main> 
-
-    <footer class="app-footer"> 
-        <div class="footer-content">
-            <span>Banklar © 2026</span>
-            <div class="footer-actions">
-                <button id="btn-export" class="btn-ghost">Exportar</button>
-                <button id="btn-import-data" class="btn-ghost">Importar</button>
+                    <div class="form-group">
+                        <label>Nombre de la Inversión</label>
+                        <input type="text" id="inv-name" placeholder="Ej: Fondo de Emergencias" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Capital Inicial *</label>
+                        <input type="text" id="inv-cap" class="currency-input" placeholder="$ 0" data-raw="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tasa Efectiva Anual (EA %) *</label>
+                        <input type="number" id="inv-ea" step="0.01" placeholder="Ej: 13.25" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Frecuencia de Acreditación de Rendimientos</label>
+                        <select id="inv-freq">
+                            <option value="DIARIO">Diariamente</option>
+                            <option value="SEMANAL">Semanalmente</option>
+                            <option value="MENSUAL">Mensualmente</option>
+                            <option value="TRIMESTRAL">Trimestralmente</option>
+                            <option value="SEMESTRAL">Semestralmente</option>
+                            <option value="ANUAL">Anualmente</option>
+                            <option value="PERSONALIZADO">Personalizado (Por Días)</option>
+                        </select>
+                    </div>
+                    <div class="form-group hidden" id="group-inv-custom-days">
+                        <label>¿Cada cuántos días se reflejan los rendimientos? *</label>
+                        <input type="number" id="inv-custom-days" placeholder="Ej: 15">
+                        <p style="font-size:10px; color:var(--text-muted); margin-top:4px;">Ingresa la cantidad exacta de días de corte.</p>
+                    </div>
+                    <button class="btn" id="btn-save-inv" style="margin-top:16px;">Crear Inversión Activa</button>
+                </form>
             </div>
-        </div> 
-    </footer> 
-</div>
 
-<!-- ========== OVERLAY ========== -->
-<div id="modal-overlay" class="modal-overlay hidden"></div> 
-
-<!-- ========== MODALES ========== -->
-
-<!-- Modal: Ver todas las transacciones -->
-<div id="view-all-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="viewall-title"> 
-    <div class="modal-header">
-        <h3 id="viewall-title">Todas las transacciones</h3>
-        <button id="close-all-tx" class="btn-ghost btn-close-modal">✕</button>
-    </div>
-    <div class="modal-toolbar"> 
-        <div class="filter-controls"> 
-            <select id="tx-filter-type">
-                <option value="all">Todas</option>
-                <option value="income">Ingresos</option>
-                <option value="expense">Gastos</option>
-                <option value="transfer">Transferencias</option>
-                <option value="cash-conversion">Conversiones</option>
-            </select> 
-            <select id="tx-filter-account">
-                <option value="all">Todas las cuentas</option>
-                <!-- Se llena dinámicamente -->
-            </select> 
-        </div> 
-        <div class="search-control">
-            <input type="text" id="tx-search" placeholder="Buscar...">
-        </div> 
-    </div> 
-    <div id="all-tx-container" class="all-tx"></div> 
-</div> 
-
-<!-- Modal: Ajustes -->
-<div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title"> 
-    <div class="modal-header">
-        <h3 id="settings-title">⚙️ Ajustes</h3>
-        <button onclick="hideAllModals()" class="btn-ghost btn-close-modal">✕</button>
-    </div>
-    <form id="settings-form"> 
-        <div class="row">
-            <label for="settings-low-threshold">Umbral de alerta (saldo bajo)</label>
-            <div class="currency-input-wrapper">
-                <span class="currency-symbol">$</span>
-                <input id="settings-low-threshold" type="text" required class="currency-input">
+            <div class="card">
+                <h2>Tus Inversiones Activas</h2>
+                <div id="investments-list-container"></div>
             </div>
-        </div> 
-        <div class="row">
-            <label for="settings-currency">Moneda principal</label>
-            <select id="settings-currency">
-                <!-- Se llena dinámicamente -->
-            </select>
-        </div> 
-        <div class="row">
-            <label for="settings-theme">Tema de la interfaz</label>
-            <select id="settings-theme">
-                <option value="system">🌓 Sistema</option>
-                <option value="light">☀️ Claro</option>
-                <option value="dark">🌙 Oscuro</option>
-            </select>
         </div>
-        <div class="row actions"> 
-            <button type="submit" class="btn-primary">Guardar</button> 
-        </div> 
-        <div class="row actions danger-zone"> 
-            <button id="btn-reset-data" type="button" class="btn-danger">🗑️ Resetear todos los datos</button> 
-        </div> 
-    </form> 
-</div> 
 
-<!-- Modal: Presupuestos -->
-<div id="budgets-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="budgets-title"> 
-    <div class="modal-header">
-        <h3 id="budgets-title">Editar Presupuestos</h3>
-        <button id="btn-close-budgets" class="btn-ghost btn-close-modal">✕</button>
+        <div id="tab-history" class="tab-content hidden">
+            <div class="card">
+                <h2>Presupuestos Mensuales</h2>
+                <form id="form-budget" onsubmit="return false;" style="margin-bottom:20px;">
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="budget-cat-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Límite Mensual</label>
+                        <input type="text" id="budget-amt" class="currency-input" placeholder="$ 0" data-raw="0">
+                    </div>
+                    <button class="btn btn-sm" id="btn-save-budget">Asignar Límite</button>
+                </form>
+                <div id="budget-progress-container"></div>
+            </div>
+
+            <div class="card">
+                <h2>Historial de Movimientos</h2>
+                <div class="search-container">
+                    <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="history-search" placeholder="Buscar por nota o categoría...">
+                </div>
+                <div id="history-container" style="max-height:350px; overflow-y:auto; background:var(--bg-main); border-radius:10px; border: 1px solid var(--bg-input);"></div>
+                <button class="btn btn-danger btn-secondary" id="btn-clear-history" style="margin-top:16px;">Vaciar Todo el Historial</button>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content hidden">
+            <div class="card">
+                <h2>Personalización Visual</h2>
+                <button class="btn btn-secondary" id="btn-toggle-theme" style="margin-top:12px;">
+                    <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    Cambiar Modo Claro / Oscuro
+                </button>
+            </div>
+            <div class="card">
+                <h2>Portabilidad Local de Datos</h2>
+                <p class="subtitle">Copia y traslada tu información sin nubes externas.</p>
+                <button class="btn" id="btn-export">
+                    <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    Exportar al Portapapeles
+                </button>
+                <div class="form-group" style="margin-top:16px;">
+                    <label>Importar Cadena de Texto (JSON)</label>
+                    <textarea id="import-area" rows="4" placeholder="Pega el código JSON de exportación aquí..."></textarea>
+                </div>
+                <button class="btn btn-secondary" id="btn-import">Procesar e Importar Datos</button>
+            </div>
+            <div class="card" style="border:1px solid var(--danger);">
+                <h3 style="color:var(--danger);">Zona Crítica</h3>
+                <p class="subtitle">Borrado absoluto de la memoria interna.</p>
+                <button class="btn btn-danger" id="btn-hard-reset">
+                    <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Restablecer Aplicación de Fábrica
+                </button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-target="tab-dashboard">
+                <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Panel
+            </div>
+            <div class="nav-tab" data-target="tab-transactions">
+                <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Operar
+            </div>
+            <div class="nav-tab" data-target="tab-investments">
+                <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                Invertir
+            </div>
+            <div class="nav-tab" data-target="tab-history">
+                <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Historial
+            </div>
+            <div class="nav-tab" data-target="tab-settings">
+                <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Ajustes
+            </div>
+        </div>
     </div>
-    <form id="budgets-form"> 
-        <div id="budgets-form-list"></div> 
-        <div class="row" style="margin-top:12px;gap:8px;display:flex;align-items:center"> 
-            <select id="new-budget-name" style="flex:1;">
-                <option value="" disabled selected>Seleccionar categoría</option>
-                <!-- Se llena dinámicamente -->
-            </select> 
-            <input id="new-budget-amt" placeholder="Monto" type="text" class="currency-input" style="width:130px;"> 
-            <button id="btn-add-budget" type="button" class="btn-ghost">Agregar</button> 
-        </div> 
-        <div class="row actions" style="margin-top:16px;">
-            <button type="submit" class="btn-primary">Guardar</button>
-        </div> 
-    </form> 
-</div> 
 
-<!-- Modal: Exportar -->
-<div id="export-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="export-title"> 
-    <div class="modal-header">
-        <h3 id="export-title">Exportar datos</h3>
-        <button id="btn-close-export" class="btn-ghost btn-close-modal">✕</button>
-    </div>
-    <p style="margin-bottom:16px;">Selecciona el formato para exportar tus datos financieros:</p>
-    <div class="row actions">
-        <button id="btn-export-csv" class="btn-primary">📊 Exportar CSV</button>
-        <button id="btn-export-json" class="btn-ghost">📄 Exportar JSON</button>
-    </div> 
-</div> 
+    <script>
+        let appState = {
+            user: { name: "" },
+            accounts: [],
+            inversiones: [],
+            transactions: [],
+            categories: {
+                income: ['Salario', 'Honorarios', 'Rendimientos', 'Otros Ingresos'],
+                expense: ['Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Diversión', 'Salud', 'Otros Gastos']
+            },
+            budgets: {},
+            entities: ['Bancolombia', 'Nubank', 'Lulo Bank', 'Davivienda', 'Nequi', 'Banco de Bogotá'],
+            privacyAccepted: false,
+            onboarded: false,
+            theme: 'dark'
+        };
 
-<!-- Modal: Reporte de gastos -->
-<div id="expenses-report-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="report-title"> 
-    <div class="modal-header">
-        <h3 id="report-title">Reporte de Gastos</h3>
-        <button id="close-expenses-report" class="btn-ghost btn-close-modal">✕</button>
-    </div>
-    <p class="meta" style="margin-bottom:12px;">Resumen por categoría (porcentaje y monto)</p>
-    <div id="expenses-report-container" class="all-tx"></div> 
-</div> 
+        function initCurrencyFields() {
+            document.querySelectorAll('.currency-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    let clean = this.value.replace(/\D/g, "");
+                    if (!clean) { this.value = ""; this.setAttribute('data-raw', '0'); return; }
+                    let num = parseInt(clean, 10);
+                    this.setAttribute('data-raw', num.toString());
+                    this.value = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(num);
+                });
+            });
+        }
 
-<!-- Modal: Portabilidad de datos -->
-<div id="portability-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="portability-title"> 
-    <div class="modal-header">
-        <h3 id="portability-title">Portabilidad de Datos</h3>
-        <button id="btn-close-portability" class="btn-ghost btn-close-modal">✕</button>
-    </div>
-    <p style="margin-bottom:8px;">Copia todos los datos al portapapeles:</p>
-    <textarea id="data-export-text" rows="8" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-family:monospace;font-size:12px;background:var(--bg-secondary);color:var(--text);"></textarea>
-    <div class="row actions" style="margin-top:12px;"> 
-        <button id="btn-copy-data" class="btn-primary">📋 Copiar al portapapeles</button> 
-    </div> 
-    <div class="info-box"> 
-        <p><strong>Instrucciones:</strong><br>1. Haz clic en "Copiar"<br>2. En la nueva versión, ve a Importar datos<br>3. Pega los datos y confirma</p> 
-    </div> 
-</div> 
+        function formatCOP(v) {
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+        }
 
-<!-- Modal: Importar datos -->
-<div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="import-title"> 
-    <div class="modal-header">
-        <h3 id="import-title">Importar Datos</h3>
-        <button id="btn-close-import" class="btn-ghost btn-close-modal">✕</button>
-    </div>
-    <p style="margin-bottom:8px;">Pega los datos exportados anteriormente:</p>
-    <textarea id="data-import-text" rows="8" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);font-family:monospace;font-size:12px;background:var(--bg-secondary);color:var(--text);" placeholder="Pega aquí los datos copiados..."></textarea>
-    <div class="row actions" style="margin-top:12px;"> 
-        <button id="btn-import-confirm" class="btn-primary">📥 Importar datos</button> 
-    </div> 
-    <div class="warning-box"> 
-        <p><strong>⚠️ Advertencia:</strong> Esta acción sobreescribirá todos tus datos actuales.</p> 
-    </div> 
-</div> 
+        function save() { localStorage.setItem('banklar_core_state', JSON.stringify(appState)); }
 
-<!-- Modal: Inversión -->
-<div id="investment-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="investment-title"> 
-    <div class="modal-header">
-        <h3 id="investment-title">📈 Nueva Inversión</h3>
-        <button onclick="hideAllModals()" class="btn-ghost btn-close-modal">✕</button>
-    </div>
-    <div id="investment-form-container">
-        <!-- Se llena dinámicamente con ui-modals.js -->
-    </div>
-</div>
+        function load() {
+            let data = localStorage.getItem('banklar_core_state');
+            if (data) {
+                try {
+                    appState = JSON.parse(data);
+                    if (!appState.inversiones) appState.inversiones = [];
+                    if (!appState.entities) appState.entities = ['Bancolombia', 'Nubank', 'Lulo Bank', 'Davivienda', 'Nequi', 'Banco de Bogotá'];
+                    if (appState.theme === 'light') document.body.classList.add('light-theme');
+                } catch(e) { console.error(e); }
+            }
+        }
 
-<!-- ========== SETUP MODAL (LEGACY - oculto) ========== -->
-<div id="setup-modal" class="modal hidden" role="dialog" aria-modal="true"> 
-    <h3>Primera vez — Configura tu cuenta</h3> 
-    <form id="setup-form"> 
-        <div class="row"><label for="user-name">Nombre</label><input id="user-name" type="text" required placeholder="Tu nombre"></div> 
-        <div class="row"><label for="user-nu">Saldo en Nu</label><input id="user-nu" type="text" value="0,00" class="currency-input"></div> 
-        <div class="row"><label for="user-nequi">Saldo en Nequi</label><input id="user-nequi" type="text" value="0,00" class="currency-input"></div> 
-        <div class="row"><label for="user-davivienda">Saldo en Davivienda</label><input id="user-davivienda" type="text" value="0,00" class="currency-input"></div> 
-        <div class="row"><label for="user-cash">Saldo en Efectivo</label><input id="user-cash" type="text" value="0,00" class="currency-input"></div> 
-        <div class="row actions"><button type="submit" class="btn-primary">Guardar y empezar</button></div> 
-    </form> 
-</div> 
+        function changeScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
 
-<!-- ========== TOAST ========== -->
-<div id="toast-container" class="toast-container" aria-live="polite"></div> 
+        // CONTROL PRIVACIDAD Y ONBOARDING
+        document.getElementById('btn-accept-privacy').addEventListener('click', () => {
+            appState.privacyAccepted = true; save();
+            changeScreen('screen-onboarding');
+            buildDynamicOnboarding(1);
+        });
 
-<!-- Archivos JavaScript modulares -->
-<script src="js/core.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/models.js"></script>
-<script src="js/ui-render.js"></script>
-<script src="js/ui-modals.js"></script>
-<script src="js/ui-forms.js"></script>
+        document.getElementById('btn-ob-next-1').addEventListener('click', () => {
+            let n = document.getElementById('ob-name').value.trim();
+            if(!n) return alert("Por favor ingresa tu nombre.");
+            appState.user.name = n;
+            document.getElementById('ob-step-1').classList.add('hidden');
+            document.getElementById('ob-step-2').classList.remove('hidden');
+        });
 
-</body> 
+        document.getElementById('ob-count').addEventListener('change', (e) => {
+            buildDynamicOnboarding(parseInt(e.target.value, 10));
+        });
+
+        function buildDynamicOnboarding(c) {
+            let container = document.getElementById('ob-dynamic-accounts');
+            container.innerHTML = "";
+            for(let i=1; i<=c; i++) {
+                let t="Cuenta Adicional", s="Medio secundario o billetera.", p="Ej: RappiPay";
+                let type="additional";
+                if(i===1) { t="Cuenta Principal"; s="Donde recibes tus ingresos mayores."; p="Ej: Bancolombia"; type="main"; }
+                if(i===2) { t="Cuenta Secundaria"; s="Usada para gastos frecuentes o ahorros."; p="Ej: Nequi"; type="secondary"; }
+                
+                let block = document.createElement('div');
+                block.className = "card";
+                block.style.marginTop = "12px";
+                block.innerHTML = `
+                    <h4 style="color:var(--accent);">${t}</h4>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">${s}</p>
+                    <div class="form-group">
+                        <label>Nombre del Banco / Cuenta *</label>
+                        <input type="text" class="ob-acc-name" data-type="${type}" placeholder="${p}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Saldo Actual *</label>
+                        <input type="text" class="currency-input ob-acc-bal" placeholder="$ 0" data-raw="0" required>
+                    </div>
+                `;
+                container.appendChild(block);
+            }
+            initCurrencyFields();
+        }
+
+        document.getElementById('btn-ob-finish').addEventListener('click', () => {
+            appState.accounts = [];
+            let cash = parseInt(document.getElementById('ob-cash-bal').getAttribute('data-raw') || '0', 10);
+            appState.accounts.push({ id: 'acc_cash_default', name: 'Efectivo / Caja', type: 'cash', balance: cash, initialBalance: cash });
+
+            let names = document.querySelectorAll('.ob-acc-name');
+            let bals = document.querySelectorAll('.ob-acc-bal');
+            let ok = true;
+
+            names.forEach((el, idx) => {
+                let name = el.value.trim();
+                let b = parseInt(bals[idx].getAttribute('data-raw') || '0', 10);
+                let type = el.getAttribute('data-type');
+                if(!name) ok = false;
+                appState.accounts.push({ id: 'acc_'+Date.now()+'_'+idx, name: name, type: type, balance: b, initialBalance: b });
+            });
+
+            if(!ok) return alert("Completa todos los nombres de tus cuentas bancarias.");
+            appState.onboarded = true; save();
+            changeScreen('screen-app');
+            runCoreEngine();
+        });
+
+        // MOTOR DE INTERÉS COMPUESTO PASIVO
+        function processCompoundInterest() {
+            let hoy = new Date();
+            let recalculado = false;
+
+            appState.inversiones.forEach(inv => {
+                if(!inv.activa) return;
+                let ultAct = new Date(inv.fechaUltimaAct);
+                let diff = hoy - ultAct;
+                let dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+                if (dias <= 0) return;
+                recalculado = true;
+
+                let tasaDiaria = Math.pow(1 + (inv.tasaEA / 100), 1 / 365) - 1;
+                let cap = inv.capitalActual;
+                let acum = inv.rendPendiente || 0;
+                let fControl = new Date(ultAct);
+
+                let corteDias = 30;
+                if(inv.frecuencia==='DIARIO') corteDias=1;
+                if(inv.frecuencia==='SEMANAL') corteDias=7;
+                if(inv.frecuencia==='TRIMESTRAL') corteDias=90;
+                if(inv.frecuencia==='SEMESTRAL') corteDias=180;
+                if(inv.frecuencia==='ANUAL') corteDias=365;
+                if(inv.frecuencia==='PERSONALIZADO') corteDias = inv.diasPers || 30;
+
+                for(let i=0; i<dias; i++) {
+                    fControl.setDate(fControl.getDate() + 1);
+                    let rend = cap * tasaDiaria;
+                    acum += rend;
+
+                    let ultAcred = new Date(inv.fechaUltimaAcred);
+                    let diffAcred = Math.floor((fControl - ultAcred) / (1000 * 60 * 60 * 24));
+
+                    if(diffAcred >= corteDias) {
+                        cap += acum;
+                        inv.rendHistorico += acum;
+                        
+                        appState.transactions.push({
+                            id: 'tx_auto_'+Date.now()+'_'+Math.floor(Math.random()*99),
+                            type: 'income',
+                            amount: Math.round(acum),
+                            date: fControl.toISOString().split('T')[0],
+                            accountId: 'inv_'+inv.id,
+                            note: `Rendimiento Acreditado: ${inv.nombre}`,
+                            category: 'Rendimientos'
+                        });
+                        acum = 0;
+                        inv.fechaUltimaAcred = fControl.toISOString().split('T')[0];
+                    }
+                }
+
+                inv.capitalActual = Math.round(cap);
+                inv.rendPendiente = acum;
+                inv.fechaUltimaAct = hoy.toISOString().split('T')[0];
+            });
+
+            if(recalculado) save();
+        }
+
+        // RECALCULOS PATRIMONIALES Y RENDER
+        function recalculateAllData() {
+            appState.accounts.forEach(a => a.balance = a.initialBalance);
+            
+            appState.transactions.forEach(t => {
+                let amt = parseInt(t.amount, 10);
+                if(t.type==='expense') {
+                    let acc = appState.accounts.find(a => a.id === t.accountId);
+                    if(acc) acc.balance -= amt;
+                } else if(t.type==='income') {
+                    let acc = appState.accounts.find(a => a.id === t.accountId);
+                    if(acc) acc.balance += amt;
+                } else if(t.type==='transfer' || t.type==='conversion') {
+                    let o = appState.accounts.find(a => a.id === t.accountId);
+                    let d = appState.accounts.find(a => a.id === t.destAccountId);
+                    if(o) o.balance -= amt;
+                    if(d) d.balance += amt;
+                }
+            });
+
+            let totalCuentas = appState.accounts.reduce((acc, current) => acc + current.balance, 0);
+            let totalInversiones = appState.inversiones.filter(i => i.activa).reduce((acc, current) => acc + current.capitalActual, 0);
+            let patrimonioTotal = totalCuentas + totalInversiones;
+
+            document.getElementById('display-net-worth').innerText = formatCOP(patrimonioTotal);
+
+            // Renders
+            renderDashboard(totalCuentas);
+            renderTxForm();
+            renderInvestmentsModule();
+            renderHistoryAndBudgets();
+            checkSmartAlerts(patrimonioTotal);
+        }
+
+        function renderDashboard(totalCuentas) {
+            let container = document.getElementById('dash-accounts-list');
+            container.innerHTML = "";
+            appState.accounts.forEach(a => {
+                let div = document.createElement('div');
+                div.className = "mini-card";
+                div.innerHTML = `<div class="m-title">${a.name}</div><div class="m-balance">${formatCOP(a.balance)}</div>`;
+                container.appendChild(div);
+            });
+
+            let invContainer = document.getElementById('dash-inv-list');
+            invContainer.innerHTML = "";
+            let anyInv = false;
+            appState.inversiones.forEach(i => {
+                if(!i.activa) return;
+                anyInv = true;
+                let div = document.createElement('div');
+                div.className = "mini-card";
+                div.style.borderLeft = "4px solid var(--accent)";
+                div.innerHTML = `<div class="m-title">${i.nombre}</div><div class="m-balance">${formatCOP(i.capitalActual)}</div>`;
+                invContainer.appendChild(div);
+            });
+            if(!anyInv) invContainer.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>No posees inversiones activas.</p>";
+
+            // Metricas
+            let tInc=0, tExp=0, mExp=0, fExp=0;
+            let hoy = new Date();
+            appState.transactions.forEach(t => {
+                let amt = parseInt(t.amount, 10);
+                if(t.type==='income') tInc += amt;
+                if(t.type==='expense') {
+                    tExp += amt;
+                    let tDate = new Date(t.date + "T00:00:00");
+                    if(tDate.getFullYear() === hoy.getFullYear() && tDate.getMonth() === hoy.getMonth()) {
+                        mExp += amt;
+                        if(hoy.getDate() <= 15 && tDate.getDate() <= 15) fExp += amt;
+                        else if(hoy.getDate() > 15 && tDate.getDate() > 15) fExp += amt;
+                    }
+                }
+            });
+
+            document.getElementById('m-inc').innerText = formatCOP(tInc);
+            document.getElementById('m-exp').innerText = formatCOP(tExp);
+            document.getElementById('m-month').innerText = formatCOP(mExp);
+            document.getElementById('m-fortnight').innerText = formatCOP(fExp);
+
+            // Resumen de Categorias
+            let cats = {};
+            appState.transactions.forEach(t => {
+                if(t.type==='expense' && t.category) {
+                    cats[t.category] = (cats[t.category] || 0) + parseInt(t.amount,10);
+                }
+            });
+            let summaryHtml = "";
+            for(let c in cats) {
+                summaryHtml += `<div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--bg-input);"><span style="flex:1;">${c}</span><span style="font-weight:700; color:var(--danger);">${formatCOP(cats[c])}</span></div>`;
+            }
+            document.getElementById('dash-cat-summary').innerHTML = summaryHtml || "<p style='font-size:12px; color:var(--text-muted);'>Sin gastos registrados.</p>";
+        }
+
+        // OPERACIONES Y SELECTORES
+        let txTypeSelected = "expense";
+        let catSelected = "";
+        document.querySelectorAll('.type-selector .type-btn').forEach(b => {
+            b.addEventListener('click', function() {
+                document.querySelectorAll('.type-selector .type-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                txTypeSelected = this.getAttribute('data-type');
+                renderTxForm();
+            });
+        });
+
+        function renderTxForm() {
+            let orig = document.getElementById('tx-origin');
+            let dest = document.getElementById('tx-dest');
+            orig.innerHTML = ""; dest.innerHTML = "";
+
+            appState.accounts.forEach(a => {
+                let o1 = document.createElement('option'); o1.value = a.id; o1.innerText = `${a.name} (${formatCOP(a.balance)})`;
+                orig.appendChild(o1);
+                let o2 = document.createElement('option'); o2.value = a.id; o2.innerText = `${a.name} (${formatCOP(a.balance)})`;
+                dest.appendChild(o2);
+            });
+
+            if(txTypeSelected==='income') {
+                let main = appState.accounts.find(a => a.type==='main');
+                if(main) orig.value = main.id;
+            }
+
+            let gDest = document.getElementById('group-dest');
+            let gCat = document.getElementById('group-cat');
+            let lblOrig = document.getElementById('label-origin');
+
+            if(txTypeSelected==='expense' || txTypeSelected==='income') {
+                gDest.classList.add('hidden'); gCat.classList.remove('hidden');
+                lblOrig.innerText = txTypeSelected==='expense'?'Cuenta Origen':'Cuenta Destino';
+                renderCategoriesGrid();
+            } else {
+                gDest.classList.remove('hidden'); gCat.classList.add('hidden');
+                lblOrig.innerText = 'Desde Cuenta';
+            }
+        }
+
+        function renderCategoriesGrid(filter="") {
+            let container = document.getElementById('tx-cat-list');
+            container.innerHTML = ""; catSelected = "";
+            let pool = (txTypeSelected==='income')? appState.categories.income : appState.categories.expense;
+            pool.forEach(c => {
+                if(filter && !c.toLowerCase().includes(filter.toLowerCase())) return;
+                let div = document.createElement('div');
+                div.className = "category-item";
+                div.innerText = c;
+                div.addEventListener('click', function() {
+                    document.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
+                    this.classList.add('selected');
+                    catSelected = c;
+                });
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('tx-cat-search').addEventListener('input', (e) => {
+            renderCategoriesGrid(e.target.value);
+        });
+
+        document.getElementById('btn-add-cat').addEventListener('click', () => {
+            let n = document.getElementById('new-cat-name').value.trim();
+            if(!n) return;
+            let pool = (txTypeSelected==='income')? appState.categories.income : appState.categories.expense;
+            if(!pool.includes(n)) {
+                pool.push(n); save(); renderCategoriesGrid();
+                document.getElementById('new-cat-name').value = "";
+            }
+        });
+
+        document.getElementById('btn-save-tx').addEventListener('click', () => {
+            let amt = parseInt(document.getElementById('tx-amount').getAttribute('data-raw') || '0', 10);
+            let o = document.getElementById('tx-origin').value;
+            let d = document.getElementById('tx-dest').value;
+            let date = document.getElementById('tx-date').value;
+            let note = document.getElementById('tx-note').value.trim();
+
+            if(amt<=0 || !date) return alert("Completa los campos obligatorios.");
+            if((txTypeSelected==='expense' || txTypeSelected==='income') && !catSelected) return alert("Selecciona una categoría.");
+            if((txTypeSelected==='transfer' || txTypeSelected==='conversion') && o===d) return alert("Las cuentas deben ser diferentes.");
+
+            appState.transactions.push({
+                id: 'tx_'+Date.now()+'_'+Math.floor(Math.random()*100),
+                type: txTypeSelected,
+                amount: amt,
+                date: date,
+                accountId: o,
+                destAccountId: d,
+                category: catSelected,
+                note: note || (txTypeSelected==='transfer'?'Transferencia':txTypeSelected==='conversion'?'Conversión':catSelected)
+            });
+
+            document.getElementById('tx-amount').value="";
+            document.getElementById('tx-amount').setAttribute('data-raw','0');
+            document.getElementById('tx-note').value="";
+            save(); recalculateAllData();
+            alert("Operación registrada correctamente.");
+        });
+
+        // MODULO INVERSIONES COMPLETO
+        document.getElementById('inv-type').addEventListener('change', (e) => {
+            let g = document.getElementById('group-inv-custom-type');
+            if(e.target.value==='Personalizado') g.classList.remove('hidden');
+            else g.classList.add('hidden');
+        });
+
+        document.getElementById('inv-entity').addEventListener('change', (e) => {
+            let g = document.getElementById('group-inv-new-entity');
+            if(e.target.value==='+ Registrar nueva entidad financiera') g.classList.remove('hidden');
+            else g.classList.add('hidden');
+        });
+
+        document.getElementById('inv-freq').addEventListener('change', (e) => {
+            let g = document.getElementById('group-inv-custom-days');
+            if(e.target.value==='PERSONALIZADO') g.classList.remove('hidden');
+            else g.classList.add('hidden');
+        });
+
+        function renderInvestmentsModule() {
+            let sel = document.getElementById('inv-entity');
+            sel.innerHTML = "";
+            appState.entities.forEach(e => {
+                let o = document.createElement('option'); o.value=e; o.innerText=e;
+                sel.appendChild(o);
+            });
+            let oNew = document.createElement('option'); oNew.value='+ Registrar nueva entidad financiera'; oNew.innerText='+ Registrar nueva entidad';
+            sel.appendChild(oNew);
+
+            // Render lista activa
+            let container = document.getElementById('investments-list-container');
+            container.innerHTML = "";
+            
+            appState.inversiones.forEach(inv => {
+                if(!inv.activa) return;
+                let div = document.createElement('div');
+                div.className = "card inv-card";
+                div.innerHTML = `
+                    <div class="inv-header">
+                        <div>
+                            <span class="inv-badge">${inv.tipo}</span>
+                            <h3 style="margin-top:6px;">${inv.nombre}</h3>
+                            <p style="font-size:12px; color:var(--text-muted);">${inv.entidadFinanciera} • Creado: ${inv.fechaCreacion}</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:13px; font-weight:800; color:var(--accent);">${inv.tasaEA}% EA</span>
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Corte: ${inv.frecuencia}</div>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; background:rgba(0,0,0,0.1); padding:12px; border-radius:10px;">
+                        <div>
+                            <span style="font-size:11px; color:var(--text-muted);">Capital Inicial</span>
+                            <div style="font-size:14px; font-weight:600;">${formatCOP(inv.capitalInicial)}</div>
+                        </div>
+                        <div>
+                            <span style="font-size:11px; color:var(--text-muted);">Capital Actual</span>
+                            <div style="font-size:16px; font-weight:800; color:var(--accent);">${formatCOP(inv.capitalActual)}</div>
+                        </div>
+                    </div>
+                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Rentabilidad Histórica Cobrada: <strong style="color:var(--accent);">+${formatCOP(inv.rendHistorico)}</strong></p>
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
+                        <button class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'add')">+ Capital</button>
+                        <button class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'withdraw')">- Retirar</button>
+                        <button class="btn btn-sm" style="background:var(--bg-input); color:var(--text-main); border:none;" onclick="editInvParams('${inv.id}')">Editar</button>
+                    </div>
+                    <button class="btn btn-sm btn-danger" style="margin-top:10px; width:100%; border-radius:8px;" onclick="deleteInv('${inv.id}')">Eliminar Inversión</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('btn-save-inv').addEventListener('click', () => {
+            let t = document.getElementById('inv-type').value;
+            if(t==='Personalizado') t = document.getElementById('inv-custom-type-name').value.trim() || "Personalizado";
+
+            let ent = document.getElementById('inv-entity').value;
+            if(ent==='+ Registrar nueva entidad financiera') {
+                let nEnt = document.getElementById('inv-new-entity-name').value.trim();
+                if(!nEnt) return alert("Escribe el nombre de la nueva entidad.");
+                if(!appState.entities.includes(nEnt)) appState.entities.push(nEnt);
+                ent = nEnt;
+            }
+
+            let name = document.getElementById('inv-name').value.trim();
+            let cap = parseInt(document.getElementById('inv-cap').getAttribute('data-raw') || '0', 10);
+            let ea = parseFloat(document.getElementById('inv-ea').value);
+            let freq = document.getElementById('inv-freq').value;
+            let dPers = parseInt(document.getElementById('inv-custom-days').value || '30', 10);
+
+            if(!name || cap<=0 || isNaN(ea)) return alert("Diligencia los campos obligatorios.");
+
+            let id = 'inv_'+Date.now();
+            let hoyStr = new Date().toISOString().split('T')[0];
+
+            appState.inversiones.push({
+                id: id, tipo: t, entidadFinanciera: ent, nombre: name, capitalInicial: cap, capitalActual: cap,
+                tasaEA: ea, frecuencia: freq, diasPers: dPers, rendHistorico: 0, rendPendiente: 0,
+                fechaCreacion: hoyStr, fechaUltimaAct: hoyStr, fechaUltimaAcred: hoyStr, activa: true
+            });
+
+            // Registrar movimiento automatico
+            appState.transactions.push({
+                id: 'tx_'+Date.now(), type: 'expense', amount: cap, date: hoyStr, accountId: 'acc_cash_default', note: `Aporte Inicial Inversión: ${name}`, category: 'Inversiones'
+            });
+
+            document.getElementById('inv-name').value = "";
+            document.getElementById('inv-cap').value = "";
+            document.getElementById('inv-cap').setAttribute('data-raw', '0');
+            document.getElementById('inv-ea').value = "";
+            document.getElementById('inv-custom-type-name').value = "";
+            document.getElementById('inv-new-entity-name').value = "";
+            
+            document.getElementById('group-inv-custom-type').classList.add('hidden');
+            document.getElementById('group-inv-new-entity').classList.add('hidden');
+            document.getElementById('group-inv-custom-days').classList.add('hidden');
+
+            save(); recalculateAllData();
+            alert("Inversión registrada y en ejecución.");
+        });
+
+        window.manageInvCapital = function(id, action) {
+            let inv = appState.inversiones.find(i => i.id === id);
+            if(!inv) return;
+            let promptText = action==='add' ? "Monto a inyectar al capital:" : "Monto a retirar de la inversión:";
+            let rawVal = prompt(promptText);
+            if(!rawVal) return;
+            let val = parseInt(rawVal.replace(/\D/g, ""), 10);
+            if(isNaN(val) || val <= 0) return alert("Monto inválido.");
+
+            let hoyStr = new Date().toISOString().split('T')[0];
+            if(action==='add') {
+                inv.capitalActual += val;
+                appState.transactions.push({ id:'tx_'+Date.now(), type:'expense', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Aporte Capital: ${inv.nombre}`, category:'Inversiones' });
+            } else {
+                if(val > inv.capitalActual) return alert("No posees tanto capital disponible en este producto.");
+                inv.capitalActual -= val;
+                appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Retiro Capital: ${inv.nombre}`, category:'Inversiones' });
+            }
+            save(); recalculateAllData();
+        };
+
+        window.editInvParams = function(id) {
+            let inv = appState.inversiones.find(i => i.id === id);
+            if(!inv) return;
+            
+            let nName = prompt("Nuevo nombre de la inversión:", inv.nombre);
+            let nEA = prompt("Nueva Tasa Efectiva Anual (EA %):", inv.tasaEA);
+            
+            if(nName) inv.nombre = nName;
+            if(nEA && !isNaN(parseFloat(nEA))) {
+                let parsedEA = parseFloat(nEA);
+                if(parsedEA !== inv.tasaEA) {
+                    inv.tasaEA = parsedEA;
+                    inv.fechaUltimaAct = new Date().toISOString().split('T')[0];
+                    appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount:0, accountId:'acc_cash_default', date:inv.fechaUltimaAct, note:`Cambio de Tasa a ${parsedEA}% EA: ${inv.nombre}`, category:'Inversiones' });
+                }
+            }
+            save(); recalculateAllData();
+        };
+
+        window.deleteInv = function(id) {
+            if(!confirm("¿Seguro que deseas eliminar esta inversión? Se generará un movimiento de liquidación en tu historial.")) return;
+            let idx = appState.inversiones.findIndex(i => i.id === id);
+            if(idx !== -1) {
+                let inv = appState.inversiones[idx];
+                inv.activa = false;
+                let hoyStr = new Date().toISOString().split('T')[0];
+                appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount: inv.capitalActual, accountId:'acc_cash_default', date:hoyStr, note:`Liquidación/Eliminación: ${inv.nombre}`, category:'Inversiones' });
+                save(); recalculateAllData();
+            }
+        };
+
+        // HISTORIAL Y PRESUPUESTOS
+        function renderHistoryAndBudgets() {
+            let bSel = document.getElementById('budget-cat-select');
+            bSel.innerHTML = "";
+            appState.categories.expense.forEach(c => {
+                let o = document.createElement('option'); o.value=c; o.innerText=c; bSel.appendChild(o);
+            });
+
+            // Progreso Presupuestos
+            let hoy = new Date();
+            let sp = {};
+            appState.transactions.forEach(t => {
+                if(t.type==='expense' && t.category) {
+                    let td = new Date(t.date+"T00:00:00");
+                    if(td.getFullYear()===hoy.getFullYear() && td.getMonth()===hoy.getMonth()) {
+                        sp[t.category] = (sp[t.category] || 0) + parseInt(t.amount, 10);
+                    }
+                }
+            });
+
+            let bContainer = document.getElementById('budget-progress-container');
+            bContainer.innerHTML = "";
+            let anyBudget = false;
+            for(let c in appState.budgets) {
+                anyBudget = true;
+                let lim = appState.budgets[c];
+                let gastado = sp[c] || 0;
+                let pct = Math.min((gastado / lim) * 100, 100);
+                let div = document.createElement('div');
+                div.className = "budget-bar";
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>${c}</span>
+                        <strong style="color:var(--text-main);">${formatCOP(gastado)} de ${formatCOP(lim)}</strong>
+                    </div>
+                    <div style="background:var(--bg-input); border-radius:4px; height:8px; overflow:hidden;">
+                        <div class="budget-bar-fill ${gastado > lim ? 'over':''}" style="width:${pct}%;"></div>
+                    </div>
+                `;
+                bContainer.appendChild(div);
+            }
+            if(!anyBudget) bContainer.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>No has estipulado límites mensuales.</p>";
+
+            // Historial Items
+            renderHistoryItemsFiltered();
+        }
+
+        function renderHistoryItemsFiltered(filter="") {
+            let container = document.getElementById('history-container');
+            container.innerHTML = "";
+            let rev = [...appState.transactions].reverse();
+            
+            rev.forEach(t => {
+                if(filter && !t.note.toLowerCase().includes(filter.toLowerCase()) && !(t.category && t.category.toLowerCase().includes(filter.toLowerCase()))) return;
+                let div = document.createElement('div');
+                div.className = `history-item tx-${t.type}`;
+                div.innerHTML = `
+                    <div class="tx-details">
+                        <h4>${t.note}</h4>
+                        <p>${t.date} | ID: ${t.id.substring(3,11)}</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="tx-amt">${t.type==='expense'?'-':'+'} ${formatCOP(t.amount)}</div>
+                        <button class="btn-sm btn-danger" style="padding:4px 8px; font-size:10px; border-radius:6px; background:transparent; border:1px solid var(--danger); color:var(--danger);" onclick="deleteTx('${t.id}')">Eliminar</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('history-search').addEventListener('input', (e) => {
+            renderHistoryItemsFiltered(e.target.value);
+        });
+
+        document.getElementById('btn-save-budget').addEventListener('click', () => {
+            let c = document.getElementById('budget-cat-select').value;
+            let amt = parseInt(document.getElementById('budget-amt').getAttribute('data-raw') || '0', 10);
+            if(amt <= 0) return alert("Digita un monto válido.");
+            appState.budgets[c] = amt;
+            document.getElementById('budget-amt').value = "";
+            document.getElementById('budget-amt').setAttribute('data-raw','0');
+            save(); recalculateAllData();
+            alert("Límite guardado.");
+        });
+
+        window.deleteTx = function(id) {
+            if(!confirm("¿Deseas eliminar este registro específico mediante su ID único?")) return;
+            appState.transactions = appState.transactions.filter(t => t.id !== id);
+            save(); recalculateAllData();
+        };
+
+        document.getElementById('btn-clear-history').addEventListener('click', () => {
+            if(confirm("¿Seguro que deseas vaciar por completo tu historial? Los saldos retornarán al valor del onboarding.")) {
+                appState.transactions = []; save(); recalculateAllData();
+            }
+        });
+
+        // ALERTAS INTELIGENTES (CON ICONOS SVG)
+        const iconDanger = `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+        const iconWallet = `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
+        const iconTarget = `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v8l9-11h-7z"></path></svg>`;
+        const iconIdea = `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>`;
+
+        function checkSmartAlerts(patrimonio) {
+            let container = document.getElementById('alerts-area');
+            container.innerHTML = "";
+
+            if(patrimonio < 150000) {
+                container.innerHTML += `<div class="alert-box danger">${iconDanger}<div><strong>Patrimonio Crítico:</strong> Tu balance general está por debajo de niveles seguros. Reduce gastos superfluos.</div></div>`;
+            }
+            let cash = appState.accounts.find(a => a.type==='cash');
+            if(cash && cash.balance < 30000) {
+                container.innerHTML += `<div class="alert-box">${iconWallet}<div><strong>Efectivo Bajo:</strong> Tienes poco dinero físico disponible. Evalúa realizar una conversión bancaria.</div></div>`;
+            }
+
+            // Alertas presupuesto
+            let hoy = new Date();
+            let sp = {};
+            appState.transactions.forEach(t => {
+                if(t.type==='expense' && t.category) {
+                    let td = new Date(t.date+"T00:00:00");
+                    if(td.getFullYear()===hoy.getFullYear() && td.getMonth()===hoy.getMonth()) {
+                        sp[t.category] = (sp[t.category] || 0) + parseInt(t.amount, 10);
+                    }
+                }
+            });
+            for(let c in appState.budgets) {
+                if((sp[c] || 0) > appState.budgets[c]) {
+                    container.innerHTML += `<div class="alert-box danger">${iconTarget}<div><strong>Presupuesto Desbordado:</strong> Superaste el límite establecido para la categoría: ${c}.</div></div>`;
+                }
+            }
+
+            if(container.innerHTML === "" && patrimonio >= 1000000) {
+                container.innerHTML = `<div class="alert-box success">${iconIdea}<div><strong>Recomendación:</strong> Posees estabilidad financiera óptima. Considera aperturar un CDT o Cajita de alto rendimiento.</div></div>`;
+            }
+        }
+
+        // CONTROL DE PESTAÑAS (SPA)
+        document.querySelectorAll('.nav-tab').forEach(t => {
+            t.addEventListener('click', function() {
+                document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                this.classList.add('active');
+                let target = this.getAttribute('data-target');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                document.getElementById(target).classList.remove('hidden');
+                recalculateAllData();
+            });
+        });
+
+        // TEMA Y PORTABILIDAD
+        document.getElementById('btn-toggle-theme').addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            appState.theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            save();
+        });
+
+        document.getElementById('btn-export').addEventListener('click', () => {
+            navigator.clipboard.writeText(JSON.stringify(appState)).then(() => {
+                alert("¡Cadena de datos de Banklar copiada con éxito!");
+            }).catch(() => {
+                alert("Código: " + JSON.stringify(appState));
+            });
+        });
+
+        document.getElementById('btn-import').addEventListener('click', () => {
+            let txt = document.getElementById('import-area').value.trim();
+            if(!txt) return;
+            try {
+                let parsed = JSON.parse(txt);
+                if(parsed.accounts && parsed.user) {
+                    appState = parsed; save();
+                    document.getElementById('import-area').value = "";
+                    window.location.reload();
+                } else { alert("Estructura de datos JSON incompatible."); }
+            } catch(e) { alert("Error de lectura. Asegúrate de copiar el código exacto."); }
+        });
+
+        document.getElementById('btn-hard-reset').addEventListener('click', () => {
+            if(confirm("¿Deseas borrar permanentemente la memoria de la aplicación? Esto no se puede deshacer.")) {
+                localStorage.removeItem('banklar_core_state'); window.location.reload();
+            }
+        });
+
+        // CONTROL DE ARRANQUE INICIAL
+        function runCoreEngine() {
+            document.getElementById('display-username').innerText = appState.user.name;
+            processCompoundInterest();
+            recalculateAllData();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            load();
+            initCurrencyFields();
+            if (!appState.privacyAccepted) { changeScreen('screen-privacy'); }
+            else if (!appState.onboarded) { changeScreen('screen-onboarding'); buildDynamicOnboarding(1); }
+            else { changeScreen('screen-app'); runCoreEngine(); }
+        });
+    </script>
+</body>
 </html>
