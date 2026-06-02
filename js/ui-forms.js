@@ -28,7 +28,13 @@ function updateFormVisibility() {
         el.txAccountRow.style.display = (isIncome || isExpense) ? 'block' : 'none';
     }
 
-    // Depositar a cuenta principal (nuevo)
+    // Mostrar fila de destino en transferencias
+    const transferToRow = document.getElementById('transfer-to-row');
+    if (transferToRow) {
+        transferToRow.style.display = isTransfer ? 'block' : 'none';
+    }
+
+    // Depositar a cuenta principal
     if (el.depositToPrincipal && el.depositToPrincipal.parentElement) {
         el.depositToPrincipal.parentElement.style.display = isIncome ? 'block' : 'none';
     }
@@ -37,15 +43,25 @@ function updateFormVisibility() {
         el.principalSplitRow.style.display = (isIncome && el.depositToPrincipal && el.depositToPrincipal.checked) ? 'block' : 'none';
     }
 
+    // Compatibilidad legacy
+    const depositToNuRow = document.getElementById('deposit-to-nu-row');
+    if (depositToNuRow) {
+        depositToNuRow.style.display = isIncome ? 'block' : 'none';
+    }
+    const nuSplitRow = document.getElementById('nu-split-row');
+    if (nuSplitRow) {
+        nuSplitRow.style.display = (isIncome && el.depositToNu && el.depositToNu.checked) ? 'block' : 'none';
+    }
+
     // Poblar select de cuenta según tipo
-    populateTxAccountSelect(isIncome, isExpense, isTransfer, isCashConversion);
+    populateTxAccountSelect(isIncome, isExpense);
     
     // Poblar transferencias y conversiones
     if (isTransfer) populateTransferSelects();
     if (isCashConversion) populateCashConversionSelects();
 }
 
-function populateTxAccountSelect(isIncome, isExpense, isTransfer, isCashConversion) {
+function populateTxAccountSelect(isIncome, isExpense) {
     if (!el.txAccount) return;
     
     const accounts = getActiveAccounts();
@@ -55,19 +71,25 @@ function populateTxAccountSelect(isIncome, isExpense, isTransfer, isCashConversi
     el.txAccount.innerHTML = '';
 
     if (isIncome || isExpense) {
-        accounts.forEach(acc => {
+        if (accounts.length === 0) {
             const opt = document.createElement('option');
-            opt.value = acc.id;
-            opt.textContent = `${acc.name} (${formatCurrency(acc.balance, currency)})`;
+            opt.value = '';
+            opt.textContent = 'No hay cuentas registradas';
             el.txAccount.appendChild(opt);
-        });
+        } else {
+            accounts.forEach(acc => {
+                const opt = document.createElement('option');
+                opt.value = acc.id;
+                opt.textContent = `${acc.name} (${formatCurrency(acc.balance, currency)})`;
+                el.txAccount.appendChild(opt);
+            });
+        }
     }
 
     // Restaurar selección si es válida
     if (currentValue && accounts.some(a => a.id === currentValue)) {
         el.txAccount.value = currentValue;
     } else if (accounts.length > 0) {
-        // Preseleccionar cuenta principal
         const principal = getPrincipalAccount();
         if (principal) el.txAccount.value = principal.id;
     }
@@ -82,12 +104,19 @@ function populateTransferSelects() {
 
     el.transferFrom.innerHTML = '<option value="">Seleccionar origen</option>';
 
-    accounts.forEach(acc => {
+    if (accounts.length === 0) {
         const opt = document.createElement('option');
-        opt.value = acc.id;
-        opt.textContent = `${acc.name} (${formatCurrency(acc.balance, currency)})`;
+        opt.value = '';
+        opt.textContent = 'No hay cuentas registradas';
         el.transferFrom.appendChild(opt);
-    });
+    } else {
+        accounts.forEach(acc => {
+            const opt = document.createElement('option');
+            opt.value = acc.id;
+            opt.textContent = `${acc.name} (${formatCurrency(acc.balance, currency)})`;
+            el.transferFrom.appendChild(opt);
+        });
+    }
 
     if (currentValue && accounts.some(a => a.id === currentValue)) {
         el.transferFrom.value = currentValue;
@@ -99,12 +128,19 @@ function populateTransferSelects() {
         const toCurrentValue = transferTo.value;
         transferTo.innerHTML = '<option value="">Seleccionar destino</option>';
         
-        accounts.forEach(acc => {
+        if (accounts.length === 0) {
             const opt = document.createElement('option');
-            opt.value = acc.id;
-            opt.textContent = `${acc.name} (${formatCurrency(acc.balance, currency)})`;
+            opt.value = '';
+            opt.textContent = 'No hay cuentas registradas';
             transferTo.appendChild(opt);
-        });
+        } else {
+            accounts.forEach(acc => {
+                const opt = document.createElement('option');
+                opt.value = acc.id;
+                opt.textContent = `${acc.name} (${formatCurrency(acc.balance, currency)})`;
+                transferTo.appendChild(opt);
+            });
+        }
 
         if (toCurrentValue && accounts.some(a => a.id === toCurrentValue)) {
             transferTo.value = toCurrentValue;
@@ -121,6 +157,14 @@ function populateCashConversionSelects() {
     const currentValue = el.cashConversionDetails.value;
 
     el.cashConversionDetails.innerHTML = '';
+
+    if (accounts.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No hay cuentas registradas';
+        el.cashConversionDetails.appendChild(opt);
+        return;
+    }
 
     if (conversionType === 'to_cash') {
         accounts.forEach(acc => {
@@ -151,7 +195,6 @@ function handleTransactionSubmit(e) {
     const amountInput = el.txAmount;
     let amount = 0;
 
-    // Usar currency input Nu Bank si está configurado
     if (amountInput && amountInput.getValue) {
         amount = amountInput.getValue();
     } else {
@@ -185,21 +228,43 @@ function handleIncomeTransaction(amount) {
     const source = el.incomeSource ? el.incomeSource.value : 'Ingreso';
     const accountId = el.txAccount ? el.txAccount.value : null;
     const depositPrincipal = el.depositToPrincipal && el.depositToPrincipal.checked;
-    const toAccountId = depositPrincipal ? getPrincipalAccountId() : null;
 
     let principalAllocated = 0;
-    if (depositPrincipal && el.principalSplitAmount) {
-        if (el.principalSplitAmount.getValue) {
-            principalAllocated = el.principalSplitAmount.getValue();
+    let toAccountId = null;
+
+    if (depositPrincipal) {
+        toAccountId = getPrincipalAccountId();
+        if (el.principalSplitAmount) {
+            if (el.principalSplitAmount.getValue) {
+                principalAllocated = el.principalSplitAmount.getValue();
+            } else {
+                principalAllocated = parseCurrencyFormatted(el.principalSplitAmount.value || '0');
+            }
+            if (principalAllocated <= 0 || principalAllocated >= amount) {
+                principalAllocated = amount;
+            }
         } else {
-            principalAllocated = parseCurrencyFormatted(el.principalSplitAmount.value || '0');
-        }
-        if (principalAllocated <= 0 || principalAllocated >= amount) {
             principalAllocated = amount;
         }
     }
 
-    // Verificar que la cuenta existe
+    // Compatibilidad legacy con Nu
+    if (!depositPrincipal && el.depositToNu && el.depositToNu.checked) {
+        toAccountId = getAccountIdByName('nu');
+        if (el.nuSplitAmount) {
+            if (el.nuSplitAmount.getValue) {
+                principalAllocated = el.nuSplitAmount.getValue();
+            } else {
+                principalAllocated = parseCurrencyFormatted(el.nuSplitAmount.value || '0');
+            }
+            if (principalAllocated <= 0 || principalAllocated >= amount) {
+                principalAllocated = amount;
+            }
+        } else {
+            principalAllocated = amount;
+        }
+    }
+
     if (!accountId) {
         showToast('Selecciona una cuenta válida', 'error');
         return;
@@ -211,8 +276,9 @@ function handleIncomeTransaction(amount) {
         amount: Number(amount.toFixed(2)),
         source,
         accountId,
-        toAccountId: depositPrincipal ? toAccountId : null,
-        principalAllocated: depositPrincipal ? Number(principalAllocated.toFixed(2)) : 0,
+        toAccountId: (depositPrincipal || (el.depositToNu && el.depositToNu.checked)) ? toAccountId : null,
+        principalAllocated: (depositPrincipal || (el.depositToNu && el.depositToNu.checked)) ? Number(principalAllocated.toFixed(2)) : 0,
+        nuAllocated: (el.depositToNu && el.depositToNu.checked) ? Number(principalAllocated.toFixed(2)) : 0,
         description: ''
     };
 
@@ -228,7 +294,6 @@ function handleExpenseTransaction(amount) {
         return;
     }
 
-    // Verificar saldo
     const balance = getBalanceForAccount(accountId);
     const account = getAccountById(accountId);
 
@@ -264,7 +329,6 @@ function handleTransferTransaction(amount) {
         return;
     }
 
-    // Verificar saldo
     const balance = getBalanceForAccount(fromAccountId);
     if (amount > balance) {
         const account = getAccountById(fromAccountId);
@@ -314,7 +378,11 @@ function handleCashConversionTransaction(amount) {
         conversionDescription = `Efectivo → ${accountName}`;
     }
 
-    // Verificar saldo
+    if (!fromAccountId) {
+        showToast('No se encontró la cuenta origen', 'error');
+        return;
+    }
+
     const balance = getBalanceForAccount(fromAccountId);
     if (amount > balance) {
         const fromAcc = getAccountById(fromAccountId);
@@ -447,13 +515,12 @@ function handleSettingsSubmit(e) {
 function showSettings() {
     showModal('settings-modal');
     
-    // Poblar valores actuales
     const lowThresholdInput = $('settings-low-threshold');
     if (lowThresholdInput) {
         if (lowThresholdInput.setValue) {
             lowThresholdInput.setValue(state.settings.lowThreshold || 0);
         } else {
-            lowThresholdInput.value = (state.settings.lowThreshold || 0).toString();
+            lowThresholdInput.value = formatCurrency(state.settings.lowThreshold || 20000, state.settings.currency).replace(/[^0-9,]/g, '').trim();
         }
     }
 
@@ -464,15 +531,17 @@ function showSettings() {
             const opt = document.createElement('option');
             opt.value = c.code;
             opt.textContent = `${c.symbol} ${c.name}`;
+            if (c.code === (state.settings.currency || 'COP')) opt.selected = true;
             currencySelect.appendChild(opt);
         });
-        currencySelect.value = state.settings.currency || 'COP';
     }
 
     const themeSelect = $('settings-theme');
     if (themeSelect) {
         themeSelect.value = getTheme();
     }
+
+    initializeCurrencyMasks();
 }
 
 // ---------- Budgets ----------
@@ -584,8 +653,10 @@ function showBudgets() {
             <button type="button" class="remove-budget" data-key="${key}" style="color:var(--danger);">✕</button>
         `;
         list.appendChild(div);
-        initializeCurrencyMasks();
     });
+
+    // Reinicializar máscaras
+    setTimeout(() => initializeCurrencyMasks(), 100);
 
     // Botón para añadir nueva fila
     const addRowBtn = document.createElement('button');
@@ -601,7 +672,8 @@ function handleAddBudgetRow() {
     if (!list) return;
 
     const cats = getCategories();
-    const addRowBtn = list.querySelector('button:last-child');
+    const buttons = list.querySelectorAll('button');
+    const addRowBtn = buttons[buttons.length - 1];
 
     const div = document.createElement('div');
     div.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;';
@@ -617,7 +689,6 @@ function handleAddBudgetRow() {
     list.insertBefore(div, addRowBtn);
     initializeCurrencyMasks();
 
-    // Evento para eliminar fila
     div.querySelector('.remove-budget-row').addEventListener('click', () => {
         div.remove();
     });
@@ -625,7 +696,7 @@ function handleAddBudgetRow() {
 
 // ---------- Onboarding / Setup ----------
 function handleSetupSubmit(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (onboardingStep === 1) {
         handleOnboardingStep1();
@@ -648,7 +719,6 @@ function handleOnboardingStep1() {
     onboardingData.name = name;
     onboardingData.currency = currencySelect ? currencySelect.value : 'COP';
     
-    // Establecer locale según moneda
     const currencyDef = CURRENCIES.find(c => c.code === onboardingData.currency);
     onboardingData.locale = currencyDef ? currencyDef.locale : 'es-CO';
 
@@ -668,7 +738,6 @@ function handleOnboardingStep2() {
     onboardingData.accountCount = accountCount;
     onboardingData.accounts = [];
 
-    // Recoger datos de cada cuenta
     for (let i = 0; i < accountCount; i++) {
         const nameInput = $(`onboarding-account-name-${i}`);
         const balanceInput = $(`onboarding-account-balance-${i}`);
@@ -698,17 +767,14 @@ function handleOnboardingStep2() {
         });
     }
 
-    // Completar onboarding
     completeOnboardingProcess();
 }
 
 function completeOnboardingProcess() {
-    // Crear entidades financieras
     const entities = [];
     const accounts = [];
 
     onboardingData.accounts.forEach((accData, index) => {
-        // Verificar si la entidad ya existe
         let entity = entities.find(e => e.name.toLowerCase() === accData.name.toLowerCase());
         if (!entity) {
             entity = {
@@ -733,7 +799,6 @@ function completeOnboardingProcess() {
         });
     });
 
-    // Guardar todo
     const userData = {
         name: onboardingData.name,
         currency: onboardingData.currency,
@@ -747,21 +812,51 @@ function completeOnboardingProcess() {
 
     completeOnboarding(userData);
 
-    // Calcular patrimonio inicial
     const patrimony = calculateTotalPatrimony();
-
     showToast(`¡Bienvenido ${onboardingData.name}! Patrimonio inicial: ${formatCurrency(patrimony.total, onboardingData.currency)}`, 'success');
+
+    // Ocultar pantalla de onboarding
+    const onboardingScreen = $('onboarding-screen');
+    if (onboardingScreen) {
+        onboardingScreen.classList.remove('active');
+        onboardingScreen.style.display = 'none';
+    }
+
+    // Mostrar dashboard
+    const dashboardScreen = $('dashboard-screen');
+    if (dashboardScreen) {
+        dashboardScreen.classList.add('active');
+        dashboardScreen.style.display = 'block';
+    }
 
     hideAllModals();
     populateCategorySelects();
     populateAccountSelects();
-    showDashboard();
+    renderAll();
 }
 
 // ---------- Render Onboarding Steps ----------
 function renderOnboardingStep(step) {
-    const container = $('onboarding-container');
-    if (!container) return;
+    // Buscar o crear el contenedor
+    let container = $('onboarding-container');
+    
+    if (!container) {
+        const onboardingScreen = $('onboarding-screen');
+        if (onboardingScreen) {
+            onboardingScreen.classList.add('active');
+            onboardingScreen.style.display = 'flex';
+            onboardingScreen.innerHTML = '';
+            container = document.createElement('div');
+            container.id = 'onboarding-container';
+            container.className = 'onboarding-container';
+            onboardingScreen.appendChild(container);
+        }
+    }
+    
+    if (!container) {
+        console.error('No se encontró contenedor para onboarding');
+        return;
+    }
 
     onboardingStep = step;
     const currency = onboardingData.currency || 'COP';
@@ -778,7 +873,7 @@ function renderOnboardingStep(step) {
                 
                 <div class="form-group">
                     <label for="onboarding-name">¿Cómo te llamas?</label>
-                    <input type="text" id="onboarding-name" class="form-input" placeholder="Tu nombre" value="${onboardingData.name}" required>
+                    <input type="text" id="onboarding-name" class="form-input" placeholder="Tu nombre" value="${escapeHTML(onboardingData.name)}" required>
                 </div>
 
                 <div class="form-group">
@@ -788,13 +883,13 @@ function renderOnboardingStep(step) {
                     </select>
                 </div>
 
-                <button onclick="handleSetupSubmit(event)" class="btn-primary" style="width:100%;margin-top:16px;">
+                <button onclick="handleSetupSubmit(event)" class="btn-primary btn-large" style="margin-top:16px;">
                     Continuar →
                 </button>
             </div>
         `;
     } else if (step === 2) {
-        const countOptions = '';
+        let countOptions = '';
         for (let i = 1; i <= 10; i++) {
             countOptions += `<option value="${i}" ${i === onboardingData.accountCount ? 'selected' : ''}>${i} cuenta${i > 1 ? 's' : ''}</option>`;
         }
@@ -817,19 +912,22 @@ function renderOnboardingStep(step) {
 
                 <div id="onboarding-accounts-forms"></div>
 
-                <button onclick="handleSetupSubmit(event)" class="btn-primary" style="width:100%;margin-top:16px;">
+                <button onclick="handleSetupSubmit(event)" class="btn-primary btn-large" style="margin-top:16px;">
                     Completar configuración ✓
                 </button>
             </div>
         `;
 
-        renderAccountForms();
+        setTimeout(() => {
+            renderAccountForms();
+        }, 100);
     }
 }
 
 function renderAccountForms() {
     const formsContainer = $('onboarding-accounts-forms');
     const countInput = $('onboarding-account-count');
+    
     if (!formsContainer || !countInput) return;
 
     const count = parseInt(countInput.value) || 1;
@@ -854,16 +952,20 @@ function renderAccountForms() {
 
             <div class="form-group">
                 <label for="onboarding-account-balance-${i}">Saldo actual</label>
-                <input type="text" id="onboarding-account-balance-${i}" class="form-input currency-input" placeholder="${form.fields.balance.placeholder}" data-currency-display="balance-display-${i}">
-                <span id="balance-display-${i}" class="currency-display">$0,00</span>
+                <div class="currency-input-wrapper">
+                    <span class="currency-symbol">$</span>
+                    <input type="text" id="onboarding-account-balance-${i}" class="form-input currency-input" placeholder="${form.fields.balance.placeholder}" data-currency-display="balance-display-${i}">
+                </div>
+                <span id="balance-display-${i}" class="currency-display">0,00</span>
             </div>
         `;
 
         formsContainer.appendChild(formDiv);
     });
 
-    // Inicializar máscaras de moneda en los nuevos inputs
-    initializeCurrencyMasks();
+    setTimeout(() => {
+        initializeCurrencyMasks();
+    }, 100);
 }
 
 function initOnboarding() {
@@ -875,7 +977,37 @@ function initOnboarding() {
         accountCount: 1,
         accounts: []
     };
+    
+    // Mostrar pantalla de onboarding
+    const screen = $('onboarding-screen');
+    if (screen) {
+        screen.classList.add('active');
+        screen.style.display = 'flex';
+    }
+    
+    // Ocultar dashboard
+    const dashboard = $('dashboard-screen');
+    if (dashboard) {
+        dashboard.classList.remove('active');
+        dashboard.style.display = 'none';
+    }
+    
+    // Ocultar privacidad
+    const privacy = $('privacy-screen');
+    if (privacy) {
+        privacy.classList.remove('active');
+        privacy.style.display = 'none';
+    }
+    
     renderOnboardingStep(1);
+}
+
+// ---------- Helper para escapar HTML ----------
+function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 // ---------- Investment Form ----------
@@ -924,8 +1056,11 @@ function showNewInvestmentForm() {
 
             <div class="form-group">
                 <label for="investment-initial-amount">Capital inicial</label>
-                <input type="text" id="investment-initial-amount" class="form-input currency-input" placeholder="Monto inicial" data-currency-display="inv-amount-display" required>
-                <span id="inv-amount-display" class="currency-display">$0,00</span>
+                <div class="currency-input-wrapper">
+                    <span class="currency-symbol">$</span>
+                    <input type="text" id="investment-initial-amount" class="form-input currency-input" placeholder="Monto inicial" data-currency-display="inv-amount-display" required>
+                </div>
+                <span id="inv-amount-display" class="currency-display">0,00</span>
             </div>
 
             <div class="form-group">
@@ -943,7 +1078,7 @@ function showNewInvestmentForm() {
             <div id="investment-custom-days-group" class="form-group" style="display:none;">
                 <label for="investment-custom-days">¿Cada cuántos días se reflejan los rendimientos?</label>
                 <input type="number" id="investment-custom-days" class="form-input" placeholder="Ej: 15, 45, 90" min="1" max="365">
-                <small>Ingresa la cantidad exacta de días según las condiciones de tu producto financiero.</small>
+                <small style="color:var(--text-secondary);display:block;margin-top:4px;">Ingresa la cantidad exacta de días según las condiciones de tu producto financiero.</small>
             </div>
 
             <div class="form-group">
@@ -954,13 +1089,14 @@ function showNewInvestmentForm() {
                 </select>
             </div>
 
-            <button type="submit" class="btn-primary" style="width:100%;margin-top:16px;">
-                Crear inversión
-            </button>
+            <div style="display:flex;gap:12px;margin-top:16px;">
+                <button type="button" onclick="hideAllModals()" class="btn-secondary" style="flex:1;">Cancelar</button>
+                <button type="submit" class="btn-primary" style="flex:1;">Crear inversión</button>
+            </div>
         </form>
     `;
 
-    initializeCurrencyMasks();
+    setTimeout(() => initializeCurrencyMasks(), 100);
 }
 
 function handleInvestmentTypeChange() {
@@ -1011,7 +1147,6 @@ function handleInvestmentSubmit(e) {
         initialAmount = parseCurrencyFormatted(initialAmountInput ? initialAmountInput.value : '0');
     }
 
-    // Validaciones
     if (!investmentName) {
         showToast('Ingresa un nombre para la inversión', 'error');
         return;
@@ -1032,7 +1167,6 @@ function handleInvestmentSubmit(e) {
         return;
     }
 
-    // Manejar entidad financiera
     let entityId;
     if (entitySelectValue === 'new') {
         const newEntityName = $('investment-new-entity-name').value.trim();
@@ -1051,7 +1185,6 @@ function handleInvestmentSubmit(e) {
 
     const accreditationDays = frequencyId === 'custom' ? customDays : getAccreditationDays(frequencyId);
 
-    // Crear inversión
     const investment = createInvestment({
         typeId,
         customTypeName,
@@ -1118,7 +1251,6 @@ function getPrincipalAccountId() {
 
 // ---------- Event Listeners ----------
 function initializeEventListeners() {
-    // Formulario de transacción
     if (el.txType) {
         el.txType.addEventListener('change', updateFormVisibility);
     }
@@ -1131,7 +1263,6 @@ function initializeEventListeners() {
         el.depositToPrincipal.addEventListener('change', updateFormVisibility);
     }
 
-    // Compatibilidad con nombre antiguo
     if (el.depositToNu) {
         el.depositToNu.addEventListener('change', updateFormVisibility);
     }
@@ -1140,14 +1271,11 @@ function initializeEventListeners() {
         el.txForm.addEventListener('submit', handleTransactionSubmit);
     }
 
-    // Acciones en transacciones (ver/eliminar)
     document.addEventListener('click', handleTransactionActions);
 
-    // Botones ver todo
     if (el.btnViewAll) el.btnViewAll.addEventListener('click', () => showViewAll());
     if (el.btnViewAll2) el.btnViewAll2.addEventListener('click', () => showViewAll());
 
-    // Filtros en view-all
     const txFilterType = $('tx-filter-type');
     const txFilterAccount = $('tx-filter-account');
     const txSearch = $('tx-search');
@@ -1159,15 +1287,12 @@ function initializeEventListeners() {
         txFilterAccount ? txFilterAccount.value : 'all'
     ), 300));
 
-    // Cerrar modales
     on('close-all-tx', 'click', hideAllModals);
     if (el.modalOverlay) el.modalOverlay.addEventListener('click', hideAllModals);
 
-    // Settings
     if (el.btnSettings) el.btnSettings.addEventListener('click', showSettings);
     on('settings-form', 'submit', handleSettingsSubmit);
 
-    // Budgets
     on('btn-edit-budgets', 'click', showBudgets);
     on('btn-close-budgets', 'click', hideAllModals);
     on('btn-add-budget', 'click', handleAddBudget);
@@ -1176,7 +1301,6 @@ function initializeEventListeners() {
     if (budgetsListEl) budgetsListEl.addEventListener('click', handleBudgetRemoval);
     if ($('budgets-form')) $('budgets-form').addEventListener('submit', handleBudgetsSubmit);
 
-    // Data portability
     on('btn-data-portability', 'click', showPortabilityModal);
     on('btn-copy-data', 'click', copyDataToClipboard);
     on('btn-close-portability', 'click', hideAllModals);
@@ -1188,33 +1312,26 @@ function initializeEventListeners() {
     on('btn-export-csv', 'click', () => exportData('csv'));
     on('btn-export-json', 'click', () => exportData('json'));
 
-    // Setup / Onboarding
     if ($('setup-form')) $('setup-form').addEventListener('submit', handleSetupSubmit);
 
-    // Reset data
     on('btn-reset-data', 'click', resetAllData);
 
-    // Refresh
     if (el.refreshBalances) el.refreshBalances.addEventListener('click', () => {
         processAllInvestmentsOnStartup();
         renderAll();
         showToast('Balances actualizados', 'success');
     });
 
-    // Expenses report
     if (el.btnExpensesReport) el.btnExpensesReport.addEventListener('click', showExpensesReport);
     const closeExpBtn = $('close-expenses-report');
     if (closeExpBtn) closeExpBtn.addEventListener('click', hideAllModals);
 
-    // Summary period
     if (el.summaryMonthly) el.summaryMonthly.addEventListener('click', () => setSummaryPeriod('monthly'));
     if (el.summaryBiweekly) el.summaryBiweekly.addEventListener('click', () => setSummaryPeriod('biweekly'));
 
-    // Nueva inversión
     on('btn-new-investment', 'click', showNewInvestmentForm);
     on('btn-close-investment', 'click', hideAllModals);
 
-    // Cerrar modales con Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') hideAllModals();
     });
@@ -1222,31 +1339,15 @@ function initializeEventListeners() {
 
 // ---------- Initialize ----------
 window.addEventListener('load', () => {
-    // Migrar datos antiguos
     migrateFromOldVersions();
-
-    // Inicializar core
     initCore();
-
-    // Poblar categorías
     populateCategorySelects();
-
-    // Inicializar máscaras de moneda
     initializeCurrencyMasks();
-
-    // Actualizar visibilidad del formulario
     updateFormVisibility();
-
-    // Configurar fecha/hora por defecto
     setDefaultDateTime();
-
-    // Inicializar event listeners
     initializeEventListeners();
-
-    // Inicializar renderizado
     initRender();
 
-    // Refrescar al volver a la ventana
     window.addEventListener('focus', () => {
         setTimeout(() => {
             processAllInvestmentsOnStartup();
