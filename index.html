@@ -439,12 +439,26 @@
 
         <div id="tab-settings" class="tab-content hidden">
             <div class="card">
+                <h2>Ingreso de Montos</h2>
+                <p class="subtitle">Define cómo registrar y visualizar los valores monetarios.</p>
+                <div class="form-group">
+                    <label>Modo de captura de valores</label>
+                    <select id="setting-cents">
+                        <option value="false">Sin centavos (Modo actual)</option>
+                        <option value="true">Con centavos (Entrada inteligente)</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" id="btn-apply-cents">Guardar Preferencia</button>
+            </div>
+            
+            <div class="card">
                 <h2>Personalización Visual</h2>
                 <button class="btn btn-secondary" id="btn-toggle-theme" style="margin-top:12px;">
                     <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     Cambiar Modo Claro / Oscuro
                 </button>
             </div>
+            
             <div class="card">
                 <h2>Portabilidad Local de Datos</h2>
                 <p class="subtitle">Copia y traslada tu información sin nubes externas.</p>
@@ -458,6 +472,7 @@
                 </div>
                 <button class="btn btn-secondary" id="btn-import">Procesar e Importar Datos</button>
             </div>
+            
             <div class="card" style="border:1px solid var(--danger);">
                 <h3 style="color:var(--danger);">Zona Crítica</h3>
                 <p class="subtitle">Borrado absoluto de la memoria interna.</p>
@@ -506,23 +521,68 @@
             entities: ['Bancolombia', 'Nubank', 'Lulo Bank', 'Davivienda', 'Nequi', 'Banco de Bogotá'],
             privacyAccepted: false,
             onboarded: false,
-            theme: 'dark'
+            theme: 'dark',
+            useCents: false // Control del modo de visualización y captura
         };
+
+        function handleCurrencyInput(e) {
+            let input = e.target;
+            let clean = input.value.replace(/\D/g, "");
+            
+            if (!clean) { 
+                input.value = ""; 
+                input.setAttribute('data-raw', '0'); 
+                return; 
+            }
+
+            if (appState.useCents) {
+                // Modo bancario: se trata el ingreso dividido por 100
+                let num = parseInt(clean, 10) / 100;
+                input.setAttribute('data-raw', num.toString());
+                input.value = new Intl.NumberFormat('es-CO', { 
+                    style: 'currency', 
+                    currency: 'COP', 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                }).format(num);
+            } else {
+                // Modo estándar (Sin centavos)
+                let num = parseInt(clean, 10);
+                input.setAttribute('data-raw', num.toString());
+                input.value = new Intl.NumberFormat('es-CO', { 
+                    style: 'currency', 
+                    currency: 'COP', 
+                    maximumFractionDigits: 0 
+                }).format(num);
+            }
+        }
 
         function initCurrencyFields() {
             document.querySelectorAll('.currency-input').forEach(input => {
-                input.addEventListener('input', function() {
-                    let clean = this.value.replace(/\D/g, "");
-                    if (!clean) { this.value = ""; this.setAttribute('data-raw', '0'); return; }
-                    let num = parseInt(clean, 10);
-                    this.setAttribute('data-raw', num.toString());
-                    this.value = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(num);
-                });
+                input.removeEventListener('input', handleCurrencyInput);
+                input.addEventListener('input', handleCurrencyInput);
             });
         }
 
         function formatCOP(v) {
-            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+            if (appState.useCents) {
+                return new Intl.NumberFormat('es-CO', { 
+                    style: 'currency', 
+                    currency: 'COP', 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                }).format(v);
+            } else {
+                return new Intl.NumberFormat('es-CO', { 
+                    style: 'currency', 
+                    currency: 'COP', 
+                    maximumFractionDigits: 0 
+                }).format(v);
+            }
+        }
+
+        function roundValue(val) {
+            return appState.useCents ? (Math.round(val * 100) / 100) : Math.round(val);
         }
 
         function save() { localStorage.setItem('banklar_core_state', JSON.stringify(appState)); }
@@ -534,6 +594,7 @@
                     appState = JSON.parse(data);
                     if (!appState.inversiones) appState.inversiones = [];
                     if (!appState.entities) appState.entities = ['Bancolombia', 'Nubank', 'Lulo Bank', 'Davivienda', 'Nequi', 'Banco de Bogotá'];
+                    if (appState.useCents === undefined) appState.useCents = false;
                     if (appState.theme === 'light') document.body.classList.add('light-theme');
                 } catch(e) { console.error(e); }
             }
@@ -594,7 +655,7 @@
 
         document.getElementById('btn-ob-finish').addEventListener('click', () => {
             appState.accounts = [];
-            let cash = parseInt(document.getElementById('ob-cash-bal').getAttribute('data-raw') || '0', 10);
+            let cash = parseFloat(document.getElementById('ob-cash-bal').getAttribute('data-raw') || '0');
             appState.accounts.push({ id: 'acc_cash_default', name: 'Efectivo / Caja', type: 'cash', balance: cash, initialBalance: cash });
 
             let names = document.querySelectorAll('.ob-acc-name');
@@ -603,7 +664,7 @@
 
             names.forEach((el, idx) => {
                 let name = el.value.trim();
-                let b = parseInt(bals[idx].getAttribute('data-raw') || '0', 10);
+                let b = parseFloat(bals[idx].getAttribute('data-raw') || '0');
                 let type = el.getAttribute('data-type');
                 if(!name) ok = false;
                 appState.accounts.push({ id: 'acc_'+Date.now()+'_'+idx, name: name, type: type, balance: b, initialBalance: b });
@@ -657,7 +718,7 @@
                         appState.transactions.push({
                             id: 'tx_auto_'+Date.now()+'_'+Math.floor(Math.random()*99),
                             type: 'income',
-                            amount: Math.round(acum),
+                            amount: roundValue(acum),
                             date: fControl.toISOString().split('T')[0],
                             accountId: 'inv_'+inv.id,
                             note: `Rendimiento Acreditado: ${inv.nombre}`,
@@ -668,7 +729,7 @@
                     }
                 }
 
-                inv.capitalActual = Math.round(cap);
+                inv.capitalActual = roundValue(cap);
                 inv.rendPendiente = acum;
                 inv.fechaUltimaAct = hoy.toISOString().split('T')[0];
             });
@@ -681,7 +742,7 @@
             appState.accounts.forEach(a => a.balance = a.initialBalance);
             
             appState.transactions.forEach(t => {
-                let amt = parseInt(t.amount, 10);
+                let amt = parseFloat(t.amount);
                 if(t.type==='expense') {
                     let acc = appState.accounts.find(a => a.id === t.accountId);
                     if(acc) acc.balance -= amt;
@@ -738,7 +799,7 @@
             let tInc=0, tExp=0, mExp=0, fExp=0;
             let hoy = new Date();
             appState.transactions.forEach(t => {
-                let amt = parseInt(t.amount, 10);
+                let amt = parseFloat(t.amount);
                 if(t.type==='income') tInc += amt;
                 if(t.type==='expense') {
                     tExp += amt;
@@ -760,7 +821,7 @@
             let cats = {};
             appState.transactions.forEach(t => {
                 if(t.type==='expense' && t.category) {
-                    cats[t.category] = (cats[t.category] || 0) + parseInt(t.amount,10);
+                    cats[t.category] = (cats[t.category] || 0) + parseFloat(t.amount);
                 }
             });
             let summaryHtml = "";
@@ -846,7 +907,7 @@
         });
 
         document.getElementById('btn-save-tx').addEventListener('click', () => {
-            let amt = parseInt(document.getElementById('tx-amount').getAttribute('data-raw') || '0', 10);
+            let amt = parseFloat(document.getElementById('tx-amount').getAttribute('data-raw') || '0');
             let o = document.getElementById('tx-origin').value;
             let d = document.getElementById('tx-dest').value;
             let date = document.getElementById('tx-date').value;
@@ -958,7 +1019,7 @@
             }
 
             let name = document.getElementById('inv-name').value.trim();
-            let cap = parseInt(document.getElementById('inv-cap').getAttribute('data-raw') || '0', 10);
+            let cap = parseFloat(document.getElementById('inv-cap').getAttribute('data-raw') || '0');
             let ea = parseFloat(document.getElementById('inv-ea').value);
             let freq = document.getElementById('inv-freq').value;
             let dPers = parseInt(document.getElementById('inv-custom-days').value || '30', 10);
@@ -1000,7 +1061,10 @@
             let promptText = action==='add' ? "Monto a inyectar al capital:" : "Monto a retirar de la inversión:";
             let rawVal = prompt(promptText);
             if(!rawVal) return;
-            let val = parseInt(rawVal.replace(/\D/g, ""), 10);
+            
+            // Reemplaza comas por puntos en caso de ingresar decimales por el teclado
+            let valStr = rawVal.replace(',', '.').replace(/[^\d.]/g, "");
+            let val = parseFloat(valStr);
             if(isNaN(val) || val <= 0) return alert("Monto inválido.");
 
             let hoyStr = new Date().toISOString().split('T')[0];
@@ -1061,7 +1125,7 @@
                 if(t.type==='expense' && t.category) {
                     let td = new Date(t.date+"T00:00:00");
                     if(td.getFullYear()===hoy.getFullYear() && td.getMonth()===hoy.getMonth()) {
-                        sp[t.category] = (sp[t.category] || 0) + parseInt(t.amount, 10);
+                        sp[t.category] = (sp[t.category] || 0) + parseFloat(t.amount);
                     }
                 }
             });
@@ -1122,7 +1186,7 @@
 
         document.getElementById('btn-save-budget').addEventListener('click', () => {
             let c = document.getElementById('budget-cat-select').value;
-            let amt = parseInt(document.getElementById('budget-amt').getAttribute('data-raw') || '0', 10);
+            let amt = parseFloat(document.getElementById('budget-amt').getAttribute('data-raw') || '0');
             if(amt <= 0) return alert("Digita un monto válido.");
             appState.budgets[c] = amt;
             document.getElementById('budget-amt').value = "";
@@ -1168,7 +1232,7 @@
                 if(t.type==='expense' && t.category) {
                     let td = new Date(t.date+"T00:00:00");
                     if(td.getFullYear()===hoy.getFullYear() && td.getMonth()===hoy.getMonth()) {
-                        sp[t.category] = (sp[t.category] || 0) + parseInt(t.amount, 10);
+                        sp[t.category] = (sp[t.category] || 0) + parseFloat(t.amount);
                     }
                 }
             });
@@ -1193,6 +1257,33 @@
                 document.getElementById(target).classList.remove('hidden');
                 recalculateAllData();
             });
+        });
+
+        // PREFERENCIA DE CENTAVOS
+        document.getElementById('btn-apply-cents').addEventListener('click', () => {
+            let isCents = document.getElementById('setting-cents').value === "true";
+            
+            if (appState.useCents !== isCents) {
+                appState.useCents = isCents;
+                save();
+                
+                // Actualiza dinámicamente los campos que ya están en el DOM
+                document.querySelectorAll('.currency-input').forEach(input => {
+                    let raw = parseFloat(input.getAttribute('data-raw') || '0');
+                    if (raw > 0) {
+                        if (!isCents) {
+                            raw = Math.floor(raw); // Elimina decimales sobrantes al pasar a enteros
+                        }
+                        input.setAttribute('data-raw', raw.toString());
+                        input.value = formatCOP(raw);
+                    } else {
+                        input.value = "";
+                    }
+                });
+                
+                recalculateAllData(); // Actualizar todo visualmente de inmediato
+                alert("Preferencia de montos guardada y aplicada exitosamente.");
+            }
         });
 
         // TEMA Y PORTABILIDAD
@@ -1232,6 +1323,7 @@
         // CONTROL DE ARRANQUE INICIAL
         function runCoreEngine() {
             document.getElementById('display-username').innerText = appState.user.name;
+            document.getElementById('setting-cents').value = appState.useCents ? "true" : "false";
             processCompoundInterest();
             recalculateAllData();
         }
