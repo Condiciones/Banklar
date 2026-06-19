@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Banklar - Finanzas e Inversiones</title>
+    
+    <!-- Configuración PWA Moderna -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5158ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
     <style>
         :root {
             /* Modo Oscuro: Tonos Pizarra/Morado profundo */
@@ -1334,6 +1342,13 @@
             if (!appState.privacyAccepted) { changeScreen('screen-privacy'); }
             else if (!appState.onboarded) { changeScreen('screen-onboarding'); buildDynamicOnboarding(1); }
             else { changeScreen('screen-app'); runCoreEngine(); }
+            
+            // Registro Automatizado del Service Worker para PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA: Service Worker activo con alcance:', reg.scope))
+                    .catch(err => console.error('PWA: Falló el registro del Service Worker:', err));
+            }
         });
     </script>
 </body>
