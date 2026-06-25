@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Banklar - Finanzas e Inversiones</title>
     
-    <!-- Configuración PWA Moderna -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#5158ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -205,7 +204,7 @@
                 <li>Una vez eliminados, los datos no podrán recuperarse porque no existen copias en servidores externos.</li>
             </ul>
             <p style="font-size:11px; color:var(--text-muted); margin-bottom:16px;">Al continuar, confirmas que entiendes cómo se almacenan y gestionan tus datos.</p>
-            <button class="btn" id="btn-accept-privacy">Confirmar y Continuar</button>
+            <button type="button" class="btn" id="btn-accept-privacy">Confirmar y Continuar</button>
         </div>
     </div>
 
@@ -217,7 +216,7 @@
                 <label for="ob-name">¿Cómo te llamas? *</label>
                 <input type="text" id="ob-name" placeholder="Ejemplo: Alejandro">
             </div>
-            <button class="btn" id="btn-ob-next-1" style="margin-top:16px;">Siguiente</button>
+            <button type="button" class="btn" id="btn-ob-next-1" style="margin-top:16px;">Siguiente</button>
         </div>
 
         <div class="card id-onboarding-step-2 hidden" id="ob-step-2">
@@ -241,7 +240,7 @@
                 </select>
             </div>
             <div id="ob-dynamic-accounts"></div>
-            <button class="btn" id="btn-ob-finish" style="margin-top:20px;">Finalizar Configuración</button>
+            <button type="button" class="btn" id="btn-ob-finish" style="margin-top:20px;">Finalizar Configuración</button>
         </div>
     </div>
 
@@ -301,20 +300,33 @@
             <div class="card">
                 <h2>Registrar Operación</h2>
                 <div class="type-selector">
-                    <button class="type-btn active" data-type="expense">GASTO</button>
-                    <button class="type-btn" data-type="income">INGRESO</button>
-                    <button class="type-btn" data-type="transfer">TRANSF.</button>
-                    <button class="type-btn" data-type="conversion">CONVER.</button>
+                    <button type="button" class="type-btn active" data-type="expense">GASTO</button>
+                    <button type="button" class="type-btn" data-type="income">INGRESO</button>
+                    <button type="button" class="type-btn" data-type="transfer">TRANSF.</button>
+                    <button type="button" class="type-btn" data-type="conversion">CONVER.</button>
                 </div>
-                <form id="form-tx" onsubmit="return false;">
+                <div id="form-tx">
                     <div class="form-group">
                         <label>Monto / Cantidad *</label>
-                        <input type="text" id="tx-amount" class="currency-input" placeholder="$ 0" data-raw="0" required>
+                        <input type="text" id="tx-amount" class="currency-input" placeholder="$ 0" data-raw="0">
                     </div>
                     <div class="form-group" id="group-origin">
                         <label id="label-origin">Cuenta de Origen</label>
                         <select id="tx-origin"></select>
                     </div>
+                    
+                    <div class="form-group hidden" id="group-tx-cc-details" style="background: rgba(81, 88, 255, 0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(81, 88, 255, 0.2);">
+                        <div class="form-group">
+                            <label for="tx-cc-quotas">Número de Cuotas</label>
+                            <input type="number" id="tx-cc-quotas" value="1" min="1">
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="tx-cc-interest-free" style="width:auto;">
+                            <label for="tx-cc-interest-free" style="margin-bottom:0;">Compra sin intereses</label>
+                        </div>
+                        <div id="tx-cc-simulation-summary" style="font-size:12px; color:var(--text-muted); margin-top:8px; line-height:1.4;"></div>
+                    </div>
+
                     <div class="form-group hidden" id="group-dest">
                         <label>Cuenta Destino</label>
                         <select id="tx-dest"></select>
@@ -329,26 +341,26 @@
                         <div class="category-grid" id="tx-cat-list"></div>
                         <div style="display:flex; gap:8px; margin-bottom:12px;">
                             <input type="text" id="new-cat-name" placeholder="Nueva categoría...">
-                            <button class="btn btn-sm" id="btn-add-cat">Añadir</button>
+                            <button type="button" class="btn btn-sm" id="btn-add-cat">Añadir</button>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Fecha *</label>
-                        <input type="date" id="tx-date" required>
+                        <input type="date" id="tx-date">
                     </div>
                     <div class="form-group">
                         <label>Nota / Comentario</label>
                         <input type="text" id="tx-note" placeholder="Ej: Supermercado Semanal">
                     </div>
-                    <button class="btn" id="btn-save-tx" style="margin-top:16px;">Guardar Movimiento</button>
-                </form>
+                    <button type="button" class="btn" id="btn-save-tx" style="margin-top:16px;">Guardar Movimiento</button>
+                </div>
             </div>
         </div>
 
         <div id="tab-investments" class="tab-content hidden">
             <div class="card">
                 <h2>Nueva Inversión</h2>
-                <form id="form-inv" onsubmit="return false;">
+                <div id="form-inv">
                     <div class="form-group">
                         <label>Tipo de Inversión</label>
                         <select id="inv-type">
@@ -369,24 +381,31 @@
                         <input type="text" id="inv-custom-type-name" placeholder="Ej: Crowdfunding">
                     </div>
                     <div class="form-group">
-                        <label>Entidad Financiera</label>
+                        <label>Entidad Financiera (Tu Cuenta/Banco)</label>
                         <select id="inv-entity"></select>
-                    </div>
-                    <div class="form-group hidden" id="group-inv-new-entity">
-                        <label>Nombre de la Nueva Entidad</label>
-                        <input type="text" id="inv-new-entity-name" placeholder="Ej: Lulo Bank">
                     </div>
                     <div class="form-group">
                         <label>Nombre de la Inversión</label>
-                        <input type="text" id="inv-name" placeholder="Ej: Fondo de Emergencias" required>
+                        <input type="text" id="inv-name" placeholder="Ej: Fondo de Emergencias">
+                    </div>
+                    <div class="form-group">
+                        <label>Origen de Fondos *</label>
+                        <select id="inv-fund-source">
+                            <option value="already_available">Ya tenía este dinero disponible / Externo</option>
+                            <option value="transfer_account">Transferir desde una cuenta bancaria existente</option>
+                        </select>
+                    </div>
+                    <div class="form-group hidden" id="group-inv-source-account">
+                        <label>Seleccionar Cuenta de Origen</label>
+                        <select id="inv-source-account-select"></select>
                     </div>
                     <div class="form-group">
                         <label>Capital Inicial *</label>
-                        <input type="text" id="inv-cap" class="currency-input" placeholder="$ 0" data-raw="0" required>
+                        <input type="text" id="inv-cap" class="currency-input" placeholder="$ 0" data-raw="0">
                     </div>
                     <div class="form-group">
                         <label>Tasa Efectiva Anual (EA %) *</label>
-                        <input type="number" id="inv-ea" step="0.01" placeholder="Ej: 13.25" required>
+                        <input type="number" id="inv-ea" step="0.01" placeholder="Ej: 13.25">
                     </div>
                     <div class="form-group">
                         <label>Frecuencia de Acreditación de Rendimientos</label>
@@ -405,20 +424,25 @@
                         <input type="number" id="inv-custom-days" placeholder="Ej: 15">
                         <p style="font-size:10px; color:var(--text-muted); margin-top:4px;">Ingresa la cantidad exacta de días de corte.</p>
                     </div>
-                    <button class="btn" id="btn-save-inv" style="margin-top:16px;">Crear Inversión Activa</button>
-                </form>
+                    <button type="button" class="btn" id="btn-save-inv" style="margin-top:16px;">Crear Inversión Activa</button>
+                </div>
             </div>
 
             <div class="card">
                 <h2>Tus Inversiones Activas</h2>
                 <div id="investments-list-container"></div>
             </div>
+
+            <div class="card">
+                <h2>Historial de Inversiones Cerradas</h2>
+                <div id="closed-investments-list-container"></div>
+            </div>
         </div>
 
         <div id="tab-history" class="tab-content hidden">
             <div class="card">
                 <h2>Presupuestos Mensuales</h2>
-                <form id="form-budget" onsubmit="return false;" style="margin-bottom:20px;">
+                <div id="form-budget" style="margin-bottom:20px;">
                     <div class="form-group">
                         <label>Categoría</label>
                         <select id="budget-cat-select"></select>
@@ -427,8 +451,8 @@
                         <label>Límite Mensual</label>
                         <input type="text" id="budget-amt" class="currency-input" placeholder="$ 0" data-raw="0">
                     </div>
-                    <button class="btn btn-sm" id="btn-save-budget">Asignar Límite</button>
-                </form>
+                    <button type="button" class="btn btn-sm" id="btn-save-budget">Asignar Límite</button>
+                </div>
                 <div id="budget-progress-container"></div>
             </div>
 
@@ -441,11 +465,90 @@
                     <input type="text" id="history-search" placeholder="Buscar por nota o categoría...">
                 </div>
                 <div id="history-container" style="max-height:350px; overflow-y:auto; background:var(--bg-main); border-radius:10px; border: 1px solid var(--bg-input);"></div>
-                <button class="btn btn-danger btn-secondary" id="btn-clear-history" style="margin-top:16px;">Vaciar Todo el Historial</button>
+                <button type="button" class="btn btn-danger btn-secondary" id="btn-clear-history" style="margin-top:16px;">Vaciar Todo el Historial</button>
             </div>
         </div>
 
         <div id="tab-settings" class="tab-content hidden">
+            <div class="card">
+                <h2>Gestión de Cuentas y Bancos</h2>
+                <p class="subtitle">Administra, edita o añade tus entidades en cualquier momento.</p>
+                <div id="form-manage-account" style="background:rgba(251, 191, 36, 0.03); padding:12px; border-radius:10px; margin-bottom:12px; border: 1px dashed var(--bg-input);">
+                    <input type="hidden" id="edit-acc-id" value="">
+                    <div class="form-group">
+                        <label id="lbl-manage-account">Nueva Cuenta / Banco</label>
+                        <input type="text" id="manage-acc-name" placeholder="Ej: Lulo Bank, Billetera Personal">
+                    </div>
+                    <div class="form-group" id="group-manage-acc-bal">
+                        <label>Saldo Inicial</label>
+                        <input type="text" id="manage-acc-bal" class="currency-input" placeholder="$ 0" data-raw="0">
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn btn-sm" id="btn-save-managed-acc">Guardar Cuenta</button>
+                        <button type="button" class="btn btn-sm btn-secondary hidden" id="btn-cancel-managed-acc">Cancelar</button>
+                    </div>
+                </div>
+                <div id="settings-accounts-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+
+            <div class="card">
+                <h2>Tarjetas de Crédito</h2>
+                <p class="subtitle">Registra tus plásticos de financiamiento y simula extractos.</p>
+                <div id="form-cc" style="background:rgba(81, 88, 255, 0.05); padding:12px; border-radius:10px; margin-bottom:12px;">
+                    <input type="hidden" id="edit-cc-id" value="">
+                    <div class="form-group">
+                        <label>Nombre de la Tarjeta *</label>
+                        <input type="text" id="cc-name" placeholder="Ej: Visa Gold">
+                    </div>
+                    <div class="form-group">
+                        <label>Banco Asociado *</label>
+                        <select id="cc-account-id"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tasa de Interés Mensual (% MV) *</label>
+                        <input type="number" id="cc-interest" step="0.01" placeholder="Ej: 2.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Día de Corte (1 al 31) *</label>
+                        <input type="number" id="cc-closing-day" min="1" max="31" placeholder="Ej: 20">
+                    </div>
+                    <div class="form-group">
+                        <label>Día Límite de Pago (1 al 31) *</label>
+                        <input type="number" id="cc-due-day" min="1" max="31" placeholder="Ej: 5">
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn btn-sm" id="btn-save-cc">Guardar Tarjeta</button>
+                        <button type="button" class="btn btn-sm btn-secondary hidden" id="btn-cancel-cc">Cancelar</button>
+                    </div>
+                </div>
+                <div id="settings-cc-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+
+            <div class="card hidden" id="cc-detail-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 id="cc-detail-title" style="color:var(--accent);">Detalle de Tarjeta</h3>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('cc-detail-panel').classList.add('hidden')">Cerrar Vista</button>
+                </div>
+                <div id="cc-detail-metrics" style="margin-top:12px; font-size:13px; line-height:1.5;"></div>
+                
+                <h4 style="margin-top:14px; font-size:13px;">Registrar Cargo Manual (Extracto)</h4>
+                <div style="background:rgba(0,0,0,0.1); padding:10px; border-radius:8px; margin-bottom:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                    <input type="text" id="cc-manual-charge-note" placeholder="Cuota de manejo, Seguro...">
+                    <input type="text" id="cc-manual-charge-amt" class="currency-input" placeholder="Monto" data-raw="0">
+                    <button type="button" class="btn btn-sm" id="btn-save-cc-manual-charge" style="grid-column: span 2;">Agregar Cargo</button>
+                </div>
+
+                <h4 style="margin-top:14px; font-size:13px;">Registrar Pago a la Tarjeta</h4>
+                <div style="background:rgba(16, 185, 129, 0.05); padding:10px; border-radius:8px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                    <select id="cc-payment-source"></select>
+                    <input type="text" id="cc-payment-amt" class="currency-input" placeholder="Monto del Pago" data-raw="0">
+                    <button type="button" class="btn btn-sm" id="btn-save-cc-payment" style="grid-column: span 2; background:var(--success);">Efectuar Pago</button>
+                </div>
+
+                <h4 style="margin-top:14px; font-size:13px;">Historial de Compras y Cargos Activos</h4>
+                <div id="cc-detail-tx-history" style="font-size:12px; background:var(--bg-main); border-radius:8px; padding:6px; max-height:18px0px; overflow-y:auto; margin-top:6px;"></div>
+            </div>
+
             <div class="card">
                 <h2>Ingreso de Montos</h2>
                 <p class="subtitle">Define cómo registrar y visualizar los valores monetarios.</p>
@@ -456,12 +559,12 @@
                         <option value="true">Con centavos (Entrada inteligente)</option>
                     </select>
                 </div>
-                <button class="btn btn-secondary" id="btn-apply-cents">Guardar Preferencia</button>
+                <button type="button" class="btn btn-secondary" id="btn-apply-cents">Guardar Preferencia</button>
             </div>
             
             <div class="card">
                 <h2>Personalización Visual</h2>
-                <button class="btn btn-secondary" id="btn-toggle-theme" style="margin-top:12px;">
+                <button type="button" class="btn btn-secondary" id="btn-toggle-theme" style="margin-top:12px;">
                     <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     Cambiar Modo Claro / Oscuro
                 </button>
@@ -470,7 +573,7 @@
             <div class="card">
                 <h2>Portabilidad Local de Datos</h2>
                 <p class="subtitle">Copia y traslada tu información sin nubes externas.</p>
-                <button class="btn" id="btn-export">
+                <button type="button" class="btn" id="btn-export">
                     <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                     Exportar al Portapapeles
                 </button>
@@ -478,13 +581,13 @@
                     <label>Importar Cadena de Texto (JSON)</label>
                     <textarea id="import-area" rows="4" placeholder="Pega el código JSON de exportación aquí..."></textarea>
                 </div>
-                <button class="btn btn-secondary" id="btn-import">Procesar e Importar Datos</button>
+                <button type="button" class="btn btn-secondary" id="btn-import-trigger">Procesar e Importar Datos</button>
             </div>
             
             <div class="card" style="border:1px solid var(--danger);">
                 <h3 style="color:var(--danger);">Zona Crítica</h3>
                 <p class="subtitle">Borrado absoluto de la memoria interna.</p>
-                <button class="btn btn-danger" id="btn-hard-reset">
+                <button type="button" class="btn btn-danger" id="btn-hard-reset">
                     <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     Restablecer Aplicación de Fábrica
                 </button>
@@ -523,14 +626,14 @@
             transactions: [],
             categories: {
                 income: ['Salario', 'Honorarios', 'Rendimientos', 'Otros Ingresos'],
-                expense: ['Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Diversión', 'Salud', 'Otros Gastos']
+                expense: ['Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Diversión', 'Salud', 'Otros Gastos', 'Inversiones']
             },
             budgets: {},
-            entities: ['Bancolombia', 'Nubank', 'Lulo Bank', 'Davivienda', 'Nequi', 'Banco de Bogotá'],
             privacyAccepted: false,
             onboarded: false,
             theme: 'dark',
-            useCents: false // Control del modo de visualización y captura
+            useCents: false,
+            creditCards: [] // Almacenamiento modular para Tarjetas de Crédito
         };
 
         function handleCurrencyInput(e) {
@@ -544,7 +647,6 @@
             }
 
             if (appState.useCents) {
-                // Modo bancario: se trata el ingreso dividido por 100
                 let num = parseInt(clean, 10) / 100;
                 input.setAttribute('data-raw', num.toString());
                 input.value = new Intl.NumberFormat('es-CO', { 
@@ -554,7 +656,6 @@
                     maximumFractionDigits: 2 
                 }).format(num);
             } else {
-                // Modo estándar (Sin centavos)
                 let num = parseInt(clean, 10);
                 input.setAttribute('data-raw', num.toString());
                 input.value = new Intl.NumberFormat('es-CO', { 
@@ -601,7 +702,7 @@
                 try {
                     appState = JSON.parse(data);
                     if (!appState.inversiones) appState.inversiones = [];
-                    if (!appState.entities) appState.entities = ['Bancolombia', 'Nubank', 'Lulo Bank', 'Davivienda', 'Nequi', 'Banco de Bogotá'];
+                    if (!appState.creditCards) appState.creditCards = [];
                     if (appState.useCents === undefined) appState.useCents = false;
                     if (appState.theme === 'light') document.body.classList.add('light-theme');
                 } catch(e) { console.error(e); }
@@ -649,11 +750,11 @@
                     <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">${s}</p>
                     <div class="form-group">
                         <label>Nombre del Banco / Cuenta *</label>
-                        <input type="text" class="ob-acc-name" data-type="${type}" placeholder="${p}" required>
+                        <input type="text" class="ob-acc-name" data-type="${type}" placeholder="${p}">
                     </div>
                     <div class="form-group">
                         <label>Saldo Actual *</label>
-                        <input type="text" class="currency-input ob-acc-bal" placeholder="$ 0" data-raw="0" required>
+                        <input type="text" class="currency-input ob-acc-bal" placeholder="$ 0" data-raw="0">
                     </div>
                 `;
                 container.appendChild(block);
@@ -730,7 +831,8 @@
                             date: fControl.toISOString().split('T')[0],
                             accountId: 'inv_'+inv.id,
                             note: `Rendimiento Acreditado: ${inv.nombre}`,
-                            category: 'Rendimientos'
+                            category: 'Rendimientos',
+                            isWealthTransfer: true
                         });
                         acum = 0;
                         inv.fechaUltimaAcred = fControl.toISOString().split('T')[0];
@@ -747,10 +849,36 @@
 
         // RECALCULOS PATRIMONIALES Y RENDER
         function recalculateAllData() {
+            // Inicializar balances a su estado de configuración base
             appState.accounts.forEach(a => a.balance = a.initialBalance);
+
+            // Reiniciar dinámicamente deudas calculadas sobre TC
+            appState.creditCards.forEach(cc => {
+                cc.utilizedBalance = 0;
+                cc.nextStatementAmortization = 0;
+                cc.nextStatementInterest = 0;
+            });
             
+            // Ejecución lineal de transacciones registradas
             appState.transactions.forEach(t => {
                 let amt = parseFloat(t.amount);
+                
+                // Si proviene de tarjeta de crédito
+                if (t.creditCardId) {
+                    let cc = appState.creditCards.find(c => c.id === t.creditCardId);
+                    if (cc) {
+                        cc.utilizedBalance += amt;
+                        // Cálculo simplificado de amortización de cuotas para el extracto inmediato
+                        if (t.installments > 0) {
+                            cc.nextStatementAmortization += (amt / t.installments);
+                            if (!t.interestFree) {
+                                cc.nextStatementInterest += (amt * (parseFloat(cc.interestRate) / 100));
+                            }
+                        }
+                    }
+                    return;
+                }
+
                 if(t.type==='expense') {
                     let acc = appState.accounts.find(a => a.id === t.accountId);
                     if(acc) acc.balance -= amt;
@@ -767,25 +895,38 @@
 
             let totalCuentas = appState.accounts.reduce((acc, current) => acc + current.balance, 0);
             let totalInversiones = appState.inversiones.filter(i => i.activa).reduce((acc, current) => acc + current.capitalActual, 0);
-            let patrimonioTotal = totalCuentas + totalInversiones;
+            let totalDeudaTC = appState.creditCards.reduce((acc, current) => acc + (current.utilizedBalance || 0), 0);
+            
+            // Patrimonio Consistente = Cuentas + Inversiones Activas - Deudas de TC
+            let patrimonioTotal = totalCuentas + totalInversiones - totalDeudaTC;
 
             document.getElementById('display-net-worth').innerText = formatCOP(patrimonioTotal);
 
-            // Renders
-            renderDashboard(totalCuentas);
+            // Actualización de Renders en Cascada
+            renderDashboard();
             renderTxForm();
             renderInvestmentsModule();
             renderHistoryAndBudgets();
+            renderSettingsManagement();
             checkSmartAlerts(patrimonioTotal);
         }
 
-        function renderDashboard(totalCuentas) {
+        function renderDashboard() {
             let container = document.getElementById('dash-accounts-list');
             container.innerHTML = "";
             appState.accounts.forEach(a => {
                 let div = document.createElement('div');
                 div.className = "mini-card";
                 div.innerHTML = `<div class="m-title">${a.name}</div><div class="m-balance">${formatCOP(a.balance)}</div>`;
+                container.appendChild(div);
+            });
+
+            // Tarjetas añadidas al panel si poseen saldo consumido
+            appState.creditCards.forEach(cc => {
+                let div = document.createElement('div');
+                div.className = "mini-card";
+                div.style.borderLeft = "4px solid var(--danger)";
+                div.innerHTML = `<div class="m-title">${cc.name} (Deuda)</div><div class="m-balance" style="color:var(--danger);">${formatCOP(cc.utilizedBalance || 0)}</div>`;
                 container.appendChild(div);
             });
 
@@ -803,10 +944,11 @@
             });
             if(!anyInv) invContainer.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>No posees inversiones activas.</p>";
 
-            // Metricas
+            // Métricas excluyendo transferencias internas de patrimonio
             let tInc=0, tExp=0, mExp=0, fExp=0;
             let hoy = new Date();
             appState.transactions.forEach(t => {
+                if (t.isWealthTransfer) return; // Evita alteración de métricas
                 let amt = parseFloat(t.amount);
                 if(t.type==='income') tInc += amt;
                 if(t.type==='expense') {
@@ -825,10 +967,10 @@
             document.getElementById('m-month').innerText = formatCOP(mExp);
             document.getElementById('m-fortnight').innerText = formatCOP(fExp);
 
-            // Resumen de Categorias
+            // Resumen de Categorías
             let cats = {};
             appState.transactions.forEach(t => {
-                if(t.type==='expense' && t.category) {
+                if(!t.isWealthTransfer && t.type==='expense' && t.category) {
                     cats[t.category] = (cats[t.category] || 0) + parseFloat(t.amount);
                 }
             });
@@ -839,7 +981,7 @@
             document.getElementById('dash-cat-summary').innerHTML = summaryHtml || "<p style='font-size:12px; color:var(--text-muted);'>Sin gastos registrados.</p>";
         }
 
-        // OPERACIONES Y SELECTORES
+        // OPERACIONES, SELECTORES Y SIMULADOR TC
         let txTypeSelected = "expense";
         let catSelected = "";
         document.querySelectorAll('.type-selector .type-btn').forEach(b => {
@@ -856,6 +998,7 @@
             let dest = document.getElementById('tx-dest');
             orig.innerHTML = ""; dest.innerHTML = "";
 
+            // Alimentar Orígenes (Cuentas Líquidas)
             appState.accounts.forEach(a => {
                 let o1 = document.createElement('option'); o1.value = a.id; o1.innerText = `${a.name} (${formatCOP(a.balance)})`;
                 orig.appendChild(o1);
@@ -863,9 +1006,14 @@
                 dest.appendChild(o2);
             });
 
-            if(txTypeSelected==='income') {
-                let main = appState.accounts.find(a => a.type==='main');
-                if(main) orig.value = main.id;
+            // Si es Gasto, inyectar Tarjetas de Crédito al listado de Origen
+            if (txTypeSelected === 'expense') {
+                appState.creditCards.forEach(cc => {
+                    let oCC = document.createElement('option');
+                    oCC.value = `cc_${cc.id}`;
+                    oCC.innerText = `[Tarjeta] ${cc.name} (${cc.interestRate}% MV)`;
+                    orig.appendChild(oCC);
+                });
             }
 
             let gDest = document.getElementById('group-dest');
@@ -874,11 +1022,62 @@
 
             if(txTypeSelected==='expense' || txTypeSelected==='income') {
                 gDest.classList.add('hidden'); gCat.classList.remove('hidden');
-                lblOrig.innerText = txTypeSelected==='expense'?'Cuenta Origen':'Cuenta Destino';
+                lblOrig.innerText = txTypeSelected==='expense'?'Cuenta / Tarjeta Origen':'Cuenta Destino';
                 renderCategoriesGrid();
             } else {
                 gDest.classList.remove('hidden'); gCat.classList.add('hidden');
                 lblOrig.innerText = 'Desde Cuenta';
+            }
+            toggleCreditCardFormFields();
+        }
+
+        function toggleCreditCardFormFields() {
+            let originVal = document.getElementById('tx-origin').value;
+            let groupCC = document.getElementById('group-tx-cc-details');
+            if (txTypeSelected === 'expense' && originVal && originVal.startsWith('cc_')) {
+                groupCC.classList.remove('hidden');
+                simulateCreditCardInstallments();
+            } else {
+                groupCC.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('tx-origin').addEventListener('change', toggleCreditCardFormFields);
+        document.getElementById('tx-amount').addEventListener('input', simulateCreditCardInstallments);
+        document.getElementById('tx-cc-quotas').addEventListener('input', simulateCreditCardInstallments);
+        document.getElementById('tx-cc-interest-free').addEventListener('change', simulateCreditCardInstallments);
+
+        function simulateCreditCardInstallments() {
+            let amt = parseFloat(document.getElementById('tx-amount').getAttribute('data-raw') || '0');
+            let quotas = parseInt(document.getElementById('tx-cc-quotas').value, 10) || 1;
+            let isFree = document.getElementById('tx-cc-interest-free').checked;
+            let summaryContainer = document.getElementById('tx-cc-simulation-summary');
+            
+            let originVal = document.getElementById('tx-origin').value;
+            if (!originVal || !originVal.startsWith('cc_') || amt <= 0) {
+                summaryContainer.innerHTML = "";
+                return;
+            }
+            
+            let ccId = originVal.replace('cc_', '');
+            let cc = appState.creditCards.find(c => c.id === ccId);
+            if (!cc) return;
+
+            if (isFree) {
+                let share = amt / quotas;
+                summaryContainer.innerHTML = `<strong>Financiación Sin Intereses</strong><br>Cuota Mensual: ${formatCOP(share)} por ${quotas} mes(es).<br>Total a Pagar: ${formatCOP(amt)}`;
+            } else {
+                let monthlyRate = parseFloat(cc.interestRate) / 100;
+                let installmentValue = 0;
+                if (monthlyRate > 0) {
+                    installmentValue = amt * (monthlyRate * Math.pow(1 + monthlyRate, quotas)) / (Math.pow(1 + monthlyRate, quotas) - 1);
+                } else {
+                    installmentValue = amt / quotas;
+                }
+                let totalPayable = installmentValue * quotas;
+                let totalInterest = totalPayable - amt;
+
+                summaryContainer.innerHTML = `<strong>Simulación con Interés (${cc.interestRate}% MV)</strong><br>Cuota Mensual Est.: ${formatCOP(installmentValue)}<br>Intereses Totales: ${formatCOP(totalInterest)}<br>Total Amortizado: ${formatCOP(totalPayable)}`;
             }
         }
 
@@ -921,38 +1120,57 @@
             let date = document.getElementById('tx-date').value;
             let note = document.getElementById('tx-note').value.trim();
 
-            if(amt<=0 || !date) return alert("Completa los campos obligatorios.");
-            if((txTypeSelected==='expense' || txTypeSelected==='income') && !catSelected) return alert("Selecciona una categoría.");
-            if((txTypeSelected==='transfer' || txTypeSelected==='conversion') && o===d) return alert("Las cuentas deben ser diferentes.");
+            if(amt<=0 || !date) return alert("Por favor completa los campos obligatorios.");
+            if((txTypeSelected==='expense' || txTypeSelected==='income') && !o.startsWith('cc_') && !catSelected) return alert("Selecciona una categoría.");
+            if((txTypeSelected==='transfer' || txTypeSelected==='conversion') && o===d) return alert("Las cuentas de origen y destino deben ser diferentes.");
 
-            appState.transactions.push({
+            let txObj = {
                 id: 'tx_'+Date.now()+'_'+Math.floor(Math.random()*100),
                 type: txTypeSelected,
                 amount: amt,
                 date: date,
-                accountId: o,
-                destAccountId: d,
-                category: catSelected,
-                note: note || (txTypeSelected==='transfer'?'Transferencia':txTypeSelected==='conversion'?'Conversión':catSelected)
-            });
+                note: note || (txTypeSelected==='transfer'?'Transferencia':txTypeSelected==='conversion'?'Conversión':catSelected),
+                category: catSelected || 'Tarjeta de Crédito'
+            };
 
+            // Enrutamiento si el origen es Tarjeta de Crédito
+            if (txTypeSelected === 'expense' && o.startsWith('cc_')) {
+                txObj.creditCardId = o.replace('cc_', '');
+                txObj.installments = parseInt(document.getElementById('tx-cc-quotas').value, 10) || 1;
+                txObj.interestFree = document.getElementById('tx-cc-interest-free').checked;
+            } else {
+                txObj.accountId = o;
+                txObj.destAccountId = d;
+            }
+
+            // Marcador de consistencia patrimonial
+            if(txTypeSelected==='transfer' || txTypeSelected==='conversion') {
+                txObj.isWealthTransfer = true;
+            }
+
+            appState.transactions.push(txObj);
+
+            // Limpieza de campos sin disparar alertas erróneas nativas
             document.getElementById('tx-amount').value="";
             document.getElementById('tx-amount').setAttribute('data-raw','0');
             document.getElementById('tx-note').value="";
+            document.getElementById('tx-cc-quotas').value="1";
+            document.getElementById('tx-cc-interest-free').checked = false;
+            
             save(); recalculateAllData();
             alert("Operación registrada correctamente.");
         });
 
-        // MODULO INVERSIONES COMPLETO
+        // MODULO INVERSIONES REDISEÑADO CON TRAZABILIDAD
         document.getElementById('inv-type').addEventListener('change', (e) => {
             let g = document.getElementById('group-inv-custom-type');
             if(e.target.value==='Personalizado') g.classList.remove('hidden');
             else g.classList.add('hidden');
         });
 
-        document.getElementById('inv-entity').addEventListener('change', (e) => {
-            let g = document.getElementById('group-inv-new-entity');
-            if(e.target.value==='+ Registrar nueva entidad financiera') g.classList.remove('hidden');
+        document.getElementById('inv-fund-source').addEventListener('change', (e) => {
+            let g = document.getElementById('group-inv-source-account');
+            if(e.target.value === 'transfer_account') g.classList.remove('hidden');
             else g.classList.add('hidden');
         });
 
@@ -964,13 +1182,17 @@
 
         function renderInvestmentsModule() {
             let sel = document.getElementById('inv-entity');
-            sel.innerHTML = "";
-            appState.entities.forEach(e => {
-                let o = document.createElement('option'); o.value=e; o.innerText=e;
+            let srcSel = document.getElementById('inv-source-account-select');
+            sel.innerHTML = ""; srcSel.innerHTML = "";
+
+            // Única fuente de verdad: Bancos creados por el usuario
+            appState.accounts.forEach(e => {
+                let o = document.createElement('option'); o.value=e.name; o.innerText=e.name;
                 sel.appendChild(o);
+
+                let oSrc = document.createElement('option'); oSrc.value=e.id; oSrc.innerText=`${e.name} (${formatCOP(e.balance)})`;
+                srcSel.appendChild(oSrc);
             });
-            let oNew = document.createElement('option'); oNew.value='+ Registrar nueva entidad financiera'; oNew.innerText='+ Registrar nueva entidad';
-            sel.appendChild(oNew);
 
             // Render lista activa
             let container = document.getElementById('investments-list-container');
@@ -1004,14 +1226,36 @@
                     </div>
                     <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Rentabilidad Histórica Cobrada: <strong style="color:var(--accent);">+${formatCOP(inv.rendHistorico)}</strong></p>
                     <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
-                        <button class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'add')">+ Capital</button>
-                        <button class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'withdraw')">- Retirar</button>
-                        <button class="btn btn-sm" style="background:var(--bg-input); color:var(--text-main); border:none;" onclick="editInvParams('${inv.id}')">Editar</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'add')">+ Capital</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'withdraw')">- Retirar</button>
+                        <button type="button" class="btn btn-sm" style="background:var(--bg-input); color:var(--text-main); border:none;" onclick="editInvParams('${inv.id}')">Editar</button>
                     </div>
-                    <button class="btn btn-sm btn-danger" style="margin-top:10px; width:100%; border-radius:8px;" onclick="deleteInv('${inv.id}')">Eliminar Inversión</button>
+                    <button type="button" class="btn btn-sm btn-danger" style="margin-top:10px; width:100%; border-radius:8px;" onclick="closeAndArchiveInvestment('${inv.id}')">Liquidar y Cerrar Inversión</button>
                 `;
                 container.appendChild(div);
             });
+
+            // Render Historial de Inversiones Cerradas/Archivadas
+            let closedContainer = document.getElementById('closed-investments-list-container');
+            closedContainer.innerHTML = "";
+            let closedInvs = appState.inversiones.filter(i => !i.activa);
+            if (closedInvs.length === 0) {
+                closedContainer.innerHTML = "<p style='font-size:11px; color:var(--text-muted);'>No hay registros históricos cerrados.</p>";
+            } else {
+                closedInvs.forEach(inv => {
+                    let div = document.createElement('div');
+                    div.className = "card";
+                    div.style.opacity = "0.75";
+                    div.style.borderLeft = "4px solid var(--text-muted)";
+                    div.innerHTML = `
+                        <h4 style="font-size:14px; color:var(--text-main);">${inv.nombre} [CERRADA]</h4>
+                        <p style="font-size:11px; color:var(--text-muted);">Entidad: ${inv.entidadFinanciera} | Liquidada el: ${inv.fechaCierre || inv.fechaUltimaAct}</p>
+                        <p style="font-size:12px; margin-top:4px;">Capital de Cierre: <strong>${formatCOP(inv.capitalActual)}</strong> | Rendimientos Totales: <span style="color:var(--success);">+${formatCOP(inv.rendHistorico)}</span></p>
+                        <p style="font-size:11px; color:var(--accent); font-style: italic;">Destino final asignado: ${inv.destinoAsignadoName || 'Efectivo / Caja'}</p>
+                    `;
+                    closedContainer.appendChild(div);
+                });
+            }
         }
 
         document.getElementById('btn-save-inv').addEventListener('click', () => {
@@ -1019,23 +1263,37 @@
             if(t==='Personalizado') t = document.getElementById('inv-custom-type-name').value.trim() || "Personalizado";
 
             let ent = document.getElementById('inv-entity').value;
-            if(ent==='+ Registrar nueva entidad financiera') {
-                let nEnt = document.getElementById('inv-new-entity-name').value.trim();
-                if(!nEnt) return alert("Escribe el nombre de la nueva entidad.");
-                if(!appState.entities.includes(nEnt)) appState.entities.push(nEnt);
-                ent = nEnt;
-            }
-
             let name = document.getElementById('inv-name').value.trim();
             let cap = parseFloat(document.getElementById('inv-cap').getAttribute('data-raw') || '0');
             let ea = parseFloat(document.getElementById('inv-ea').value);
             let freq = document.getElementById('inv-freq').value;
             let dPers = parseInt(document.getElementById('inv-custom-days').value || '30', 10);
+            let sourceMode = document.getElementById('inv-fund-source').value;
 
-            if(!name || cap<=0 || isNaN(ea)) return alert("Diligencia los campos obligatorios.");
+            if(!name || cap<=0 || isNaN(ea) || !ent) return alert("Por favor diligencia todos los campos obligatorios.");
 
             let id = 'inv_'+Date.now();
             let hoyStr = new Date().toISOString().split('T')[0];
+
+            // Si se selecciona descontar de cuenta existente
+            if (sourceMode === 'transfer_account') {
+                let srcAccId = document.getElementById('inv-source-account-select').value;
+                let accountObj = appState.accounts.find(a => a.id === srcAccId);
+                if (accountObj && accountObj.balance < cap) {
+                    return alert("Saldo insuficiente en la cuenta bancaria de origen para fondear la inversión.");
+                }
+                // Registrar movimiento patrimonial legítimo
+                appState.transactions.push({
+                    id: 'tx_inv_transfer_'+Date.now(),
+                    type: 'expense',
+                    amount: cap,
+                    date: hoyStr,
+                    accountId: srcAccId,
+                    note: `Fondeo de Inversión: ${name}`,
+                    category: 'Inversiones',
+                    isWealthTransfer: true // No altera reportes de gastos nocivos
+                });
+            }
 
             appState.inversiones.push({
                 id: id, tipo: t, entidadFinanciera: ent, nombre: name, capitalInicial: cap, capitalActual: cap,
@@ -1043,25 +1301,62 @@
                 fechaCreacion: hoyStr, fechaUltimaAct: hoyStr, fechaUltimaAcred: hoyStr, activa: true
             });
 
-            // Registrar movimiento automatico
-            appState.transactions.push({
-                id: 'tx_'+Date.now(), type: 'expense', amount: cap, date: hoyStr, accountId: 'acc_cash_default', note: `Aporte Inicial Inversión: ${name}`, category: 'Inversiones'
-            });
-
+            // Limpiar inputs de forma controlada
             document.getElementById('inv-name').value = "";
             document.getElementById('inv-cap').value = "";
             document.getElementById('inv-cap').setAttribute('data-raw', '0');
             document.getElementById('inv-ea').value = "";
-            document.getElementById('inv-custom-type-name').value = "";
-            document.getElementById('inv-new-entity-name').value = "";
             
-            document.getElementById('group-inv-custom-type').classList.add('hidden');
-            document.getElementById('group-inv-new-entity').classList.add('hidden');
-            document.getElementById('group-inv-custom-days').classList.add('hidden');
+            save(); recalculateAllData();
+            alert("Inversión registrada con consistencia patrimonial.");
+        });
+
+        window.closeAndArchiveInvestment = function(id) {
+            let inv = appState.inversiones.find(i => i.id === id);
+            if(!inv) return;
+
+            // Construir diálogo dinámico seguro de asignación de capital
+            let promptText = `Cierre de Inversión: ${inv.nombre}\nSaldo total acumulado: ${formatCOP(inv.capitalActual)}\n\nEscribe el NÚMERO de la opción de destino:\n1. Guardar en Efectivo / Caja\n`;
+            appState.accounts.forEach((acc, idx) => {
+                promptText += `${idx + 2}. Transferir a: ${acc.name} (${formatCOP(acc.balance)})\n`;
+            });
+
+            let optionInput = prompt(promptText);
+            if (!optionInput) return;
+
+            let opt = parseInt(optionInput, 10);
+            let destAccId = 'acc_cash_default';
+            let destName = 'Efectivo / Caja';
+
+            if (opt > 1 && opt <= appState.accounts.length + 1) {
+                let targetAcc = appState.accounts[opt - 2];
+                destAccId = targetAcc.id;
+                destName = targetAcc.name;
+            }
+
+            let hoyStr = new Date().toISOString().split('T')[0];
+
+            // Registrar la inyección de capital en el destino seleccionado
+            appState.transactions.push({
+                id: 'tx_inv_liquidate_'+Date.now(),
+                type: 'income',
+                amount: inv.capitalActual,
+                accountId: destAccId,
+                date: hoyStr,
+                note: `Liquidación de Inversión: ${inv.nombre}`,
+                category: 'Rendimientos',
+                isWealthTransfer: true
+            });
+
+            // Archivar objeto sin destrucción física
+            inv.activa = false;
+            inv.fechaCierre = hoyStr;
+            inv.destinoAsignadoId = destAccId;
+            inv.destinoAsignadoName = destName;
 
             save(); recalculateAllData();
-            alert("Inversión registrada y en ejecución.");
-        });
+            alert(`Inversión cerrada exitosamente. Los fondos fueron reasignados a ${destName}.`);
+        };
 
         window.manageInvCapital = function(id, action) {
             let inv = appState.inversiones.find(i => i.id === id);
@@ -1070,7 +1365,6 @@
             let rawVal = prompt(promptText);
             if(!rawVal) return;
             
-            // Reemplaza comas por puntos en caso de ingresar decimales por el teclado
             let valStr = rawVal.replace(',', '.').replace(/[^\d.]/g, "");
             let val = parseFloat(valStr);
             if(isNaN(val) || val <= 0) return alert("Monto inválido.");
@@ -1078,11 +1372,11 @@
             let hoyStr = new Date().toISOString().split('T')[0];
             if(action==='add') {
                 inv.capitalActual += val;
-                appState.transactions.push({ id:'tx_'+Date.now(), type:'expense', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Aporte Capital: ${inv.nombre}`, category:'Inversiones' });
+                appState.transactions.push({ id:'tx_'+Date.now(), type:'expense', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Aporte Capital: ${inv.nombre}`, category:'Inversiones', isWealthTransfer:true });
             } else {
                 if(val > inv.capitalActual) return alert("No posees tanto capital disponible en este producto.");
                 inv.capitalActual -= val;
-                appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Retiro Capital: ${inv.nombre}`, category:'Inversiones' });
+                appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Retiro Capital: ${inv.nombre}`, category:'Inversiones', isWealthTransfer:true });
             }
             save(); recalculateAllData();
         };
@@ -1096,26 +1390,10 @@
             
             if(nName) inv.nombre = nName;
             if(nEA && !isNaN(parseFloat(nEA))) {
-                let parsedEA = parseFloat(nEA);
-                if(parsedEA !== inv.tasaEA) {
-                    inv.tasaEA = parsedEA;
-                    inv.fechaUltimaAct = new Date().toISOString().split('T')[0];
-                    appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount:0, accountId:'acc_cash_default', date:inv.fechaUltimaAct, note:`Cambio de Tasa a ${parsedEA}% EA: ${inv.nombre}`, category:'Inversiones' });
-                }
+                inv.tasaEA = parseFloat(nEA);
+                inv.fechaUltimaAct = new Date().toISOString().split('T')[0];
             }
             save(); recalculateAllData();
-        };
-
-        window.deleteInv = function(id) {
-            if(!confirm("¿Seguro que deseas eliminar esta inversión? Se generará un movimiento de liquidación en tu historial.")) return;
-            let idx = appState.inversiones.findIndex(i => i.id === id);
-            if(idx !== -1) {
-                let inv = appState.inversiones[idx];
-                inv.activa = false;
-                let hoyStr = new Date().toISOString().split('T')[0];
-                appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount: inv.capitalActual, accountId:'acc_cash_default', date:hoyStr, note:`Liquidación/Eliminación: ${inv.nombre}`, category:'Inversiones' });
-                save(); recalculateAllData();
-            }
         };
 
         // HISTORIAL Y PRESUPUESTOS
@@ -1126,11 +1404,10 @@
                 let o = document.createElement('option'); o.value=c; o.innerText=c; bSel.appendChild(o);
             });
 
-            // Progreso Presupuestos
             let hoy = new Date();
             let sp = {};
             appState.transactions.forEach(t => {
-                if(t.type==='expense' && t.category) {
+                if(!t.isWealthTransfer && t.type==='expense' && t.category) {
                     let td = new Date(t.date+"T00:00:00");
                     if(td.getFullYear()===hoy.getFullYear() && td.getMonth()===hoy.getMonth()) {
                         sp[t.category] = (sp[t.category] || 0) + parseFloat(t.amount);
@@ -1161,7 +1438,6 @@
             }
             if(!anyBudget) bContainer.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>No has estipulado límites mensuales.</p>";
 
-            // Historial Items
             renderHistoryItemsFiltered();
         }
 
@@ -1174,14 +1450,18 @@
                 if(filter && !t.note.toLowerCase().includes(filter.toLowerCase()) && !(t.category && t.category.toLowerCase().includes(filter.toLowerCase()))) return;
                 let div = document.createElement('div');
                 div.className = `history-item tx-${t.type}`;
+                
+                let detailMeta = t.isWealthTransfer ? 'Traspaso de Patrimonio' : t.category || 'Operación';
+                if(t.creditCardId) detailMeta += ` | Tarjeta (${t.installments} ctos)`;
+
                 div.innerHTML = `
                     <div class="tx-details">
                         <h4>${t.note}</h4>
-                        <p>${t.date} | ID: ${t.id.substring(3,11)}</p>
+                        <p>${t.date} | ${detailMeta}</p>
                     </div>
                     <div style="text-align:right;">
                         <div class="tx-amt">${t.type==='expense'?'-':'+'} ${formatCOP(t.amount)}</div>
-                        <button class="btn-sm btn-danger" style="padding:4px 8px; font-size:10px; border-radius:6px; background:transparent; border:1px solid var(--danger); color:var(--danger);" onclick="deleteTx('${t.id}')">Eliminar</button>
+                        <button type="button" class="btn-sm btn-danger" style="padding:4px 8px; font-size:10px; border-radius:6px; background:transparent; border:1px solid var(--danger); color:var(--danger);" onclick="deleteTx('${t.id}')">Eliminar</button>
                     </div>
                 `;
                 container.appendChild(div);
@@ -1200,7 +1480,7 @@
             document.getElementById('budget-amt').value = "";
             document.getElementById('budget-amt').setAttribute('data-raw','0');
             save(); recalculateAllData();
-            alert("Límite guardado.");
+            alert("Límite asignado.");
         });
 
         window.deleteTx = function(id) {
@@ -1215,7 +1495,316 @@
             }
         });
 
-        // ALERTAS INTELIGENTES (CON ICONOS SVG)
+        // MANAGEMENT COMPLETO: BANCOS Y TARJETAS DESDE AJUSTES
+        function renderSettingsManagement() {
+            // Render Cuentas/Bancos
+            let listAcc = document.getElementById('settings-accounts-list');
+            listAcc.innerHTML = "";
+            appState.accounts.forEach(a => {
+                let div = document.createElement('div');
+                div.style = "display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:8px 12px; border-radius:8px; font-size:13px;";
+                div.innerHTML = `
+                    <div><strong>${a.name}</strong> <span style="color:var(--text-muted);">(${formatCOP(a.balance)})</span></div>
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" class="btn btn-sm" style="margin-top:0; padding:3px 6px;" onclick="startEditAccount('${a.id}')">Editar</button>
+                        ${a.id !== 'acc_cash_default' ? `<button type="button" class="btn btn-sm btn-danger" style="margin-top:0; padding:3px 6px;" onclick="deleteAccount('${a.id}')">X</button>` : ''}
+                    </div>
+                `;
+                listAcc.appendChild(div);
+            });
+
+            // Sincronizar selectores de TC
+            let ccAccSel = document.getElementById('cc-account-id');
+            ccAccSel.innerHTML = "";
+            appState.accounts.forEach(a => {
+                let o = document.createElement('option'); o.value = a.id; o.innerText = a.name;
+                ccAccSel.appendChild(o);
+            });
+
+            // Render Tarjetas de Crédito
+            let listCC = document.getElementById('settings-cc-list');
+            listCC.innerHTML = "";
+            if (appState.creditCards.length === 0) {
+                listCC.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>No tienes tarjetas de crédito registradas.</p>";
+            } else {
+                appState.creditCards.forEach(cc => {
+                    let div = document.createElement('div');
+                    div.style = "display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:8px 12px; border-radius:8px; font-size:13px;";
+                    div.innerHTML = `
+                        <div><strong>${cc.name}</strong> <span style="color:var(--danger);">(${formatCOP(cc.utilizedBalance || 0)})</span></div>
+                        <div style="display:flex; gap:4px;">
+                            <button type="button" class="btn btn-sm btn-secondary" style="margin-top:0; padding:3px 6px;" onclick="viewCreditCardDetail('${cc.id}')">Ver Deuda</button>
+                            <button type="button" class="btn btn-sm" style="margin-top:0; padding:3px 6px;" onclick="startEditCC('${cc.id}')">Edit</button>
+                            <button type="button" class="btn btn-sm btn-danger" style="margin-top:0; padding:3px 6px;" onclick="deleteCC('${cc.id}')">X</button>
+                        </div>
+                    `;
+                    listCC.appendChild(div);
+                });
+            }
+        }
+
+        // CONTROL LOGICA ACC/BANCOS
+        document.getElementById('btn-save-managed-acc').addEventListener('click', () => {
+            let name = document.getElementById('manage-acc-name').value.trim();
+            let bal = parseFloat(document.getElementById('manage-acc-bal').getAttribute('data-raw') || '0');
+            let editId = document.getElementById('edit-acc-id').value;
+
+            if (!name) return alert("Por favor ingresa un nombre válido.");
+
+            if (editId) {
+                let acc = appState.accounts.find(a => a.id === editId);
+                if (acc) acc.name = name; // Cambia únicamente el nombre sin romper saldos ni históricos
+            } else {
+                let id = 'acc_'+Date.now();
+                appState.accounts.push({ id: id, name: name, type: 'additional', balance: bal, initialBalance: bal });
+            }
+
+            // Reset Formulario
+            document.getElementById('manage-acc-name').value = "";
+            document.getElementById('manage-acc-bal').value = "";
+            document.getElementById('manage-acc-bal').setAttribute('data-raw', '0');
+            document.getElementById('edit-acc-id').value = "";
+            document.getElementById('group-manage-acc-bal').classList.remove('hidden');
+            document.getElementById('btn-cancel-managed-acc').classList.add('hidden');
+            document.getElementById('lbl-manage-account').innerText = "Nueva Cuenta / Banco";
+
+            save(); recalculateAllData();
+        });
+
+        window.startEditAccount = function(id) {
+            let acc = appState.accounts.find(a => a.id === id);
+            if (!acc) return;
+            document.getElementById('edit-acc-id').value = acc.id;
+            document.getElementById('manage-acc-name').value = acc.name;
+            document.getElementById('group-manage-acc-bal').classList.add('hidden'); // Ocultar balance para proteger integridad
+            document.getElementById('btn-cancel-managed-acc').classList.remove('hidden');
+            document.getElementById('lbl-manage-account').innerText = "Modificar Nombre de Cuenta";
+        };
+
+        document.getElementById('btn-cancel-managed-acc').addEventListener('click', () => {
+            document.getElementById('manage-acc-name').value = "";
+            document.getElementById('edit-acc-id').value = "";
+            document.getElementById('group-manage-acc-bal').classList.remove('hidden');
+            document.getElementById('btn-cancel-managed-acc').classList.add('hidden');
+            document.getElementById('lbl-manage-account').innerText = "Nueva Cuenta / Banco";
+        });
+
+        window.deleteAccount = function(id) {
+            let acc = appState.accounts.find(a => a.id === id);
+            if (!acc) return;
+
+            // Restricción estricta de eliminación si posee saldo
+            if (acc.balance !== 0) {
+                return alert(`No es posible eliminar la cuenta "${acc.name}" porque posee un saldo actual de ${formatCOP(acc.balance)}. Transfiere o liquida los fondos antes de proceder.`);
+            }
+
+            // Validar si tiene inversiones activas asociadas en nombres
+            let hasInvs = appState.inversiones.some(i => i.activa && i.entidadFinanciera === acc.name);
+            if (hasInvs) {
+                return alert("Imposible borrar: Esta cuenta posee inversiones de rendimiento activas vinculadas.");
+            }
+
+            // Validar si tiene tarjetas de crédito asociadas
+            let hasCC = appState.creditCards.some(c => c.accountId === id);
+            if (hasCC) {
+                return alert("Imposible borrar: Esta cuenta bancaria sirve de respaldo para una o más tarjetas de crédito.");
+            }
+
+            if (confirm(`¿Confirmas la eliminación definitiva de la cuenta vacía "${acc.name}"?`)) {
+                appState.accounts = appState.accounts.filter(a => a.id !== id);
+                save(); recalculateAllData();
+            }
+        };
+
+        // CONTROL LOGICA TARJETAS DE CRÉDITO
+        document.getElementById('btn-save-cc').addEventListener('click', () => {
+            let name = document.getElementById('cc-name').value.trim();
+            let accId = document.getElementById('cc-account-id').value;
+            let interest = parseFloat(document.getElementById('cc-interest').value);
+            let closing = parseInt(document.getElementById('cc-closing-day').value, 10);
+            let due = parseInt(document.getElementById('cc-due-day').value, 10);
+            let editId = document.getElementById('edit-cc-id').value;
+
+            if (!name || isNaN(interest) || isNaN(closing) || isNaN(due)) {
+                return alert("Por favor cumplimenta todos los campos obligatorios de la tarjeta.");
+            }
+
+            if (editId) {
+                let cc = appState.creditCards.find(c => c.id === editId);
+                if (cc) {
+                    cc.name = name; cc.accountId = accId; cc.interestRate = interest;
+                    cc.closingDay = closing; cc.dueDay = due;
+                }
+            } else {
+                appState.creditCards.push({
+                    id: 'cc_'+Date.now(), name: name, accountId: accId, interestRate: interest,
+                    closingDay: closing, dueDay: due, utilizedBalance: 0
+                });
+            }
+
+            // Reset
+            document.getElementById('cc-name').value = ""; document.getElementById('cc-interest').value = "";
+            document.getElementById('cc-closing-day').value = ""; document.getElementById('cc-due-day').value = "";
+            document.getElementById('edit-cc-id').value = "";
+            document.getElementById('btn-cancel-cc').classList.add('hidden');
+
+            save(); recalculateAllData();
+            alert("Tarjeta guardada con éxito.");
+        });
+
+        window.startEditCC = function(id) {
+            let cc = appState.creditCards.find(c => c.id === id);
+            if (!cc) return;
+            document.getElementById('edit-cc-id').value = cc.id;
+            document.getElementById('cc-name').value = cc.name;
+            document.getElementById('cc-account-id').value = cc.accountId;
+            document.getElementById('cc-interest').value = cc.interestRate;
+            document.getElementById('cc-closing-day').value = cc.closingDay;
+            document.getElementById('cc-due-day').value = cc.dueDay;
+            document.getElementById('btn-cancel-cc').classList.remove('hidden');
+        };
+
+        window.deleteCC = function(id) {
+            let cc = appState.creditCards.find(c => c.id === id);
+            if(!cc) return;
+            if((cc.utilizedBalance || 0) > 0) {
+                return alert("No puedes eliminar una tarjeta con deuda pendiente acumulada.");
+            }
+            if (confirm("¿Deseas desvincular esta tarjeta de crédito de la aplicación?")) {
+                appState.creditCards = appState.creditCards.filter(c => c.id !== id);
+                document.getElementById('cc-detail-panel').classList.add('hidden');
+                save(); recalculateAllData();
+            }
+        };
+
+        // PANEL DE DETALLES Y PAGOS DE TC
+        let currentCCViewedId = "";
+        window.viewCreditCardDetail = function(id) {
+            currentCCViewedId = id;
+            let cc = appState.creditCards.find(c => c.id === id);
+            if (!cc) return;
+
+            document.getElementById('cc-detail-panel').classList.remove('hidden');
+            document.getElementById('cc-detail-title').innerText = cc.name;
+
+            // Inyectar orígenes líquidos de pago para el selector
+            let pSrc = document.getElementById('cc-payment-source');
+            pSrc.innerHTML = "";
+            appState.accounts.forEach(acc => {
+                let o = document.createElement('option'); o.value = acc.id; o.innerText = `${acc.name} (${formatCOP(acc.balance)})`;
+                pSrc.appendChild(o);
+            });
+
+            let nextAmort = cc.nextStatementAmortization || 0;
+            let nextInt = cc.nextStatementInterest || 0;
+            let minPayment = nextAmort + nextInt;
+            let totalRec = cc.utilizedBalance || 0;
+
+            let metrics = document.getElementById('cc-detail-metrics');
+            metrics.innerHTML = `
+                Deuda Total Consumida: <strong style="color:var(--danger);">${formatCOP(totalRec)}</strong><br>
+                Tasa Mensual Pactada: <strong>${cc.interestRate}% MV</strong><br>
+                Día de Corte: Día <strong>${cc.closingDay}</strong> de cada mes<br>
+                Día Límite de Pago: Día <strong>${cc.dueDay}</strong> del periodo<br><br>
+                <div style="background:rgba(251,191,36,0.1); padding:8px; border-radius:6px;">
+                    <strong>Simulación Extracto Inmediato:</strong><br>
+                    • Pago Mínimo Estimado: ${formatCOP(minPayment)} (Amortización + Intereses)<br>
+                    • Pago Total Sugerido: ${formatCOP(totalRec)}
+                </div>
+            `;
+
+            // Historial segregado de movimientos de esta tarjeta
+            let histContainer = document.getElementById('cc-detail-tx-history');
+            histContainer.innerHTML = "";
+            let ccTx = appState.transactions.filter(t => t.creditCardId === id);
+            if (ccTx.length === 0) {
+                histContainer.innerHTML = "<p style='color:var(--text-muted); padding:6px;'>Sin movimientos pendientes registrados.</p>";
+            } else {
+                ccTx.forEach(t => {
+                    let div = document.createElement('div');
+                    div.style = "padding:4px; border-bottom:1px solid var(--bg-card); display:flex; justify-content:space-between;";
+                    div.innerHTML = `<span>${t.note} (${t.date})</span><strong style="color:var(--danger);">${formatCOP(t.amount)}</strong>`;
+                    histContainer.appendChild(div);
+                });
+            }
+            initCurrencyFields();
+        };
+
+        document.getElementById('btn-save-cc-manual-charge').addEventListener('click', () => {
+            if (!currentCCViewedId) return;
+            let note = document.getElementById('cc-manual-charge-note').value.trim();
+            let amt = parseFloat(document.getElementById('cc-manual-charge-amt').getAttribute('data-raw') || '0');
+            let hoyStr = new Date().toISOString().split('T')[0];
+
+            if (!note || amt <= 0) return alert("Por favor indica el concepto y un valor real.");
+
+            appState.transactions.push({
+                id: 'tx_cc_charge_'+Date.now(),
+                type: 'expense',
+                amount: amt,
+                date: hoyStr,
+                note: `[Cargo Tarjeta] ${note}`,
+                category: 'Otros Gastos',
+                creditCardId: currentCCViewedId,
+                installments: 1,
+                interestFree: true
+            });
+
+            document.getElementById('cc-manual-charge-note').value = "";
+            document.getElementById('cc-manual-charge-amt').value = "";
+            document.getElementById('cc-manual-charge-amt').setAttribute('data-raw', '0');
+
+            save(); recalculateAllData();
+            viewCreditCardDetail(currentCCViewedId);
+            alert("Cargo manual sumado a la deuda de la tarjeta.");
+        });
+
+        document.getElementById('btn-save-cc-payment').addEventListener('click', () => {
+            if (!currentCCViewedId) return;
+            let srcId = document.getElementById('cc-payment-source').value;
+            let amt = parseFloat(document.getElementById('cc-payment-amt').getAttribute('data-raw') || '0');
+            let cc = appState.creditCards.find(c => c.id === currentCCViewedId);
+            
+            if (!cc || amt <= 0) return alert("Ingresa un monto de pago válido.");
+            if (amt > cc.utilizedBalance) return alert("El abono supera la deuda existente del plástico.");
+
+            let accObj = appState.accounts.find(a => a.id === srcId);
+            if (accObj && accObj.balance < amt) return alert("Fondos líquidos insuficientes en la cuenta seleccionada.");
+
+            let hoyStr = new Date().toISOString().split('T')[0];
+
+            // Registrar abono deduciendo saldo de la cuenta de origen
+            appState.transactions.push({
+                id: 'tx_cc_pay_'+Date.now(),
+                type: 'expense',
+                amount: amt,
+                accountId: srcId,
+                date: hoyStr,
+                note: `Abono/Pago a Tarjeta: ${cc.name}`,
+                category: 'Servicios',
+                isWealthTransfer: true
+            });
+
+            // Registrar compensación en el balance de la tarjeta (Gasto Negativo Amortizable)
+            appState.transactions.push({
+                id: 'tx_cc_compensation_'+Date.now(),
+                type: 'expense',
+                amount: -amt,
+                creditCardId: currentCCViewedId,
+                date: hoyStr,
+                note: `Abono Procesado`,
+                category: 'Servicios'
+            });
+
+            document.getElementById('cc-payment-amt').value = "";
+            document.getElementById('cc-payment-amt').setAttribute('data-raw', '0');
+
+            save(); recalculateAllData();
+            viewCreditCardDetail(currentCCViewedId);
+            alert("Pago efectuado correctamente.");
+        });
+
+        // RE-ALERTER CLIPS CON COMPATIBILIDAD DINÁMICA DE TARJETAS
         const iconDanger = `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
         const iconWallet = `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
         const iconTarget = `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v8l9-11h-7z"></path></svg>`;
@@ -1226,18 +1815,43 @@
             container.innerHTML = "";
 
             if(patrimonio < 150000) {
-                container.innerHTML += `<div class="alert-box danger">${iconDanger}<div><strong>Patrimonio Crítico:</strong> Tu balance general está por debajo de niveles seguros. Reduce gastos superfluos.</div></div>`;
+                container.innerHTML += `<div class="alert-box danger">${iconDanger}<div><strong>Patrimonio Crítico:</strong> Tu balance general consolidado está por debajo de niveles seguros.</div></div>`;
             }
+            
             let cash = appState.accounts.find(a => a.type==='cash');
             if(cash && cash.balance < 30000) {
-                container.innerHTML += `<div class="alert-box">${iconWallet}<div><strong>Efectivo Bajo:</strong> Tienes poco dinero físico disponible. Evalúa realizar una conversión bancaria.</div></div>`;
+                container.innerHTML += `<div class="alert-box">${iconWallet}<div><strong>Efectivo Bajo:</strong> Tienes poco dinero físico de disponibilidad inmediata.</div></div>`;
             }
 
-            // Alertas presupuesto
+            // Recordatorios automáticos de Tarjeta de Crédito (Ventana de 5 días antes del corte)
             let hoy = new Date();
+            let currentDayNum = hoy.getDate();
+
+            appState.creditCards.forEach(cc => {
+                if ((cc.utilizedBalance || 0) <= 0) return;
+                
+                let limitWarningDay = cc.closingDay - 5;
+                // Si estamos dentro del umbral de alerta precorte
+                if (currentDayNum >= limitWarningDay && currentDayNum <= cc.closingDay) {
+                    let minEst = (cc.nextStatementAmortization || 0) + (cc.nextStatementInterest || 0);
+                    container.innerHTML += `
+                        <div class="alert-box" style="border-left-color: var(--danger); background: rgba(239, 68, 68, 0.04);">
+                            ${iconDanger}
+                            <div>
+                                <strong>Próximo Corte de Tarjeta:</strong> "${cc.name}" corta en los próximos días (Día ${cc.closingDay}).<br>
+                                • Saldo Pendiente: ${formatCOP(cc.utilizedBalance)}<br>
+                                • Pago Mínimo Calculado: ${formatCOP(minEst)}<br>
+                                • Límite Máximo de Pago: Día ${cc.dueDay}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            // Alertas presupuesto mensual desbordado
             let sp = {};
             appState.transactions.forEach(t => {
-                if(t.type==='expense' && t.category) {
+                if(!t.isWealthTransfer && t.type==='expense' && t.category) {
                     let td = new Date(t.date+"T00:00:00");
                     if(td.getFullYear()===hoy.getFullYear() && td.getMonth()===hoy.getMonth()) {
                         sp[t.category] = (sp[t.category] || 0) + parseFloat(t.amount);
@@ -1246,12 +1860,12 @@
             });
             for(let c in appState.budgets) {
                 if((sp[c] || 0) > appState.budgets[c]) {
-                    container.innerHTML += `<div class="alert-box danger">${iconTarget}<div><strong>Presupuesto Desbordado:</strong> Superaste el límite establecido para la categoría: ${c}.</div></div>`;
+                    container.innerHTML += `<div class="alert-box danger">${iconTarget}<div><strong>Presupuesto Desbordado:</strong> Superaste el límite estipulado para la categoría: ${c}.</div></div>`;
                 }
             }
 
             if(container.innerHTML === "" && patrimonio >= 1000000) {
-                container.innerHTML = `<div class="alert-box success">${iconIdea}<div><strong>Recomendación:</strong> Posees estabilidad financiera óptima. Considera aperturar un CDT o Cajita de alto rendimiento.</div></div>`;
+                container.innerHTML = `<div class="alert-box success">${iconIdea}<div><strong>Oportunidad:</strong> Posees estabilidad patrimonial óptima. Explora expandir tus fondos o aperturar un CDT.</div></div>`;
             }
         }
 
@@ -1270,28 +1884,9 @@
         // PREFERENCIA DE CENTAVOS
         document.getElementById('btn-apply-cents').addEventListener('click', () => {
             let isCents = document.getElementById('setting-cents').value === "true";
-            
-            if (appState.useCents !== isCents) {
-                appState.useCents = isCents;
-                save();
-                
-                // Actualiza dinámicamente los campos que ya están en el DOM
-                document.querySelectorAll('.currency-input').forEach(input => {
-                    let raw = parseFloat(input.getAttribute('data-raw') || '0');
-                    if (raw > 0) {
-                        if (!isCents) {
-                            raw = Math.floor(raw); // Elimina decimales sobrantes al pasar a enteros
-                        }
-                        input.setAttribute('data-raw', raw.toString());
-                        input.value = formatCOP(raw);
-                    } else {
-                        input.value = "";
-                    }
-                });
-                
-                recalculateAllData(); // Actualizar todo visualmente de inmediato
-                alert("Preferencia de montos guardada y aplicada exitosamente.");
-            }
+            appState.useCents = isCents;
+            save(); recalculateAllData();
+            alert("Preferencia de montos guardada y aplicada exitosamente.");
         });
 
         // TEMA Y PORTABILIDAD
@@ -1309,7 +1904,7 @@
             });
         });
 
-        document.getElementById('btn-import').addEventListener('click', () => {
+        document.getElementById('btn-import-trigger').addEventListener('click', () => {
             let txt = document.getElementById('import-area').value.trim();
             if(!txt) return;
             try {
@@ -1323,7 +1918,7 @@
         });
 
         document.getElementById('btn-hard-reset').addEventListener('click', () => {
-            if(confirm("¿Deseas borrar permanentemente la memoria de la aplicación? Esto no se puede deshacer.")) {
+            if(confirm("¿Deseas borrar permanentemente la memoria interna de la aplicación? Esto no se puede deshacer.")) {
                 localStorage.removeItem('banklar_core_state'); window.location.reload();
             }
         });
@@ -1343,11 +1938,10 @@
             else if (!appState.onboarded) { changeScreen('screen-onboarding'); buildDynamicOnboarding(1); }
             else { changeScreen('screen-app'); runCoreEngine(); }
             
-            // Registro Automatizado del Service Worker para PWA
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA: Service Worker activo con alcance:', reg.scope))
-                    .catch(err => console.error('PWA: Falló el registro del Service Worker:', err));
+                    .then(reg => console.log('PWA: Service Worker activo.'))
+                    .catch(err => console.error('PWA: Error en Service Worker.', err));
             }
         });
     </script>
