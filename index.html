@@ -13,7 +13,6 @@
 
     <style>
         :root {
-            /* Modo Oscuro: Tonos Pizarra/Morado profundo */
             --bg-main: #0F172A; 
             --bg-card: #1E293B; 
             --bg-input: #334155; 
@@ -24,13 +23,12 @@
             --danger: #EF4444; 
             --warning: #FBBF24; 
             --success: #10B981;
-            --expense-color: #FBBF24; /* Amarillo para gastos/deudas en modo oscuro */
+            --expense-color: #FBBF24;
             --border-radius: 14px;
             --transition: all 0.25s ease;
         }
 
         body.light-theme {
-            /* Modo Claro: Optimizado (Pizarra Claro) */
             --bg-main: #F8FAFC; 
             --bg-card: #FFFFFF; 
             --bg-input: #F1F5F9; 
@@ -41,7 +39,7 @@
             --danger: #DC2626; 
             --warning: #D97706; 
             --success: #059669;
-            --expense-color: #DC2626; /* Rojo para gastos/deudas en modo claro */
+            --expense-color: #DC2626;
         }
 
         * {
@@ -183,6 +181,65 @@
         .inv-card { border: 1px solid var(--bg-input); margin-bottom: 12px; }
         .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
         .inv-badge { font-size: 10px; padding: 3px 8px; background: var(--bg-input); border-radius: 6px; font-weight: 600; color: var(--accent); }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--bg-input);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: var(--accent);
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-btn:hover {
+            color: var(--danger);
+        }
+        .source-info {
+            background: rgba(81, 88, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
     </style>
 </head>
 <body>
@@ -661,6 +718,17 @@
         </div>
     </div>
 
+    <!-- Modal para Movimientos de Capital -->
+    <div id="capital-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Movimiento de Capital</h3>
+                <button class="close-btn" onclick="closeCapitalModal()">×</button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
     <script>
         let appState = {
             user: { name: "" },
@@ -676,8 +744,12 @@
             onboarded: false,
             theme: 'dark',
             useCents: false,
-            creditCards: [] // Almacenamiento modular para Tarjetas de Crédito
+            creditCards: []
         };
+
+        // Variables para el modal de capital
+        let currentInvId = null;
+        let currentAction = null;
 
         function handleCurrencyInput(e) {
             let input = e.target;
@@ -757,6 +829,314 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
+        // Funciones del Modal de Capital
+        function openCapitalModal(invId, action) {
+            currentInvId = invId;
+            currentAction = action;
+            
+            let inv = appState.inversiones.find(i => i.id === invId);
+            if (!inv) return;
+            
+            let modal = document.getElementById('capital-modal');
+            let title = document.getElementById('modal-title');
+            let body = document.getElementById('modal-body');
+            
+            if (action === 'add') {
+                title.textContent = 'Agregar Capital';
+                body.innerHTML = `
+                    <div class="form-group">
+                        <label>Monto a Agregar *</label>
+                        <input type="text" id="modal-amount" class="currency-input" placeholder="$ 0" data-raw="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Origen del Dinero *</label>
+                        <select id="modal-source">
+                            ${getFinancialSources()}
+                        </select>
+                    </div>
+                    <div class="source-info" id="source-balance-info"></div>
+                    <div class="form-group">
+                        <label>Nota (Opcional)</label>
+                        <input type="text" id="modal-note" placeholder="Ej: Aporte adicional">
+                    </div>
+                    <button type="button" class="btn" onclick="executeCapitalMovement()">Confirmar Aporte</button>
+                `;
+            } else if (action === 'withdraw') {
+                title.textContent = 'Retirar Capital';
+                body.innerHTML = `
+                    <div class="form-group">
+                        <label>Monto a Retirar *</label>
+                        <input type="text" id="modal-amount" class="currency-input" placeholder="$ 0" data-raw="0">
+                    </div>
+                    <div class="source-info">
+                        Capital disponible en inversión: <strong>${formatCOP(inv.capitalActual)}</strong>
+                    </div>
+                    <div class="form-group">
+                        <label>Destino del Dinero *</label>
+                        <select id="modal-destination">
+                            ${getFinancialSources()}
+                        </select>
+                    </div>
+                    <div class="source-info" id="dest-balance-info"></div>
+                    <div class="form-group">
+                        <label>Nota (Opcional)</label>
+                        <input type="text" id="modal-note" placeholder="Ej: Retiro parcial">
+                    </div>
+                    <button type="button" class="btn" onclick="executeCapitalMovement()">Confirmar Retiro</button>
+                `;
+            } else if (action === 'liquidate') {
+                title.textContent = 'Liquidar Inversión';
+                body.innerHTML = `
+                    <div class="source-info">
+                        <p>Vas a liquidar completamente: <strong>${inv.nombre}</strong></p>
+                        <p>Capital a liquidar: <strong>${formatCOP(inv.capitalActual)}</strong></p>
+                        <p>Rendimientos históricos: <strong style="color: var(--success);">+${formatCOP(inv.rendHistorico)}</strong></p>
+                    </div>
+                    <div class="form-group">
+                        <label>Destino de los Fondos *</label>
+                        <select id="modal-destination">
+                            ${getFinancialSources()}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nota (Opcional)</label>
+                        <input type="text" id="modal-note" placeholder="Ej: Cierre de inversión">
+                    </div>
+                    <button type="button" class="btn btn-danger" onclick="executeCapitalMovement()">Liquidar Inversión</button>
+                `;
+            }
+            
+            modal.classList.remove('hidden');
+            initCurrencyFields();
+            
+            // Event listeners para actualizar información de saldo
+            setTimeout(() => {
+                let sourceSelect = document.getElementById('modal-source');
+                let destSelect = document.getElementById('modal-destination');
+                
+                if (sourceSelect) {
+                    sourceSelect.addEventListener('change', updateSourceBalanceInfo);
+                    updateSourceBalanceInfo();
+                }
+                if (destSelect) {
+                    destSelect.addEventListener('change', updateDestBalanceInfo);
+                    updateDestBalanceInfo();
+                }
+            }, 100);
+        }
+
+        function closeCapitalModal() {
+            document.getElementById('capital-modal').classList.add('hidden');
+            currentInvId = null;
+            currentAction = null;
+        }
+
+        function getFinancialSources() {
+            let options = '';
+            
+            // Agregar cuentas bancarias
+            appState.accounts.forEach(acc => {
+                options += `<option value="acc_${acc.id}">${acc.name} (${formatCOP(acc.balance)})</option>`;
+            });
+            
+            // Agregar inversiones activas como fuente (solo para agregar capital)
+            if (currentAction === 'add') {
+                appState.inversiones.forEach(inv => {
+                    if (inv.activa && inv.id !== currentInvId) {
+                        options += `<option value="inv_${inv.id}">[Inversión] ${inv.nombre} (${formatCOP(inv.capitalActual)})</option>`;
+                    }
+                });
+            }
+            
+            return options;
+        }
+
+        function updateSourceBalanceInfo() {
+            let sourceSelect = document.getElementById('modal-source');
+            let infoDiv = document.getElementById('source-balance-info');
+            if (!sourceSelect || !infoDiv) return;
+            
+            let sourceId = sourceSelect.value;
+            let balance = getSourceBalance(sourceId);
+            infoDiv.innerHTML = `Saldo disponible: <strong>${formatCOP(balance)}</strong>`;
+        }
+
+        function updateDestBalanceInfo() {
+            let destSelect = document.getElementById('modal-destination');
+            let infoDiv = document.getElementById('dest-balance-info');
+            if (!destSelect || !infoDiv) return;
+            
+            let destId = destSelect.value;
+            let balance = getSourceBalance(destId);
+            infoDiv.innerHTML = `Saldo actual del destino: <strong>${formatCOP(balance)}</strong>`;
+        }
+
+        function getSourceBalance(sourceId) {
+            if (sourceId.startsWith('acc_')) {
+                let accId = sourceId.replace('acc_', '');
+                let acc = appState.accounts.find(a => a.id === accId);
+                return acc ? acc.balance : 0;
+            } else if (sourceId.startsWith('inv_')) {
+                let invId = sourceId.replace('inv_', '');
+                let inv = appState.inversiones.find(i => i.id === invId);
+                return inv ? inv.capitalActual : 0;
+            }
+            return 0;
+        }
+
+        function executeCapitalMovement() {
+            let inv = appState.inversiones.find(i => i.id === currentInvId);
+            if (!inv) return;
+            
+            let amount = parseFloat(document.getElementById('modal-amount').getAttribute('data-raw') || '0');
+            let note = document.getElementById('modal-note')?.value?.trim() || '';
+            let hoyStr = new Date().toISOString().split('T')[0];
+            
+            if (currentAction === 'add') {
+                // Validaciones para agregar capital
+                if (amount <= 0) {
+                    alert('El monto debe ser mayor a cero.');
+                    return;
+                }
+                
+                let sourceId = document.getElementById('modal-source').value;
+                let sourceBalance = getSourceBalance(sourceId);
+                
+                if (amount > sourceBalance) {
+                    alert('El monto supera el saldo disponible en la fuente seleccionada.');
+                    return;
+                }
+                
+                // Descontar de la fuente
+                if (sourceId.startsWith('acc_')) {
+                    let accId = sourceId.replace('acc_', '');
+                    let acc = appState.accounts.find(a => a.id === accId);
+                    if (acc) {
+                        acc.balance -= amount;
+                    }
+                } else if (sourceId.startsWith('inv_')) {
+                    let sourceInvId = sourceId.replace('inv_', '');
+                    let sourceInv = appState.inversiones.find(i => i.id === sourceInvId);
+                    if (sourceInv) {
+                        sourceInv.capitalActual -= amount;
+                    }
+                }
+                
+                // Aumentar capital de la inversión
+                inv.capitalActual += amount;
+                
+                // Registrar movimiento
+                let sourceName = getSourceName(sourceId);
+                appState.transactions.push({
+                    id: 'tx_inv_add_' + Date.now(),
+                    type: 'expense',
+                    amount: amount,
+                    accountId: sourceId.startsWith('acc_') ? sourceId.replace('acc_', '') : 'acc_cash_default',
+                    date: hoyStr,
+                    note: `Aporte a ${inv.nombre} desde ${sourceName}${note ? ': ' + note : ''}`,
+                    category: 'Inversiones',
+                    isWealthTransfer: true
+                });
+                
+                alert('Capital agregado exitosamente.');
+                
+            } else if (currentAction === 'withdraw') {
+                // Validaciones para retirar capital
+                if (amount <= 0) {
+                    alert('El monto debe ser mayor a cero.');
+                    return;
+                }
+                
+                if (amount > inv.capitalActual) {
+                    alert('El monto supera el capital disponible en la inversión.');
+                    return;
+                }
+                
+                let destId = document.getElementById('modal-destination').value;
+                
+                // Reducir capital de la inversión
+                inv.capitalActual -= amount;
+                
+                // Aumentar saldo en el destino
+                if (destId.startsWith('acc_')) {
+                    let accId = destId.replace('acc_', '');
+                    let acc = appState.accounts.find(a => a.id === accId);
+                    if (acc) {
+                        acc.balance += amount;
+                    }
+                }
+                
+                // Registrar movimiento
+                let destName = getSourceName(destId);
+                appState.transactions.push({
+                    id: 'tx_inv_withdraw_' + Date.now(),
+                    type: 'income',
+                    amount: amount,
+                    accountId: destId.startsWith('acc_') ? destId.replace('acc_', '') : 'acc_cash_default',
+                    date: hoyStr,
+                    note: `Retiro de ${inv.nombre} hacia ${destName}${note ? ': ' + note : ''}`,
+                    category: 'Inversiones',
+                    isWealthTransfer: true
+                });
+                
+                alert('Capital retirado exitosamente.');
+                
+            } else if (currentAction === 'liquidate') {
+                // Liquidación completa
+                let destId = document.getElementById('modal-destination').value;
+                let destName = getSourceName(destId);
+                
+                // Transferir todo el capital al destino
+                if (destId.startsWith('acc_')) {
+                    let accId = destId.replace('acc_', '');
+                    let acc = appState.accounts.find(a => a.id === accId);
+                    if (acc) {
+                        acc.balance += inv.capitalActual;
+                    }
+                }
+                
+                // Registrar movimiento de liquidación
+                appState.transactions.push({
+                    id: 'tx_inv_liquidate_' + Date.now(),
+                    type: 'income',
+                    amount: inv.capitalActual,
+                    accountId: destId.startsWith('acc_') ? destId.replace('acc_', '') : 'acc_cash_default',
+                    date: hoyStr,
+                    note: `Liquidación de ${inv.nombre} hacia ${destName}${note ? ': ' + note : ''}`,
+                    category: 'Rendimientos',
+                    isWealthTransfer: true
+                });
+                
+                // Marcar inversión como cerrada
+                inv.activa = false;
+                inv.fechaCierre = hoyStr;
+                inv.destinoAsignadoId = destId;
+                inv.destinoAsignadoName = destName;
+                
+                alert('Inversión liquidada exitosamente.');
+            }
+            
+            closeCapitalModal();
+            save();
+            recalculateAllData();
+        }
+
+        function getSourceName(sourceId) {
+            if (sourceId.startsWith('acc_')) {
+                let accId = sourceId.replace('acc_', '');
+                let acc = appState.accounts.find(a => a.id === accId);
+                return acc ? acc.name : 'Cuenta desconocida';
+            } else if (sourceId.startsWith('inv_')) {
+                let invId = sourceId.replace('inv_', '');
+                let inv = appState.inversiones.find(i => i.id === invId);
+                return inv ? inv.nombre : 'Inversión desconocida';
+            }
+            return 'Origen desconocido';
+        }
+
+        // Resto del código original...
+        // [Aquí va todo el código JavaScript original que estaba después de las funciones anteriores]
+        
         // CONTROL PRIVACIDAD Y ONBOARDING
         document.getElementById('btn-accept-privacy').addEventListener('click', () => {
             appState.privacyAccepted = true; save();
@@ -949,7 +1329,6 @@
             let totalInversiones = appState.inversiones.filter(i => i.activa).reduce((acc, current) => acc + current.capitalActual, 0);
             
             // Patrimonio Consistente = Cuentas + Inversiones Activas
-            // Las compras de tarjeta no alteran el patrimonio, sólo lo disminuye el pago de las mismas (que resta de Cuentas).
             let patrimonioTotal = totalCuentas + totalInversiones;
 
             document.getElementById('display-net-worth').innerText = formatCOP(patrimonioTotal);
@@ -1440,11 +1819,11 @@
                     </div>
                     <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Rentabilidad Histórica Cobrada: <strong style="color:var(--accent);">+${formatCOP(inv.rendHistorico)}</strong></p>
                     <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'add')">+ Capital</button>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="manageInvCapital('${inv.id}', 'withdraw')">- Retirar</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="openCapitalModal('${inv.id}', 'add')">+ Capital</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="openCapitalModal('${inv.id}', 'withdraw')">- Retirar</button>
                         <button type="button" class="btn btn-sm" style="background:var(--bg-input); color:var(--text-main); border:none;" onclick="editInvParams('${inv.id}')">Editar</button>
                     </div>
-                    <button type="button" class="btn btn-sm btn-danger" style="margin-top:10px; width:100%; border-radius:8px;" onclick="closeAndArchiveInvestment('${inv.id}')">Liquidar y Cerrar Inversión</button>
+                    <button type="button" class="btn btn-sm btn-danger" style="margin-top:10px; width:100%; border-radius:8px;" onclick="openCapitalModal('${inv.id}', 'liquidate')">Liquidar y Cerrar Inversión</button>
                 `;
                 container.appendChild(div);
             });
@@ -1520,73 +1899,6 @@
             save(); recalculateAllData();
             alert("Inversión registrada con consistencia patrimonial.");
         });
-
-        window.closeAndArchiveInvestment = function(id) {
-            let inv = appState.inversiones.find(i => i.id === id);
-            if(!inv) return;
-
-            let promptText = `Cierre de Inversión: ${inv.nombre}\nSaldo total acumulado: ${formatCOP(inv.capitalActual)}\n\nEscribe el NÚMERO de la opción de destino:\n1. Guardar en Efectivo / Caja\n`;
-            appState.accounts.forEach((acc, idx) => {
-                promptText += `${idx + 2}. Transferir a: ${acc.name} (${formatCOP(acc.balance)})\n`;
-            });
-
-            let optionInput = prompt(promptText);
-            if (!optionInput) return;
-
-            let opt = parseInt(optionInput, 10);
-            let destAccId = 'acc_cash_default';
-            let destName = 'Efectivo / Caja';
-
-            if (opt > 1 && opt <= appState.accounts.length + 1) {
-                let targetAcc = appState.accounts[opt - 2];
-                destAccId = targetAcc.id;
-                destName = targetAcc.name;
-            }
-
-            let hoyStr = new Date().toISOString().split('T')[0];
-
-            appState.transactions.push({
-                id: 'tx_inv_liquidate_'+Date.now(),
-                type: 'income',
-                amount: inv.capitalActual,
-                accountId: destAccId,
-                date: hoyStr,
-                note: `Liquidación de Inversión: ${inv.nombre}`,
-                category: 'Rendimientos',
-                isWealthTransfer: true
-            });
-
-            inv.activa = false;
-            inv.fechaCierre = hoyStr;
-            inv.destinoAsignadoId = destAccId;
-            inv.destinoAsignadoName = destName;
-
-            save(); recalculateAllData();
-            alert(`Inversión cerrada exitosamente. Los fondos fueron reasignados a ${destName}.`);
-        };
-
-        window.manageInvCapital = function(id, action) {
-            let inv = appState.inversiones.find(i => i.id === id);
-            if(!inv) return;
-            let promptText = action==='add' ? "Monto a inyectar al capital:" : "Monto a retirar de la inversión:";
-            let rawVal = prompt(promptText);
-            if(!rawVal) return;
-            
-            let valStr = rawVal.replace(',', '.').replace(/[^\d.]/g, "");
-            let val = parseFloat(valStr);
-            if(isNaN(val) || val <= 0) return alert("Monto inválido.");
-
-            let hoyStr = new Date().toISOString().split('T')[0];
-            if(action==='add') {
-                inv.capitalActual += val;
-                appState.transactions.push({ id:'tx_'+Date.now(), type:'expense', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Aporte Capital: ${inv.nombre}`, category:'Inversiones', isWealthTransfer:true });
-            } else {
-                if(val > inv.capitalActual) return alert("No posees tanto capital disponible en este producto.");
-                inv.capitalActual -= val;
-                appState.transactions.push({ id:'tx_'+Date.now(), type:'income', amount:val, accountId:'acc_cash_default', date:hoyStr, note:`Retiro Capital: ${inv.nombre}`, category:'Inversiones', isWealthTransfer:true });
-            }
-            save(); recalculateAllData();
-        };
 
         window.editInvParams = function(id) {
             let inv = appState.inversiones.find(i => i.id === id);
