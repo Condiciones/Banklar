@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Banklar - Finanzas e Inversiones</title>
+    <title>Banklar - Finanzas Personales</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#5158ff">
@@ -134,7 +134,7 @@
         .net-worth { text-align: right; }
         .net-worth .amount { font-size: 24px; font-weight: 800; color: var(--accent); }
 
-        .nav-tabs { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-card); border-top: 1px solid var(--bg-input); z-index: 100; max-width: 600px; margin: 0 auto; }
+        .nav-tabs { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-card); border-top: 1px solid var(--bg-input); z-index: 100; max-width: 600px; margin: 0 auto; }
         .nav-tab { padding: 10px 2px; text-align: center; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
         .nav-tab.active { color: var(--accent); font-weight: bold; }
         .nav-tab-icon { width: 22px; height: 22px; display: block; margin: 0 auto 3px auto; }
@@ -178,68 +178,123 @@
         .budget-bar-fill { height: 6px; background: var(--accent); width: 0%; border-radius: 3px; transition: width 0.3s; }
         .budget-bar-fill.over { background: var(--danger); }
 
-        .inv-card { border: 1px solid var(--bg-input); margin-bottom: 12px; }
-        .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .inv-badge { font-size: 10px; padding: 3px 8px; background: var(--bg-input); border-radius: 6px; font-weight: 600; color: var(--accent); }
+        /* ===== Selectores personalizados (reemplazo de <select> nativo) ===== */
+        select.select-hidden-native { display: none !important; }
 
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        .modal-content {
-            background: var(--bg-card);
-            border-radius: var(--border-radius);
-            padding: 24px;
+        .select-trigger {
             width: 100%;
-            max-width: 450px;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid var(--bg-input);
-        }
-        .modal-header {
+            min-height: 50px;
+            background-color: var(--bg-input);
+            border: 1px solid transparent;
+            color: var(--text-main);
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 15px;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .modal-header h3 {
-            margin: 0;
-            color: var(--accent);
-        }
-        .close-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 24px;
+            gap: 10px;
             cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
+            transition: var(--transition);
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .select-trigger:active { border-color: var(--accent); }
+        .select-trigger .st-label {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left;
+        }
+        .select-trigger .st-chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); }
+
+        .sheet-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 2000;
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: center;
         }
-        .close-btn:hover {
-            color: var(--danger);
+        .sheet-overlay.hidden { display: none !important; }
+        .sheet-panel {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 600px;
+            border-radius: 18px 18px 0 0;
+            padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)) 0;
+            max-height: 78vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--bg-input);
+            border-bottom: none;
         }
-        .source-info {
-            background: rgba(81, 88, 255, 0.05);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 12px;
-            color: var(--text-muted);
+        .sheet-handle { width: 40px; height: 4px; background: var(--bg-input); border-radius: 2px; margin: 0 auto 12px auto; }
+        .sheet-title { font-size: 16px; font-weight: 700; padding: 0 20px 10px 20px; color: var(--accent); }
+        .sheet-options { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .sheet-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--bg-input);
         }
+        .sheet-option:last-child { border-bottom: none; }
+        .sheet-option:active { background: rgba(81, 88, 255, 0.08); }
+        .sheet-option.selected { color: var(--accent); font-weight: 700; background: rgba(81, 88, 255, 0.08); }
+        .sheet-check { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; margin-left: 10px; }
+        .sheet-close-area { padding: 12px 20px 0 20px; }
+        .sheet-cancel-btn {
+            width: 100%;
+            padding: 14px;
+            text-align: center;
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        /* ===== Optimización móvil: pantalla "Registrar Operación" ===== */
+        #tab-transactions .card { padding: 18px 16px 22px 16px; }
+        #tab-transactions .type-selector { gap: 6px; margin-bottom: 22px; }
+        #tab-transactions .type-btn { padding: 13px 2px; font-size: 11px; border-radius: 10px; }
+        #tab-transactions .form-group { margin-bottom: 20px; }
+        #tab-transactions label { font-size: 13px; margin-bottom: 8px; }
+        #tab-transactions #tx-amount {
+            font-size: 26px;
+            font-weight: 700;
+            text-align: center;
+            padding: 16px 12px;
+            letter-spacing: 0.5px;
+        }
+        #tab-transactions #tx-cc-pay-custom-amt { font-size: 20px; font-weight: 700; text-align: center; padding: 14px 12px; }
+        #tab-transactions .select-trigger { min-height: 54px; font-size: 15px; }
+        #tab-transactions input[type="date"],
+        #tab-transactions input[type="text"]:not(.currency-input),
+        #tab-transactions input[type="number"] { padding: 14px; font-size: 15px; min-height: 50px; }
+        #tab-transactions #tx-note { min-height: 50px; }
+        #tab-transactions .category-grid { max-height: 160px; gap: 8px; padding: 10px; }
+        #tab-transactions .category-item { padding: 12px 8px; font-size: 12px; }
+        #tab-transactions #group-tx-cc-details { padding: 16px; }
+        #tab-transactions #group-tx-cc-details .form-group { margin-bottom: 16px; }
+        #tab-transactions #group-tx-cc-details .form-group:last-child { margin-bottom: 0; }
+        #tab-transactions #btn-save-tx,
+        #tab-transactions #btn-save-cc-payment-main {
+            margin-top: 26px;
+            padding: 18px;
+            font-size: 17px;
+            border-radius: 12px;
+            min-height: 56px;
+        }
+        #tab-transactions .search-container input { min-height: 48px; }
+
     </style>
 </head>
 <body>
@@ -285,7 +340,7 @@
                 <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">Dinero físico en tu billetera o bolsillo de libre disponibilidad.</p>
                 <div class="form-group">
                     <label>Saldo Inicial de Efectivo *</label>
-                    <input type="text" class="currency-input" id="ob-cash-bal" placeholder="$ 0" data-raw="0">
+                    <input type="text" class="currency-input" id="ob-cash-bal" inputmode="numeric" placeholder="$ 0" data-raw="0">
                 </div>
             </div>
 
@@ -321,10 +376,6 @@
             <div class="card">
                 <h2>Cuentas Disponibles</h2>
                 <div class="grid-cards" id="dash-accounts-list"></div>
-            </div>
-            <div class="card">
-                <h2>Resumen de Inversiones</h2>
-                <div class="grid-cards" id="dash-inv-list"></div>
             </div>
             <div class="card">
                 <h2>Métricas y Períodos</h2>
@@ -370,7 +421,7 @@
                     <div id="form-tx-standard">
                         <div class="form-group">
                             <label>Monto / Cantidad *</label>
-                            <input type="text" id="tx-amount" class="currency-input" placeholder="$ 0" data-raw="0">
+                            <input type="text" id="tx-amount" class="currency-input" inputmode="numeric" placeholder="$ 0" data-raw="0">
                         </div>
                         <div class="form-group" id="group-origin">
                             <label id="label-origin">Cuenta de Origen</label>
@@ -441,7 +492,7 @@
 
                         <div class="form-group hidden" id="group-cc-pay-custom">
                             <label>Monto a Pagar *</label>
-                            <input type="text" id="tx-cc-pay-custom-amt" class="currency-input" placeholder="$ 0" data-raw="0">
+                            <input type="text" id="tx-cc-pay-custom-amt" class="currency-input" inputmode="numeric" placeholder="$ 0" data-raw="0">
                         </div>
 
                         <div class="form-group">
@@ -457,88 +508,6 @@
             </div>
         </div>
 
-        <div id="tab-investments" class="tab-content hidden">
-            <div class="card">
-                <h2>Nueva Inversión</h2>
-                <div id="form-inv">
-                    <div class="form-group">
-                        <label>Tipo de Inversión</label>
-                        <select id="inv-type">
-                            <option value="Cajita con rendimiento">Cajita con rendimiento</option>
-                            <option value="Bolsillo con rendimiento">Bolsillo con rendimiento</option>
-                            <option value="Cuenta de ahorro con rendimiento">Cuenta de ahorro con rendimiento</option>
-                            <option value="CDT">CDT</option>
-                            <option value="CDAT">CDAT</option>
-                            <option value="Fiduenta">Fiduenta</option>
-                            <option value="Fondo de inversión colectiva">Fondo de inversión colectiva</option>
-                            <option value="Fondo de liquidez">Fondo de liquidez</option>
-                            <option value="Fondo de renta fija">Fondo de renta fija</option>
-                            <option value="Personalizado">Personalizado</option>
-                        </select>
-                    </div>
-                    <div class="form-group hidden" id="group-inv-custom-type">
-                        <label>Escribe el tipo personalizado</label>
-                        <input type="text" id="inv-custom-type-name" placeholder="Ej: Crowdfunding">
-                    </div>
-                    <div class="form-group">
-                        <label>Entidad Financiera (Tu Cuenta/Banco)</label>
-                        <select id="inv-entity"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Nombre de la Inversión</label>
-                        <input type="text" id="inv-name" placeholder="Ej: Fondo de Emergencias">
-                    </div>
-                    <div class="form-group">
-                        <label>Origen de Fondos *</label>
-                        <select id="inv-fund-source">
-                            <option value="already_available">Ya tenía este dinero disponible / Externo</option>
-                            <option value="transfer_account">Transferir desde una cuenta bancaria existente</option>
-                        </select>
-                    </div>
-                    <div class="form-group hidden" id="group-inv-source-account">
-                        <label>Seleccionar Cuenta de Origen</label>
-                        <select id="inv-source-account-select"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Capital Inicial *</label>
-                        <input type="text" id="inv-cap" class="currency-input" placeholder="$ 0" data-raw="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Tasa Efectiva Anual (EA %) *</label>
-                        <input type="number" id="inv-ea" step="0.01" placeholder="Ej: 13.25">
-                    </div>
-                    <div class="form-group">
-                        <label>Frecuencia de Acreditación de Rendimientos</label>
-                        <select id="inv-freq">
-                            <option value="DIARIO">Diariamente</option>
-                            <option value="SEMANAL">Semanalmente</option>
-                            <option value="MENSUAL">Mensualmente</option>
-                            <option value="TRIMESTRAL">Trimestralmente</option>
-                            <option value="SEMESTRAL">Semestralmente</option>
-                            <option value="ANUAL">Anualmente</option>
-                            <option value="PERSONALIZADO">Personalizado (Por Días)</option>
-                        </select>
-                    </div>
-                    <div class="form-group hidden" id="group-inv-custom-days">
-                        <label>¿Cada cuántos días se reflejan los rendimientos? *</label>
-                        <input type="number" id="inv-custom-days" placeholder="Ej: 15">
-                        <p style="font-size:10px; color:var(--text-muted); margin-top:4px;">Ingresa la cantidad exacta de días de corte.</p>
-                    </div>
-                    <button type="button" class="btn" id="btn-save-inv" style="margin-top:16px;">Crear Inversión Activa</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Tus Inversiones Activas</h2>
-                <div id="investments-list-container"></div>
-            </div>
-
-            <div class="card">
-                <h2>Historial de Inversiones Cerradas</h2>
-                <div id="closed-investments-list-container"></div>
-            </div>
-        </div>
-
         <div id="tab-history" class="tab-content hidden">
             <div class="card">
                 <h2>Presupuestos Mensuales</h2>
@@ -549,7 +518,7 @@
                     </div>
                     <div class="form-group">
                         <label>Límite Mensual</label>
-                        <input type="text" id="budget-amt" class="currency-input" placeholder="$ 0" data-raw="0">
+                        <input type="text" id="budget-amt" class="currency-input" inputmode="numeric" placeholder="$ 0" data-raw="0">
                     </div>
                     <button type="button" class="btn btn-sm" id="btn-save-budget">Asignar Límite</button>
                 </div>
@@ -581,7 +550,7 @@
                     </div>
                     <div class="form-group" id="group-manage-acc-bal">
                         <label>Saldo Inicial</label>
-                        <input type="text" id="manage-acc-bal" class="currency-input" placeholder="$ 0" data-raw="0">
+                        <input type="text" id="manage-acc-bal" class="currency-input" inputmode="numeric" placeholder="$ 0" data-raw="0">
                     </div>
                     <div style="display:flex; gap:8px;">
                         <button type="button" class="btn btn-sm" id="btn-save-managed-acc">Guardar Cuenta</button>
@@ -634,14 +603,14 @@
                 <h4 style="margin-top:14px; font-size:13px;">Registrar Cargo Manual (Extracto)</h4>
                 <div style="background:rgba(0,0,0,0.1); padding:10px; border-radius:8px; margin-bottom:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
                     <input type="text" id="cc-manual-charge-note" placeholder="Cuota de manejo, Seguro...">
-                    <input type="text" id="cc-manual-charge-amt" class="currency-input" placeholder="Monto" data-raw="0">
+                    <input type="text" id="cc-manual-charge-amt" class="currency-input" inputmode="numeric" placeholder="Monto" data-raw="0">
                     <button type="button" class="btn btn-sm" id="btn-save-cc-manual-charge" style="grid-column: span 2;">Agregar Cargo</button>
                 </div>
 
                 <h4 style="margin-top:14px; font-size:13px;">Registrar Pago a la Tarjeta</h4>
                 <div style="background:rgba(16, 185, 129, 0.05); padding:10px; border-radius:8px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
                     <select id="cc-payment-source"></select>
-                    <input type="text" id="cc-payment-amt" class="currency-input" placeholder="Monto del Pago" data-raw="0">
+                    <input type="text" id="cc-payment-amt" class="currency-input" inputmode="numeric" placeholder="Monto del Pago" data-raw="0">
                     <button type="button" class="btn btn-sm" id="btn-save-cc-payment" style="grid-column: span 2; background:var(--success);">Efectuar Pago</button>
                 </div>
 
@@ -682,6 +651,30 @@
                     <textarea id="import-area" rows="4" placeholder="Pega el código JSON de exportación aquí..."></textarea>
                 </div>
                 <button type="button" class="btn btn-secondary" id="btn-import-trigger">Procesar e Importar Datos</button>
+
+                <div style="height:1px; background:var(--bg-input); margin:20px 0;"></div>
+
+                <button type="button" class="btn" id="btn-export-file">
+                    <svg class="w-5 h-5 mr-2" style="width:20px;height:20px;margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H8a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Exportar a Archivo
+                </button>
+                <p class="subtitle" style="margin-top:6px; margin-bottom:0;">Genera un archivo .json con el respaldo actual, sin depender del portapapeles.</p>
+
+                <div class="form-group" style="margin-top:16px;">
+                    <label>Importar desde Archivo</label>
+                    <input type="file" id="import-file-input" accept=".json,application/json" class="hidden">
+                    <button type="button" class="btn btn-secondary" id="btn-import-file-trigger">Seleccionar Archivo .json</button>
+                </div>
+
+                <div style="background:rgba(81, 88, 255, 0.05); padding:12px; border-radius:10px; margin-top:20px; border:1px solid rgba(81, 88, 255, 0.2);">
+                    <h4 style="color:var(--accent); font-size:14px; margin-bottom:4px;">Convertir Texto en Archivo</h4>
+                    <p class="subtitle" style="margin-bottom:10px;">Herramienta de compatibilidad para respaldos antiguos de BANKLAR copiados como texto. No importa los datos automáticamente: solo genera el archivo .json para usarlo luego con "Importar desde Archivo".</p>
+                    <div class="form-group">
+                        <label>Pega aquí el texto JSON del respaldo antiguo</label>
+                        <textarea id="convert-text-area" rows="4" placeholder="Pega el código JSON exportado desde una versión anterior..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="btn-convert-to-file">Convertir y Descargar Archivo</button>
+                </div>
             </div>
             
             <div class="card" style="border:1px solid var(--danger);">
@@ -703,10 +696,6 @@
                 <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Operar
             </div>
-            <div class="nav-tab" data-target="tab-investments">
-                <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                Invertir
-            </div>
             <div class="nav-tab" data-target="tab-history">
                 <svg class="nav-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 Historial
@@ -718,26 +707,14 @@
         </div>
     </div>
 
-    <!-- Modal para Movimientos de Capital -->
-    <div id="capital-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">Movimiento de Capital</h3>
-                <button class="close-btn" onclick="closeCapitalModal()">×</button>
-            </div>
-            <div id="modal-body"></div>
-        </div>
-    </div>
-
     <script>
         let appState = {
             user: { name: "" },
             accounts: [],
-            inversiones: [],
             transactions: [],
             categories: {
-                income: ['Salario', 'Honorarios', 'Rendimientos', 'Otros Ingresos'],
-                expense: ['Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Diversión', 'Salud', 'Otros Gastos', 'Inversiones']
+                income: ['Salario', 'Honorarios', 'Otros Ingresos'],
+                expense: ['Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Diversión', 'Salud', 'Otros Gastos']
             },
             budgets: {},
             privacyAccepted: false,
@@ -746,10 +723,6 @@
             useCents: false,
             creditCards: []
         };
-
-        // Variables para el modal de capital
-        let currentInvId = null;
-        let currentAction = null;
 
         function handleCurrencyInput(e) {
             let input = e.target;
@@ -816,7 +789,6 @@
             if (data) {
                 try {
                     appState = JSON.parse(data);
-                    if (!appState.inversiones) appState.inversiones = [];
                     if (!appState.creditCards) appState.creditCards = [];
                     if (appState.useCents === undefined) appState.useCents = false;
                     if (appState.theme === 'light') document.body.classList.add('light-theme');
@@ -829,314 +801,91 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        // Funciones del Modal de Capital
-        function openCapitalModal(invId, action) {
-            currentInvId = invId;
-            currentAction = action;
-            
-            let inv = appState.inversiones.find(i => i.id === invId);
-            if (!inv) return;
-            
-            let modal = document.getElementById('capital-modal');
-            let title = document.getElementById('modal-title');
-            let body = document.getElementById('modal-body');
-            
-            if (action === 'add') {
-                title.textContent = 'Agregar Capital';
-                body.innerHTML = `
-                    <div class="form-group">
-                        <label>Monto a Agregar *</label>
-                        <input type="text" id="modal-amount" class="currency-input" placeholder="$ 0" data-raw="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Origen del Dinero *</label>
-                        <select id="modal-source">
-                            ${getFinancialSources()}
-                        </select>
-                    </div>
-                    <div class="source-info" id="source-balance-info"></div>
-                    <div class="form-group">
-                        <label>Nota (Opcional)</label>
-                        <input type="text" id="modal-note" placeholder="Ej: Aporte adicional">
-                    </div>
-                    <button type="button" class="btn" onclick="executeCapitalMovement()">Confirmar Aporte</button>
-                `;
-            } else if (action === 'withdraw') {
-                title.textContent = 'Retirar Capital';
-                body.innerHTML = `
-                    <div class="form-group">
-                        <label>Monto a Retirar *</label>
-                        <input type="text" id="modal-amount" class="currency-input" placeholder="$ 0" data-raw="0">
-                    </div>
-                    <div class="source-info">
-                        Capital disponible en inversión: <strong>${formatCOP(inv.capitalActual)}</strong>
-                    </div>
-                    <div class="form-group">
-                        <label>Destino del Dinero *</label>
-                        <select id="modal-destination">
-                            ${getFinancialSources()}
-                        </select>
-                    </div>
-                    <div class="source-info" id="dest-balance-info"></div>
-                    <div class="form-group">
-                        <label>Nota (Opcional)</label>
-                        <input type="text" id="modal-note" placeholder="Ej: Retiro parcial">
-                    </div>
-                    <button type="button" class="btn" onclick="executeCapitalMovement()">Confirmar Retiro</button>
-                `;
-            } else if (action === 'liquidate') {
-                title.textContent = 'Liquidar Inversión';
-                body.innerHTML = `
-                    <div class="source-info">
-                        <p>Vas a liquidar completamente: <strong>${inv.nombre}</strong></p>
-                        <p>Capital a liquidar: <strong>${formatCOP(inv.capitalActual)}</strong></p>
-                        <p>Rendimientos históricos: <strong style="color: var(--success);">+${formatCOP(inv.rendHistorico)}</strong></p>
-                    </div>
-                    <div class="form-group">
-                        <label>Destino de los Fondos *</label>
-                        <select id="modal-destination">
-                            ${getFinancialSources()}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Nota (Opcional)</label>
-                        <input type="text" id="modal-note" placeholder="Ej: Cierre de inversión">
-                    </div>
-                    <button type="button" class="btn btn-danger" onclick="executeCapitalMovement()">Liquidar Inversión</button>
-                `;
-            }
-            
-            modal.classList.remove('hidden');
-            initCurrencyFields();
-            
-            // Event listeners para actualizar información de saldo
-            setTimeout(() => {
-                let sourceSelect = document.getElementById('modal-source');
-                let destSelect = document.getElementById('modal-destination');
-                
-                if (sourceSelect) {
-                    sourceSelect.addEventListener('change', updateSourceBalanceInfo);
-                    updateSourceBalanceInfo();
-                }
-                if (destSelect) {
-                    destSelect.addEventListener('change', updateDestBalanceInfo);
-                    updateDestBalanceInfo();
-                }
-            }, 100);
+        // ===== SELECTORES PERSONALIZADOS (Hoja Inferior) =====
+        // Envuelve cada <select> nativo existente sin tocar su valor, opciones o lógica de eventos.
+        // El <select> permanece en el DOM (oculto) y sigue siendo la fuente de verdad para el resto del código.
+        let sheetActiveSelectId = null;
+
+        function buildSheetOverlay() {
+            if (document.getElementById('generic-sheet-overlay')) return;
+            let ov = document.createElement('div');
+            ov.id = 'generic-sheet-overlay';
+            ov.className = 'sheet-overlay hidden';
+            ov.innerHTML = `
+                <div class="sheet-panel">
+                    <div class="sheet-handle"></div>
+                    <div class="sheet-title" id="generic-sheet-title"></div>
+                    <div class="sheet-options" id="generic-sheet-options"></div>
+                    <div class="sheet-close-area"><button type="button" class="sheet-cancel-btn" id="generic-sheet-cancel">Cancelar</button></div>
+                </div>`;
+            document.body.appendChild(ov);
+            ov.addEventListener('click', (e) => { if (e.target === ov) closeGenericSheet(); });
+            document.getElementById('generic-sheet-cancel').addEventListener('click', closeGenericSheet);
         }
 
-        function closeCapitalModal() {
-            document.getElementById('capital-modal').classList.add('hidden');
-            currentInvId = null;
-            currentAction = null;
+        function closeGenericSheet() {
+            let ov = document.getElementById('generic-sheet-overlay');
+            if (ov) ov.classList.add('hidden');
+            sheetActiveSelectId = null;
         }
 
-        function getFinancialSources() {
-            let options = '';
-            
-            // Agregar cuentas bancarias
-            appState.accounts.forEach(acc => {
-                options += `<option value="acc_${acc.id}">${acc.name} (${formatCOP(acc.balance)})</option>`;
+        function openSelectSheet(selectId, title) {
+            let sel = document.getElementById(selectId);
+            if (!sel || sel.disabled) return;
+            buildSheetOverlay();
+            sheetActiveSelectId = selectId;
+            document.getElementById('generic-sheet-title').innerText = title || 'Selecciona una opción';
+            let optsContainer = document.getElementById('generic-sheet-options');
+            optsContainer.innerHTML = '';
+            Array.from(sel.options).forEach(opt => {
+                let row = document.createElement('div');
+                row.className = 'sheet-option' + (opt.value === sel.value ? ' selected' : '');
+                row.innerHTML = `<span>${opt.innerText}</span>` + (opt.value === sel.value ? `<svg class="sheet-check" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>` : '');
+                row.addEventListener('click', () => {
+                    if (sel.value !== opt.value) {
+                        sel.value = opt.value;
+                        sel.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    closeGenericSheet();
+                    refreshSelectTrigger(selectId);
+                });
+                optsContainer.appendChild(row);
             });
-            
-            // Agregar inversiones activas como fuente (solo para agregar capital)
-            if (currentAction === 'add') {
-                appState.inversiones.forEach(inv => {
-                    if (inv.activa && inv.id !== currentInvId) {
-                        options += `<option value="inv_${inv.id}">[Inversión] ${inv.nombre} (${formatCOP(inv.capitalActual)})</option>`;
-                    }
-                });
-            }
-            
-            return options;
+            document.getElementById('generic-sheet-overlay').classList.remove('hidden');
         }
 
-        function updateSourceBalanceInfo() {
-            let sourceSelect = document.getElementById('modal-source');
-            let infoDiv = document.getElementById('source-balance-info');
-            if (!sourceSelect || !infoDiv) return;
-            
-            let sourceId = sourceSelect.value;
-            let balance = getSourceBalance(sourceId);
-            infoDiv.innerHTML = `Saldo disponible: <strong>${formatCOP(balance)}</strong>`;
+        function refreshSelectTrigger(selectId) {
+            let sel = document.getElementById(selectId);
+            let label = document.getElementById(selectId + '-trigger-label');
+            if (!sel || !label) return;
+            let opt = sel.options[sel.selectedIndex];
+            label.innerText = opt ? opt.innerText : 'Seleccionar';
         }
 
-        function updateDestBalanceInfo() {
-            let destSelect = document.getElementById('modal-destination');
-            let infoDiv = document.getElementById('dest-balance-info');
-            if (!destSelect || !infoDiv) return;
-            
-            let destId = destSelect.value;
-            let balance = getSourceBalance(destId);
-            infoDiv.innerHTML = `Saldo actual del destino: <strong>${formatCOP(balance)}</strong>`;
+        function enhanceSelect(selectId, title) {
+            let sel = document.getElementById(selectId);
+            if (!sel || sel.dataset.enhanced === '1') return;
+            sel.dataset.enhanced = '1';
+            sel.classList.add('select-hidden-native');
+            let trigger = document.createElement('div');
+            trigger.className = 'select-trigger';
+            trigger.id = selectId + '-trigger';
+            trigger.setAttribute('role', 'button');
+            trigger.innerHTML = `<span class="st-label" id="${selectId}-trigger-label">Seleccionar</span><svg class="st-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>`;
+            trigger.addEventListener('click', () => openSelectSheet(selectId, title));
+            sel.parentNode.insertBefore(trigger, sel.nextSibling);
+            refreshSelectTrigger(selectId);
         }
 
-        function getSourceBalance(sourceId) {
-            if (sourceId.startsWith('acc_')) {
-                let accId = sourceId.replace('acc_', '');
-                let acc = appState.accounts.find(a => a.id === accId);
-                return acc ? acc.balance : 0;
-            } else if (sourceId.startsWith('inv_')) {
-                let invId = sourceId.replace('inv_', '');
-                let inv = appState.inversiones.find(i => i.id === invId);
-                return inv ? inv.capitalActual : 0;
-            }
-            return 0;
+        function refreshAllSelectTriggers() {
+            document.querySelectorAll('select[data-enhanced="1"]').forEach(sel => refreshSelectTrigger(sel.id));
         }
 
-        function executeCapitalMovement() {
-            let inv = appState.inversiones.find(i => i.id === currentInvId);
-            if (!inv) return;
-            
-            let amount = parseFloat(document.getElementById('modal-amount').getAttribute('data-raw') || '0');
-            let note = document.getElementById('modal-note')?.value?.trim() || '';
-            let hoyStr = new Date().toISOString().split('T')[0];
-            
-            if (currentAction === 'add') {
-                // Validaciones para agregar capital
-                if (amount <= 0) {
-                    alert('El monto debe ser mayor a cero.');
-                    return;
-                }
-                
-                let sourceId = document.getElementById('modal-source').value;
-                let sourceBalance = getSourceBalance(sourceId);
-                
-                if (amount > sourceBalance) {
-                    alert('El monto supera el saldo disponible en la fuente seleccionada.');
-                    return;
-                }
-                
-                // Descontar de la fuente
-                if (sourceId.startsWith('acc_')) {
-                    let accId = sourceId.replace('acc_', '');
-                    let acc = appState.accounts.find(a => a.id === accId);
-                    if (acc) {
-                        acc.balance -= amount;
-                    }
-                } else if (sourceId.startsWith('inv_')) {
-                    let sourceInvId = sourceId.replace('inv_', '');
-                    let sourceInv = appState.inversiones.find(i => i.id === sourceInvId);
-                    if (sourceInv) {
-                        sourceInv.capitalActual -= amount;
-                    }
-                }
-                
-                // Aumentar capital de la inversión
-                inv.capitalActual += amount;
-                
-                // Registrar movimiento
-                let sourceName = getSourceName(sourceId);
-                appState.transactions.push({
-                    id: 'tx_inv_add_' + Date.now(),
-                    type: 'expense',
-                    amount: amount,
-                    accountId: sourceId.startsWith('acc_') ? sourceId.replace('acc_', '') : 'acc_cash_default',
-                    date: hoyStr,
-                    note: `Aporte a ${inv.nombre} desde ${sourceName}${note ? ': ' + note : ''}`,
-                    category: 'Inversiones',
-                    isWealthTransfer: true
-                });
-                
-                alert('Capital agregado exitosamente.');
-                
-            } else if (currentAction === 'withdraw') {
-                // Validaciones para retirar capital
-                if (amount <= 0) {
-                    alert('El monto debe ser mayor a cero.');
-                    return;
-                }
-                
-                if (amount > inv.capitalActual) {
-                    alert('El monto supera el capital disponible en la inversión.');
-                    return;
-                }
-                
-                let destId = document.getElementById('modal-destination').value;
-                
-                // Reducir capital de la inversión
-                inv.capitalActual -= amount;
-                
-                // Aumentar saldo en el destino
-                if (destId.startsWith('acc_')) {
-                    let accId = destId.replace('acc_', '');
-                    let acc = appState.accounts.find(a => a.id === accId);
-                    if (acc) {
-                        acc.balance += amount;
-                    }
-                }
-                
-                // Registrar movimiento
-                let destName = getSourceName(destId);
-                appState.transactions.push({
-                    id: 'tx_inv_withdraw_' + Date.now(),
-                    type: 'income',
-                    amount: amount,
-                    accountId: destId.startsWith('acc_') ? destId.replace('acc_', '') : 'acc_cash_default',
-                    date: hoyStr,
-                    note: `Retiro de ${inv.nombre} hacia ${destName}${note ? ': ' + note : ''}`,
-                    category: 'Inversiones',
-                    isWealthTransfer: true
-                });
-                
-                alert('Capital retirado exitosamente.');
-                
-            } else if (currentAction === 'liquidate') {
-                // Liquidación completa
-                let destId = document.getElementById('modal-destination').value;
-                let destName = getSourceName(destId);
-                
-                // Transferir todo el capital al destino
-                if (destId.startsWith('acc_')) {
-                    let accId = destId.replace('acc_', '');
-                    let acc = appState.accounts.find(a => a.id === accId);
-                    if (acc) {
-                        acc.balance += inv.capitalActual;
-                    }
-                }
-                
-                // Registrar movimiento de liquidación
-                appState.transactions.push({
-                    id: 'tx_inv_liquidate_' + Date.now(),
-                    type: 'income',
-                    amount: inv.capitalActual,
-                    accountId: destId.startsWith('acc_') ? destId.replace('acc_', '') : 'acc_cash_default',
-                    date: hoyStr,
-                    note: `Liquidación de ${inv.nombre} hacia ${destName}${note ? ': ' + note : ''}`,
-                    category: 'Rendimientos',
-                    isWealthTransfer: true
-                });
-                
-                // Marcar inversión como cerrada
-                inv.activa = false;
-                inv.fechaCierre = hoyStr;
-                inv.destinoAsignadoId = destId;
-                inv.destinoAsignadoName = destName;
-                
-                alert('Inversión liquidada exitosamente.');
-            }
-            
-            closeCapitalModal();
-            save();
-            recalculateAllData();
-        }
+        // Los <select> de la app se repueblan dinámicamente en varios puntos del código;
+        // se sincroniza periódicamente el texto visible con el valor real del <select> para
+        // no tener que modificar cada función existente que ya escribe/lee su .value.
+        setInterval(refreshAllSelectTriggers, 250);
 
-        function getSourceName(sourceId) {
-            if (sourceId.startsWith('acc_')) {
-                let accId = sourceId.replace('acc_', '');
-                let acc = appState.accounts.find(a => a.id === accId);
-                return acc ? acc.name : 'Cuenta desconocida';
-            } else if (sourceId.startsWith('inv_')) {
-                let invId = sourceId.replace('inv_', '');
-                let inv = appState.inversiones.find(i => i.id === invId);
-                return inv ? inv.nombre : 'Inversión desconocida';
-            }
-            return 'Origen desconocido';
-        }
-
-        // Resto del código original...
-        // [Aquí va todo el código JavaScript original que estaba después de las funciones anteriores]
-        
         // CONTROL PRIVACIDAD Y ONBOARDING
         document.getElementById('btn-accept-privacy').addEventListener('click', () => {
             appState.privacyAccepted = true; save();
@@ -1177,7 +926,7 @@
                     </div>
                     <div class="form-group">
                         <label>Saldo Actual *</label>
-                        <input type="text" class="currency-input ob-acc-bal" placeholder="$ 0" data-raw="0">
+                        <input type="text" class="currency-input ob-acc-bal" inputmode="numeric" placeholder="$ 0" data-raw="0">
                     </div>
                 `;
                 container.appendChild(block);
@@ -1207,68 +956,6 @@
             changeScreen('screen-app');
             runCoreEngine();
         });
-
-        // MOTOR DE INTERÉS COMPUESTO PASIVO
-        function processCompoundInterest() {
-            let hoy = new Date();
-            let recalculado = false;
-
-            appState.inversiones.forEach(inv => {
-                if(!inv.activa) return;
-                let ultAct = new Date(inv.fechaUltimaAct);
-                let diff = hoy - ultAct;
-                let dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-                if (dias <= 0) return;
-                recalculado = true;
-
-                let tasaDiaria = Math.pow(1 + (inv.tasaEA / 100), 1 / 365) - 1;
-                let cap = inv.capitalActual;
-                let acum = inv.rendPendiente || 0;
-                let fControl = new Date(ultAct);
-
-                let corteDias = 30;
-                if(inv.frecuencia==='DIARIO') corteDias=1;
-                if(inv.frecuencia==='SEMANAL') corteDias=7;
-                if(inv.frecuencia==='TRIMESTRAL') corteDias=90;
-                if(inv.frecuencia==='SEMESTRAL') corteDias=180;
-                if(inv.frecuencia==='ANUAL') corteDias=365;
-                if(inv.frecuencia==='PERSONALIZADO') corteDias = inv.diasPers || 30;
-
-                for(let i=0; i<dias; i++) {
-                    fControl.setDate(fControl.getDate() + 1);
-                    let rend = cap * tasaDiaria;
-                    acum += rend;
-
-                    let ultAcred = new Date(inv.fechaUltimaAcred);
-                    let diffAcred = Math.floor((fControl - ultAcred) / (1000 * 60 * 60 * 24));
-
-                    if(diffAcred >= corteDias) {
-                        cap += acum;
-                        inv.rendHistorico += acum;
-                        
-                        appState.transactions.push({
-                            id: 'tx_auto_'+Date.now()+'_'+Math.floor(Math.random()*99),
-                            type: 'income',
-                            amount: roundValue(acum),
-                            date: fControl.toISOString().split('T')[0],
-                            accountId: 'inv_'+inv.id,
-                            note: `Rendimiento Acreditado: ${inv.nombre}`,
-                            category: 'Rendimientos',
-                            isWealthTransfer: true
-                        });
-                        acum = 0;
-                        inv.fechaUltimaAcred = fControl.toISOString().split('T')[0];
-                    }
-                }
-
-                inv.capitalActual = roundValue(cap);
-                inv.rendPendiente = acum;
-                inv.fechaUltimaAct = hoy.toISOString().split('T')[0];
-            });
-
-            if(recalculado) save();
-        }
 
         // FUNCIONES DE APOYO TC
         function getPendingInstallments(ccId) {
@@ -1326,17 +1013,13 @@
             });
 
             let totalCuentas = appState.accounts.reduce((acc, current) => acc + current.balance, 0);
-            let totalInversiones = appState.inversiones.filter(i => i.activa).reduce((acc, current) => acc + current.capitalActual, 0);
-            
-            // Patrimonio Consistente = Cuentas + Inversiones Activas
-            let patrimonioTotal = totalCuentas + totalInversiones;
+            let patrimonioTotal = totalCuentas;
 
             document.getElementById('display-net-worth').innerText = formatCOP(patrimonioTotal);
 
             // Actualización de Renders en Cascada
             renderDashboard();
             renderTxForm();
-            renderInvestmentsModule();
             renderHistoryAndBudgets();
             renderSettingsManagement();
             checkSmartAlerts(patrimonioTotal);
@@ -1360,20 +1043,6 @@
                 div.innerHTML = `<div class="m-title">${cc.name} (Deuda)</div><div class="m-balance" style="color:var(--expense-color);">${formatCOP(cc.utilizedBalance || 0)}</div>`;
                 container.appendChild(div);
             });
-
-            let invContainer = document.getElementById('dash-inv-list');
-            invContainer.innerHTML = "";
-            let anyInv = false;
-            appState.inversiones.forEach(i => {
-                if(!i.activa) return;
-                anyInv = true;
-                let div = document.createElement('div');
-                div.className = "mini-card";
-                div.style.borderLeft = "4px solid var(--accent)";
-                div.innerHTML = `<div class="m-title">${i.nombre}</div><div class="m-balance">${formatCOP(i.capitalActual)}</div>`;
-                invContainer.appendChild(div);
-            });
-            if(!anyInv) invContainer.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>No posees inversiones activas.</p>";
 
             // Métricas excluyendo transferencias internas de patrimonio
             let tInc=0, tExp=0, mExp=0, fExp=0;
@@ -1442,20 +1111,13 @@
                     cardSel.appendChild(o);
                 });
 
-                // Cargar Orígenes Dinámicos (Cuentas e Inversiones Activas)
+                // Cargar Orígenes Dinámicos (Cuentas)
                 let origSel = document.getElementById('tx-cc-pay-origin');
                 origSel.innerHTML = "";
                 appState.accounts.forEach(a => {
                     let o = document.createElement('option'); o.value = a.id; 
                     o.innerText = `${a.name} (${formatCOP(a.balance)})`;
                     origSel.appendChild(o);
-                });
-                appState.inversiones.forEach(inv => {
-                    if (inv.activa) {
-                        let o = document.createElement('option'); o.value = `inv_${inv.id}`; 
-                        o.innerText = `[Inversión] ${inv.nombre} (${formatCOP(inv.capitalActual)})`;
-                        origSel.appendChild(o);
-                    }
                 });
 
                 document.getElementById('tx-cc-pay-date').value = new Date().toISOString().split('T')[0];
@@ -1635,24 +1297,8 @@
             if (amt > maxPay) return alert("El monto no puede superar el saldo pendiente de la tarjeta.");
             
             let finalOriginAccId = originId;
-            
-            // Si el pago proviene de una inversión, aplicamos el retiro controlado.
-            if (originId.startsWith('inv_')) {
-                let invId = originId.replace('inv_', '');
-                let inv = appState.inversiones.find(i => i.id === invId);
-                if (!inv || inv.capitalActual < amt) return alert("Fondos insuficientes en la inversión seleccionada.");
-                
-                inv.capitalActual -= amt; // Deducción directa al capital invertido
-                
-                appState.transactions.push({
-                    id: 'tx_inv_w_'+Date.now(), type: 'income', amount: amt, accountId: 'acc_cash_default',
-                    date: dateStr, note: `Liquidación parcial para pago de ${cc.name}`, category: 'Inversiones', isWealthTransfer: true
-                });
-                finalOriginAccId = 'acc_cash_default'; // Compensación patrimonial
-            } else {
-                let acc = appState.accounts.find(a => a.id === originId);
-                if (!acc || acc.balance < amt) return alert("Fondos líquidos insuficientes en la cuenta.");
-            }
+            let acc = appState.accounts.find(a => a.id === originId);
+            if (!acc || acc.balance < amt) return alert("Fondos líquidos insuficientes en la cuenta.");
             
             // 1. Descuento del origen (reduce el patrimonio real al confirmar el pago)
             appState.transactions.push({
@@ -1755,165 +1401,6 @@
             save(); recalculateAllData();
             alert("Operación registrada correctamente.");
         });
-
-        // MODULO INVERSIONES REDISEÑADO CON TRAZABILIDAD
-        document.getElementById('inv-type').addEventListener('change', (e) => {
-            let g = document.getElementById('group-inv-custom-type');
-            if(e.target.value==='Personalizado') g.classList.remove('hidden');
-            else g.classList.add('hidden');
-        });
-
-        document.getElementById('inv-fund-source').addEventListener('change', (e) => {
-            let g = document.getElementById('group-inv-source-account');
-            if(e.target.value === 'transfer_account') g.classList.remove('hidden');
-            else g.classList.add('hidden');
-        });
-
-        document.getElementById('inv-freq').addEventListener('change', (e) => {
-            let g = document.getElementById('group-inv-custom-days');
-            if(e.target.value==='PERSONALIZADO') g.classList.remove('hidden');
-            else g.classList.add('hidden');
-        });
-
-        function renderInvestmentsModule() {
-            let sel = document.getElementById('inv-entity');
-            let srcSel = document.getElementById('inv-source-account-select');
-            sel.innerHTML = ""; srcSel.innerHTML = "";
-
-            appState.accounts.forEach(e => {
-                let o = document.createElement('option'); o.value=e.name; o.innerText=e.name;
-                sel.appendChild(o);
-
-                let oSrc = document.createElement('option'); oSrc.value=e.id; oSrc.innerText=`${e.name} (${formatCOP(e.balance)})`;
-                srcSel.appendChild(oSrc);
-            });
-
-            let container = document.getElementById('investments-list-container');
-            container.innerHTML = "";
-            
-            appState.inversiones.forEach(inv => {
-                if(!inv.activa) return;
-                let div = document.createElement('div');
-                div.className = "card inv-card";
-                div.innerHTML = `
-                    <div class="inv-header">
-                        <div>
-                            <span class="inv-badge">${inv.tipo}</span>
-                            <h3 style="margin-top:6px;">${inv.nombre}</h3>
-                            <p style="font-size:12px; color:var(--text-muted);">${inv.entidadFinanciera} • Creado: ${inv.fechaCreacion}</p>
-                        </div>
-                        <div style="text-align:right;">
-                            <span style="font-size:13px; font-weight:800; color:var(--accent);">${inv.tasaEA}% EA</span>
-                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Corte: ${inv.frecuencia}</div>
-                        </div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; background:rgba(0,0,0,0.1); padding:12px; border-radius:10px;">
-                        <div>
-                            <span style="font-size:11px; color:var(--text-muted);">Capital Inicial</span>
-                            <div style="font-size:14px; font-weight:600;">${formatCOP(inv.capitalInicial)}</div>
-                        </div>
-                        <div>
-                            <span style="font-size:11px; color:var(--text-muted);">Capital Actual</span>
-                            <div style="font-size:16px; font-weight:800; color:var(--accent);">${formatCOP(inv.capitalActual)}</div>
-                        </div>
-                    </div>
-                    <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Rentabilidad Histórica Cobrada: <strong style="color:var(--accent);">+${formatCOP(inv.rendHistorico)}</strong></p>
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="openCapitalModal('${inv.id}', 'add')">+ Capital</button>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="openCapitalModal('${inv.id}', 'withdraw')">- Retirar</button>
-                        <button type="button" class="btn btn-sm" style="background:var(--bg-input); color:var(--text-main); border:none;" onclick="editInvParams('${inv.id}')">Editar</button>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-danger" style="margin-top:10px; width:100%; border-radius:8px;" onclick="openCapitalModal('${inv.id}', 'liquidate')">Liquidar y Cerrar Inversión</button>
-                `;
-                container.appendChild(div);
-            });
-
-            let closedContainer = document.getElementById('closed-investments-list-container');
-            closedContainer.innerHTML = "";
-            let closedInvs = appState.inversiones.filter(i => !i.activa);
-            if (closedInvs.length === 0) {
-                closedContainer.innerHTML = "<p style='font-size:11px; color:var(--text-muted);'>No hay registros históricos cerrados.</p>";
-            } else {
-                closedInvs.forEach(inv => {
-                    let div = document.createElement('div');
-                    div.className = "card";
-                    div.style.opacity = "0.75";
-                    div.style.borderLeft = "4px solid var(--text-muted)";
-                    div.innerHTML = `
-                        <h4 style="font-size:14px; color:var(--text-main);">${inv.nombre} [CERRADA]</h4>
-                        <p style="font-size:11px; color:var(--text-muted);">Entidad: ${inv.entidadFinanciera} | Liquidada el: ${inv.fechaCierre || inv.fechaUltimaAct}</p>
-                        <p style="font-size:12px; margin-top:4px;">Capital de Cierre: <strong>${formatCOP(inv.capitalActual)}</strong> | Rendimientos Totales: <span style="color:var(--success);">+${formatCOP(inv.rendHistorico)}</span></p>
-                        <p style="font-size:11px; color:var(--accent); font-style: italic;">Destino final asignado: ${inv.destinoAsignadoName || 'Efectivo / Caja'}</p>
-                    `;
-                    closedContainer.appendChild(div);
-                });
-            }
-        }
-
-        document.getElementById('btn-save-inv').addEventListener('click', () => {
-            let t = document.getElementById('inv-type').value;
-            if(t==='Personalizado') t = document.getElementById('inv-custom-type-name').value.trim() || "Personalizado";
-
-            let ent = document.getElementById('inv-entity').value;
-            let name = document.getElementById('inv-name').value.trim();
-            let cap = parseFloat(document.getElementById('inv-cap').getAttribute('data-raw') || '0');
-            let ea = parseFloat(document.getElementById('inv-ea').value);
-            let freq = document.getElementById('inv-freq').value;
-            let dPers = parseInt(document.getElementById('inv-custom-days').value || '30', 10);
-            let sourceMode = document.getElementById('inv-fund-source').value;
-
-            if(!name || cap<=0 || isNaN(ea) || !ent) return alert("Por favor diligencia todos los campos obligatorios.");
-
-            let id = 'inv_'+Date.now();
-            let hoyStr = new Date().toISOString().split('T')[0];
-
-            if (sourceMode === 'transfer_account') {
-                let srcAccId = document.getElementById('inv-source-account-select').value;
-                let accountObj = appState.accounts.find(a => a.id === srcAccId);
-                if (accountObj && accountObj.balance < cap) {
-                    return alert("Saldo insuficiente en la cuenta bancaria de origen para fondear la inversión.");
-                }
-                appState.transactions.push({
-                    id: 'tx_inv_transfer_'+Date.now(),
-                    type: 'expense',
-                    amount: cap,
-                    date: hoyStr,
-                    accountId: srcAccId,
-                    note: `Fondeo de Inversión: ${name}`,
-                    category: 'Inversiones',
-                    isWealthTransfer: true
-                });
-            }
-
-            appState.inversiones.push({
-                id: id, tipo: t, entidadFinanciera: ent, nombre: name, capitalInicial: cap, capitalActual: cap,
-                tasaEA: ea, frecuencia: freq, diasPers: dPers, rendHistorico: 0, rendPendiente: 0,
-                fechaCreacion: hoyStr, fechaUltimaAct: hoyStr, fechaUltimaAcred: hoyStr, activa: true
-            });
-
-            document.getElementById('inv-name').value = "";
-            document.getElementById('inv-cap').value = "";
-            document.getElementById('inv-cap').setAttribute('data-raw', '0');
-            document.getElementById('inv-ea').value = "";
-            
-            save(); recalculateAllData();
-            alert("Inversión registrada con consistencia patrimonial.");
-        });
-
-        window.editInvParams = function(id) {
-            let inv = appState.inversiones.find(i => i.id === id);
-            if(!inv) return;
-            
-            let nName = prompt("Nuevo nombre de la inversión:", inv.nombre);
-            let nEA = prompt("Nueva Tasa Efectiva Anual (EA %):", inv.tasaEA);
-            
-            if(nName) inv.nombre = nName;
-            if(nEA && !isNaN(parseFloat(nEA))) {
-                inv.tasaEA = parseFloat(nEA);
-                inv.fechaUltimaAct = new Date().toISOString().split('T')[0];
-            }
-            save(); recalculateAllData();
-        };
 
         // HISTORIAL Y PRESUPUESTOS
         function renderHistoryAndBudgets() {
@@ -2109,10 +1596,6 @@
 
             if (acc.balance !== 0) {
                 return alert(`No es posible eliminar la cuenta "${acc.name}" porque posee un saldo actual de ${formatCOP(acc.balance)}. Transfiere o liquida los fondos antes de proceder.`);
-            }
-            let hasInvs = appState.inversiones.some(i => i.activa && i.entidadFinanciera === acc.name);
-            if (hasInvs) {
-                return alert("Imposible borrar: Esta cuenta posee inversiones de rendimiento activas vinculadas.");
             }
             let hasCC = appState.creditCards.some(c => c.accountId === id);
             if (hasCC) {
@@ -2418,6 +1901,72 @@
             } catch(e) { alert("Error de lectura. Asegúrate de copiar el código exacto."); }
         });
 
+        // ===== COMPATIBILIDAD: RESPALDO COMO ARCHIVO .json =====
+        // No modifica la exportación/importación por texto existente; son herramientas adicionales.
+        function generateBackupFilename() {
+            let now = new Date();
+            let pad = n => n.toString().padStart(2, '0');
+            return `BANKLAR_Backup_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.json`;
+        }
+
+        function downloadJSONFile(content, filename) {
+            let blob = new Blob([content], { type: 'application/json' });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        // Exportar a Archivo: usa exactamente la misma estructura (appState) que la exportación por texto.
+        document.getElementById('btn-export-file').addEventListener('click', () => {
+            downloadJSONFile(JSON.stringify(appState), generateBackupFilename());
+        });
+
+        // Convertir Texto en Archivo: herramienta de compatibilidad con respaldos antiguos.
+        // Solo valida y descarga; NO importa los datos automáticamente.
+        document.getElementById('btn-convert-to-file').addEventListener('click', () => {
+            let txt = document.getElementById('convert-text-area').value.trim();
+            if (!txt) return alert("Pega el texto del respaldo antiguo antes de convertir.");
+            try {
+                JSON.parse(txt); // Solo se valida; el contenido descargado es el texto original, sin reestructurar.
+            } catch (e) {
+                return alert("El respaldo está dañado o incompleto. Verifica que hayas copiado el texto completo.");
+            }
+            downloadJSONFile(txt, generateBackupFilename());
+            document.getElementById('convert-text-area').value = "";
+            alert("Archivo de respaldo generado y descargado correctamente. Ya puedes usarlo con 'Importar desde Archivo'.");
+        });
+
+        // Importar desde Archivo: reutiliza la misma validación que la importación por texto.
+        document.getElementById('btn-import-file-trigger').addEventListener('click', () => {
+            document.getElementById('import-file-input').click();
+        });
+
+        document.getElementById('import-file-input').addEventListener('change', (e) => {
+            let file = e.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    let parsed = JSON.parse(ev.target.result);
+                    if (parsed.accounts && parsed.user) {
+                        appState = parsed; save();
+                        window.location.reload();
+                    } else {
+                        alert("Estructura de datos JSON incompatible.");
+                    }
+                } catch (err) {
+                    alert("El archivo está dañado o incompleto.");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = "";
+        });
+
         document.getElementById('btn-hard-reset').addEventListener('click', () => {
             if(confirm("¿Deseas borrar permanentemente la memoria interna de la aplicación? Esto no se puede deshacer.")) {
                 localStorage.removeItem('banklar_core_state'); window.location.reload();
@@ -2428,13 +1977,25 @@
         function runCoreEngine() {
             document.getElementById('display-username').innerText = appState.user.name;
             document.getElementById('setting-cents').value = appState.useCents ? "true" : "false";
-            processCompoundInterest();
             recalculateAllData();
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             load();
             initCurrencyFields();
+
+            // Reemplazo de todos los <select> nativos por selectores personalizados (hoja inferior)
+            enhanceSelect('ob-count', 'Cantidad de cuentas bancarias');
+            enhanceSelect('tx-origin', 'Cuenta / Tarjeta de origen');
+            enhanceSelect('tx-dest', 'Cuenta destino');
+            enhanceSelect('tx-cc-pay-card', 'Tarjeta a pagar');
+            enhanceSelect('tx-cc-pay-origin', 'Origen del dinero');
+            enhanceSelect('tx-cc-pay-type', 'Tipo de pago');
+            enhanceSelect('budget-cat-select', 'Categoría');
+            enhanceSelect('cc-account-id', 'Banco asociado');
+            enhanceSelect('cc-payment-source', 'Origen del pago');
+            enhanceSelect('setting-cents', 'Modo de captura de valores');
+
             if (!appState.privacyAccepted) { changeScreen('screen-privacy'); }
             else if (!appState.onboarded) { changeScreen('screen-onboarding'); buildDynamicOnboarding(1); }
             else { changeScreen('screen-app'); runCoreEngine(); }
